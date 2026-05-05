@@ -46,7 +46,7 @@ export interface SwellData {
 }
 
 export interface SkyData {
-  condition: string
+  condition: 'Clear' | 'Partly Cloudy' | 'Overcast' | 'Light Rain' | 'Heavy Rain'
   rainChance: number
   icon: 'clear' | 'partly-cloudy' | 'overcast' | 'light-rain' | 'heavy-rain'
 }
