@@ -1,0 +1,6 @@
+{
+  "properties": {
+    "forecast": "https://api.weather.gov/gridpoints/MTR/84,105/forecast",
+    "forecastHourly": "https://api.weather.gov/gridpoints/MTR/84,105/forecast/hourly"
+  }
+}

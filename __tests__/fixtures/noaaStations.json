@@ -1,0 +1,7 @@
+{
+  "stations": [
+    { "id": "9415020", "name": "Point Reyes, CA", "lat": "37.9953", "lng": "-122.9767" },
+    { "id": "9414290", "name": "San Francisco, CA", "lat": "37.8063", "lng": "-122.4659" },
+    { "id": "9410660", "name": "Los Angeles, CA", "lat": "33.72", "lng": "-118.272" }
+  ]
+}
