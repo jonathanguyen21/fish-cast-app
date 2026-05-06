@@ -17,17 +17,13 @@ export async function fetchMarineData(spot: Spot): Promise<SwellData | null> {
     if (!res.ok) return null
     const json = await res.json()
 
-    const times: string[] = json.hourly?.time ?? []
     const heights: number[] = json.hourly?.wave_height ?? []
     const periods: number[] = json.hourly?.wave_period ?? []
     const directions: number[] = json.hourly?.wave_direction ?? []
 
     if (heights.length === 0) return null
 
-    // Find index closest to current hour
-    const currentHour = new Date().getHours()
-    const idx = times.findIndex(t => new Date(t).getHours() === currentHour)
-    const i = idx >= 0 ? idx : 0
+    const i = Math.min(new Date().getHours(), heights.length - 1)
 
     const height = heights[i] ?? 0
     if (height === 0) return null
