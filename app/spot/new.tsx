@@ -1,9 +1,13 @@
 import React, { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native'
+import {
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  Alert, ScrollView, ActivityIndicator,
+} from 'react-native'
 import MapView, { Marker } from 'react-native-maps'
 import { useRouter } from 'expo-router'
 import { useSpots } from '../../hooks/useSpots'
 import { detectRegion } from '../../data/species'
+import { resolveNearestStation } from '../../services/noaaStationService'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import type { Spot } from '../../types/spot'
@@ -12,15 +16,16 @@ import type { SpotType } from '../../types/spot'
 export default function AddSpotScreen() {
   const router = useRouter()
   const { spots, addSpot } = useSpots()
-  const isPro = false  // Phase A: always false; Phase B: read from settingsStore
+  const isPro = false
 
   const [name, setName] = useState('')
   const [type, setType] = useState<SpotType>('saltwater')
   const [coords, setCoords] = useState({ lat: 38.33, lng: -123.05 })
+  const [isSaving, setIsSaving] = useState(false)
 
   const isFreeAndHasSpot = !isPro && spots.length >= 1
 
-  function handleSave() {
+  async function handleSave() {
     if (!name.trim()) {
       Alert.alert('Name required', 'Please enter a name for this spot.')
       return
@@ -29,17 +34,29 @@ export default function AddSpotScreen() {
       Alert.alert('Upgrade to Pro', 'Free accounts can save 1 spot. Upgrade to Pro for unlimited spots.')
       return
     }
-    const spot: Spot = {
-      id: `spot_${Date.now()}`,
-      name: name.trim(),
-      lat: coords.lat,
-      lng: coords.lng,
-      type,
-      stationId: null,
-      region: detectRegion(coords.lat, coords.lng),
+
+    setIsSaving(true)
+    try {
+      const stationId = type === 'saltwater'
+        ? await resolveNearestStation(coords.lat, coords.lng)
+        : null
+
+      const spot: Spot = {
+        id: `spot_${Date.now()}`,
+        name: name.trim(),
+        lat: coords.lat,
+        lng: coords.lng,
+        type,
+        stationId,
+        region: detectRegion(coords.lat, coords.lng),
+      }
+      addSpot(spot)
+      router.back()
+    } catch {
+      Alert.alert('Error', 'Could not save spot. Please try again.')
+    } finally {
+      setIsSaving(false)
     }
-    addSpot(spot)
-    router.back()
   }
 
   return (
@@ -85,11 +102,21 @@ export default function AddSpotScreen() {
           <Text style={styles.proHint}>Free accounts can save 1 spot. Upgrade to Pro for unlimited spots.</Text>
         )}
 
+        {isSaving && (
+          <View style={styles.savingRow}>
+            <ActivityIndicator size="small" color={Colors.accent} />
+            <Text style={styles.savingText}>Finding nearest tide station…</Text>
+          </View>
+        )}
+
         <TouchableOpacity
-          style={[styles.saveButton, isFreeAndHasSpot && styles.saveDisabled]}
+          style={[styles.saveButton, (isFreeAndHasSpot || isSaving) && styles.saveDisabled]}
           onPress={handleSave}
+          disabled={isSaving}
         >
-          <Text style={styles.saveText}>{isFreeAndHasSpot ? 'Upgrade to Save More' : 'Save Spot'}</Text>
+          <Text style={styles.saveText}>
+            {isSaving ? 'Saving…' : isFreeAndHasSpot ? 'Upgrade to Save More' : 'Save Spot'}
+          </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -114,6 +141,8 @@ const styles = StyleSheet.create({
   toggleText: { fontSize: 14, color: Colors.textSecondary },
   toggleTextActive: { color: Colors.accent, fontWeight: '600' },
   proHint: { fontSize: 13, color: Colors.warning, marginTop: Spacing.md },
+  savingRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginTop: Spacing.md },
+  savingText: { fontSize: 13, color: Colors.textSecondary },
   saveButton: {
     backgroundColor: Colors.accent, borderRadius: Spacing.cardRadius,
     padding: Spacing.md, alignItems: 'center', marginTop: Spacing.lg,
