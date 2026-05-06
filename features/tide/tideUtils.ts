@@ -1,13 +1,14 @@
 export type TidePhase = 'incoming' | 'outgoing' | 'slack'
 
+const SLACK_THRESHOLD_FT_PER_HOUR = 0.25
+
 export function detectPhase(hourlyCurve: number[], currentHour: number): TidePhase {
   const i = Math.min(Math.max(currentHour, 1), 22)
   const prev = hourlyCurve[i - 1]
   const curr = hourlyCurve[i]
   const next = hourlyCurve[i + 1]
   const delta = curr - prev
-  const slackThreshold = 0.25
-  if (Math.abs(delta) < slackThreshold && Math.abs(next - curr) < slackThreshold) return 'slack'
+  if (Math.abs(delta) < SLACK_THRESHOLD_FT_PER_HOUR && Math.abs(next - curr) < SLACK_THRESHOLD_FT_PER_HOUR) return 'slack'
   return delta > 0 ? 'incoming' : 'outgoing'
 }
 

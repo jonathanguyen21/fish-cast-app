@@ -1,7 +1,7 @@
-import type { Species, SpeciesScore } from '../../types/species'
+import type { Species, SpeciesScore, TimeOfDay } from '../../types/species'
 import type { TidePhase } from '../tide/tideUtils'
 
-interface ScoringContext {
+export interface ScoringContext {
   month: number         // 1–12
   waterTemp: number     // °F
   tidePhase: TidePhase
@@ -25,8 +25,8 @@ function tempPoints(species: Species, waterTemp: number): number {
 function tidePoints(species: Species, tidePhase: TidePhase): number {
   if (species.preferred_tide === 'any') return 15
   if (species.preferred_tide === tidePhase) return 15
-  if (tidePhase === 'slack') return 5
-  return 8
+  if (tidePhase === 'slack') return 8
+  return 5
 }
 
 function timePoints(species: Species, hour: number): number {
@@ -35,7 +35,7 @@ function timePoints(species: Species, hour: number): number {
   return 5
 }
 
-function hourToTimeOfDay(hour: number): import('../../types/species').TimeOfDay {
+function hourToTimeOfDay(hour: number): TimeOfDay {
   if (hour >= 5 && hour <= 7) return 'dawn'
   if (hour >= 8 && hour <= 11) return 'morning'
   if (hour >= 12 && hour <= 14) return 'midday'
@@ -71,10 +71,12 @@ export function scoreSpecies(species: Species, ctx: ScoringContext): SpeciesScor
     tidePoints(species, ctx.tidePhase) +
     timePoints(species, ctx.currentHour))
 
-  const { min, max } = species.water_temp_f
-  const tempLabel = ctx.waterTemp >= min && ctx.waterTemp <= max
-    ? `In range (${ctx.waterTemp}°F — ideal ${min}–${max}°F)`
-    : `Outside range (${ctx.waterTemp}°F — ideal ${min}–${max}°F)`
+  const { min, max, peak_min, peak_max } = species.water_temp_f
+  const tempLabel = ctx.waterTemp >= peak_min && ctx.waterTemp <= peak_max
+    ? `Peak range (${ctx.waterTemp}°F — optimal ${peak_min}–${peak_max}°F)`
+    : ctx.waterTemp >= min && ctx.waterTemp <= max
+      ? `In range (${ctx.waterTemp}°F — optimal ${peak_min}–${peak_max}°F)`
+      : `Outside range (${ctx.waterTemp}°F — optimal ${peak_min}–${peak_max}°F)`
 
   const tideLabel = species.preferred_tide === 'any'
     ? `${ctx.tidePhase} — neutral`
