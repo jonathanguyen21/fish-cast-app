@@ -40,7 +40,11 @@ All APIs are free with no authentication key required.
 | NWS Weather API | `https://api.weather.gov` | None (User-Agent header required) |
 | Open-Meteo Marine | `https://marine-api.open-meteo.com/v1/marine` | None |
 
-NWS requires a `User-Agent` header identifying the app: `User-Agent: FishCast/1.0 (jonathandnguyen21@gmail.com)`.
+NWS requires a `User-Agent` header identifying the app:
+```
+User-Agent: FishCast/1.0 (${process.env.EXPO_PUBLIC_NWS_CONTACT})
+```
+Contact email is stored in `.env` as `EXPO_PUBLIC_NWS_CONTACT` (gitignored). Set this to the app's contact email before running.
 
 ---
 
