@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
-import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import type { WindData } from '../../types/conditions'
@@ -17,8 +17,14 @@ function windColor(speed: number): string {
 
 export function WindDisplay({ wind }: Props) {
   const color = windColor(wind.speed)
+  const rotation = useSharedValue(wind.direction)
+
+  useEffect(() => {
+    rotation.value = withTiming(wind.direction, { duration: 800 })
+  }, [wind.direction])
+
   const arrowStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: withTiming(`${wind.direction}deg`, { duration: 800 }) }],
+    transform: [{ rotate: `${rotation.value}deg` }],
   }))
 
   return (
