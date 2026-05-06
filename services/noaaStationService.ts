@@ -27,6 +27,7 @@ export async function resolveNearestStation(lat: number, lng: number): Promise<s
       const sLat = parseFloat(s.lat)
       const sLng = parseFloat(s.lng)
       if (isNaN(sLat) || isNaN(sLng)) continue
+      if (!s.id) continue
       const dist = haversineKm(lat, lng, sLat, sLng)
       if (dist < bestDist) {
         bestDist = dist
