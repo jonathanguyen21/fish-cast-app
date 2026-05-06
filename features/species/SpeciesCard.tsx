@@ -11,7 +11,7 @@ interface Props {
   onPress: () => void
 }
 
-const statusColor: Record<string, string> = {
+const statusColor: Record<SpeciesScore['status'], string> = {
   'Peak Season': Colors.success,
   'Active': Colors.ocean,
   'Present': Colors.textSecondary,
@@ -34,6 +34,7 @@ export function SpeciesCard({ speciesScore, isPro, onPress }: Props) {
             {status}
           </Text>
         </View>
+        {/* color is always a 6-digit hex from scoreColor(); '22' appends ~13% alpha */}
         <View style={[styles.badge, { backgroundColor: color + '22', borderColor: color }]}>
           <Text style={[styles.badgeScore, { color }]}>{isLocked ? '?' : score}</Text>
         </View>
