@@ -36,6 +36,7 @@ export default function AddSpotScreen() {
     }
 
     setIsSaving(true)
+    let saved = false
     try {
       const stationId = type === 'saltwater'
         ? await resolveNearestStation(coords.lat, coords.lng)
@@ -51,12 +52,13 @@ export default function AddSpotScreen() {
         region: detectRegion(coords.lat, coords.lng),
       }
       addSpot(spot)
-      router.back()
+      saved = true
     } catch {
       Alert.alert('Error', 'Could not save spot. Please try again.')
     } finally {
       setIsSaving(false)
     }
+    if (saved) router.back()
   }
 
   return (
@@ -102,7 +104,7 @@ export default function AddSpotScreen() {
           <Text style={styles.proHint}>Free accounts can save 1 spot. Upgrade to Pro for unlimited spots.</Text>
         )}
 
-        {isSaving && (
+        {isSaving && type === 'saltwater' && (
           <View style={styles.savingRow}>
             <ActivityIndicator size="small" color={Colors.accent} />
             <Text style={styles.savingText}>Finding nearest tide station…</Text>
