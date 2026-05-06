@@ -20,8 +20,9 @@ function curvePath(points: { x: number; y: number }[]): string {
   for (let i = 1; i < points.length; i++) {
     const prev = points[i - 1]
     const curr = points[i]
-    const cpx = (prev.x + curr.x) / 2
-    d += ` C ${cpx} ${prev.y}, ${cpx} ${curr.y}, ${curr.x} ${curr.y}`
+    const cp1x = prev.x + (curr.x - prev.x) / 3
+    const cp2x = curr.x - (curr.x - prev.x) / 3
+    d += ` C ${cp1x} ${prev.y}, ${cp2x} ${curr.y}, ${curr.x} ${curr.y}`
   }
   return d
 }
@@ -42,8 +43,9 @@ export function TideChart({ tide, currentHour }: Props) {
   const pathD = curvePath(points)
   const fillD = `${pathD} L ${toX(curve.length - 1)} ${CHART_HEIGHT - PADDING.bottom} L ${toX(0)} ${CHART_HEIGHT - PADDING.bottom} Z`
 
-  const nowX = toX(currentHour)
-  const nowY = toY(curve[currentHour] ?? curve[0])
+  const clampedHour = Math.min(Math.max(currentHour, 0), curve.length - 1)
+  const nowX = toX(clampedHour)
+  const nowY = toY(curve[clampedHour])
 
   const hiLo = tide.events.slice(0, 2)
 
@@ -65,7 +67,7 @@ export function TideChart({ tide, currentHour }: Props) {
       </Svg>
       <View style={styles.events}>
         {hiLo.map((ev, i) => (
-          <Text key={i} style={styles.eventText}>
+          <Text key={ev.time} style={styles.eventText}>
             {ev.type === 'high' ? '▲' : '▼'} {ev.time} {ev.height.toFixed(1)} ft
           </Text>
         ))}

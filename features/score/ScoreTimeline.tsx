@@ -13,6 +13,7 @@ const BAR_MAX_HEIGHT = 80
 const BAR_WIDTH = 28
 
 export function ScoreTimeline({ hourlyScores }: Props) {
+  if (hourlyScores.length === 0) return null
   const maxScore = Math.max(...hourlyScores.map(h => h.score))
 
   return (
