@@ -10,11 +10,13 @@ export interface ScoringInputs {
 
 function pressurePoints(p: ScoringInputs['pressure']): number {
   if (p.trend === 'falling' && p.rate === 'slow') return 25
+  if (p.trend === 'falling' && p.rate === 'normal') return 18
   if (p.trend === 'stable' && p.value > 30.10) return 20
   if (p.trend === 'stable') return 15
   if (p.trend === 'rising' && p.rate === 'slow') return 10
+  if (p.trend === 'rising' && p.rate === 'normal') return 7
   if (p.trend === 'falling' && p.rate === 'fast') return 8
-  return 5
+  return 5  // rising+fast
 }
 
 function solunarPoints(s: ScoringInputs['solunar']): number {

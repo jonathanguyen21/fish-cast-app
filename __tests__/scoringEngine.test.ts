@@ -29,8 +29,7 @@ describe('calculateScore', () => {
   it('handles freshwater spot (no tide)', () => {
     const score = calculateScore({ ...ideal, tide: null, spotType: 'freshwater',
       waterTemp: { value: 68, spotType: 'freshwater' } })
-    expect(score).toBeGreaterThan(0)
-    expect(score).toBeLessThanOrEqual(100)
+    expect(score).toBe(100)
   })
 
   it('clamps score to 0–100', () => {
@@ -43,6 +42,12 @@ describe('calculateScore', () => {
     const rising = calculateScore({ ...ideal, pressure: { value: 29.8, trend: 'rising', rate: 'fast' } })
     const falling = calculateScore(ideal)
     expect(rising).toBeLessThan(falling)
+  })
+
+  it('scores falling normal pressure higher than falling fast', () => {
+    const fallingNormal = calculateScore({ ...ideal, pressure: { value: 30.05, trend: 'falling', rate: 'normal' } })
+    const fallingFast = calculateScore({ ...ideal, pressure: { value: 30.05, trend: 'falling', rate: 'fast' } })
+    expect(fallingNormal).toBeGreaterThan(fallingFast)
   })
 })
 
