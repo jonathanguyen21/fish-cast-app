@@ -1,0 +1,64 @@
+import React from 'react'
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { Colors } from '../../theme/colors'
+import { Spacing } from '../../theme/spacing'
+import { scoreColor } from '../score/scoringEngine'
+import type { SpeciesScore } from '../../types/species'
+
+interface Props {
+  speciesScore: SpeciesScore
+  isPro: boolean
+  onPress: () => void
+}
+
+const statusColor: Record<string, string> = {
+  'Peak Season': Colors.success,
+  'Active': Colors.ocean,
+  'Present': Colors.textSecondary,
+  'Inactive': Colors.textTertiary,
+}
+
+export function SpeciesCard({ speciesScore, isPro, onPress }: Props) {
+  const { species, score, status } = speciesScore
+  const isLocked = species.tier === 'pro' && !isPro
+  const color = scoreColor(score)
+
+  return (
+    <TouchableOpacity style={styles.card} onPress={onPress} testID={`species-card-${species.id}`}>
+      <View style={styles.row}>
+        <View style={styles.info}>
+          <Text style={[styles.name, isLocked && styles.locked]}>
+            {isLocked ? '🔒 Pro Species' : species.common_name}
+          </Text>
+          <Text style={[styles.status, { color: statusColor[status] ?? Colors.textSecondary }]}>
+            {status}
+          </Text>
+        </View>
+        <View style={[styles.badge, { backgroundColor: color + '22', borderColor: color }]}>
+          <Text style={[styles.badgeScore, { color }]}>{isLocked ? '?' : score}</Text>
+        </View>
+      </View>
+      {isLocked && (
+        <Text style={styles.upgradeHint}>Upgrade to Pro to see what's biting →</Text>
+      )}
+    </TouchableOpacity>
+  )
+}
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: Colors.card, borderRadius: Spacing.cardRadius,
+    padding: Spacing.md, marginBottom: Spacing.sm,
+  },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  info: { flex: 1 },
+  name: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
+  locked: { color: Colors.textTertiary },
+  status: { fontSize: 12, marginTop: 2 },
+  badge: {
+    width: 44, height: 44, borderRadius: 22, borderWidth: 1.5,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  badgeScore: { fontSize: 15, fontWeight: '700' },
+  upgradeHint: { fontSize: 12, color: Colors.accent, marginTop: Spacing.xs },
+})
