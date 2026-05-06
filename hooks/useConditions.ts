@@ -70,6 +70,7 @@ export function useConditions(spot: Spot | null): UseConditionsResult {
     )
   }, [spot, noaaQuery.data, nwsQuery.data, marineQuery.data, solunarQuery.data])
 
+  // Solunar omitted — it's a local calculation with 24hr staleTime, not a network fetch
   function refetch() {
     noaaQuery.refetch()
     nwsQuery.refetch()
