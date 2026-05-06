@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { ScrollView, View, Text, StyleSheet, RefreshControl } from 'react-native'
 import { useSpots } from '../../hooks/useSpots'
 import { useConditions } from '../../hooks/useConditions'
@@ -34,25 +34,28 @@ export default function DashboardScreen() {
     )
   }
 
-  const currentHour = new Date().getHours()
+  const now = new Date()
+  const currentHour = now.getHours()
   const tidePhase = conditions.tide
     ? detectPhase(conditions.tide.hourlyCurve, currentHour)
     : 'slack'
 
-  const allSpecies = getSpeciesForRegion(activeSpot.lat, activeSpot.lng)
-  const scoredSpecies = allSpecies
-    .map(sp => scoreSpecies(sp, {
-      month: new Date().getMonth() + 1,
-      waterTemp: conditions.water.temp,
-      tidePhase,
-      currentHour,
-    }))
-    .sort((a, b) => {
-      // Pro species sorted together at bottom if locked
-      if (!isPro && a.species.tier === 'pro' && b.species.tier !== 'pro') return 1
-      if (!isPro && b.species.tier === 'pro' && a.species.tier !== 'pro') return -1
-      return b.score - a.score
-    })
+  const scoredSpecies = useMemo(() =>
+    getSpeciesForRegion(activeSpot.lat, activeSpot.lng)
+      .map(sp => scoreSpecies(sp, {
+        month: now.getMonth() + 1,
+        waterTemp: conditions.water.temp,
+        tidePhase,
+        currentHour,
+      }))
+      .sort((a, b) => {
+        // Pro species sorted together at bottom if locked
+        if (!isPro && a.species.tier === 'pro' && b.species.tier !== 'pro') return 1
+        if (!isPro && b.species.tier === 'pro' && a.species.tier !== 'pro') return -1
+        return b.score - a.score
+      }),
+    [activeSpot.lat, activeSpot.lng, conditions.water.temp, tidePhase, isPro, currentHour]
+  )
 
   return (
     <ScrollView
