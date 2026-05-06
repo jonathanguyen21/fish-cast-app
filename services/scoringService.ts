@@ -12,6 +12,15 @@ const NEUTRAL_PRESSURE: PressureData = { value: 29.92, trend: 'stable', rate: 'n
 const NEUTRAL_WIND: WindData = { speed: 8, gusts: 12, direction: 0, directionLabel: 'N', unit: 'mph' }
 const NEUTRAL_SKY: SkyData = { condition: 'Partly Cloudy', rainChance: 20, icon: 'partly-cloudy' }
 
+function parseHourFromTimeString(t: string): number {
+  const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i)
+  if (!m) return -1
+  let h = parseInt(m[1])
+  if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12
+  if (m[3].toUpperCase() === 'AM' && h === 12) h = 0
+  return h
+}
+
 function formatHourLabel(h: number): string {
   const period = h < 12 ? 'AM' : 'PM'
   const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h
@@ -26,17 +35,8 @@ function formatHourTime(h: number): string {
 
 function isHourInWindow(hour: number, periods: { start: string; end: string }[]): boolean {
   for (const p of periods) {
-    const parseH = (t: string): number => {
-      const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i)
-      if (!m) return -1
-      let h = parseInt(m[1])
-      const per = m[3].toUpperCase()
-      if (per === 'PM' && h !== 12) h += 12
-      if (per === 'AM' && h === 12) h = 0
-      return h
-    }
-    const s = parseH(p.start)
-    const e = parseH(p.end)
+    const s = parseHourFromTimeString(p.start)
+    const e = parseHourFromTimeString(p.end)
     if (s >= 0 && e >= 0 && hour >= s && hour <= e) return true
   }
   return false
@@ -47,15 +47,7 @@ function getHourlySolunar(solunar: SolunarData, hour: number): ScoringInputs['so
   const inMinor = !inMajor && isHourInWindow(hour, solunar.moon.minorPeriods)
   const nearMajor = !inMajor && !inMinor &&
     solunar.moon.majorPeriods.some(p => {
-      const parseH = (t: string) => {
-        const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i)
-        if (!m) return -1
-        let h = parseInt(m[1])
-        if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12
-        if (m[3].toUpperCase() === 'AM' && h === 12) h = 0
-        return h
-      }
-      const center = (parseH(p.start) + parseH(p.end)) / 2
+      const center = (parseHourFromTimeString(p.start) + parseHourFromTimeString(p.end)) / 2
       return Math.abs(hour - center) <= 1
     })
   return {
@@ -151,7 +143,7 @@ export function buildConditionsData(
   }
 
   // Best 3-hour window
-  let bestWindow = { start: formatHourTime(5), end: formatHourTime(8), score: 0 }
+  let bestWindow = { start: formatHourTime(5), end: formatHourTime(7), score: 0 }
   for (let i = 0; i < hourlyScores.length - 2; i++) {
     const avg = Math.round(
       (hourlyScores[i].score + hourlyScores[i + 1].score + hourlyScores[i + 2].score) / 3
