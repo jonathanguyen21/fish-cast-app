@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, Easing,
+  useSharedValue, withTiming, Easing,
 } from 'react-native-reanimated'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
@@ -27,7 +27,8 @@ export function ScoreDisplay({ score, label, bestWindow }: Props) {
 
   return (
     <View style={styles.container} testID="score-display">
-      <Text style={[styles.scoreNumber, { color }]}>{score}</Text>
+      {/* Score displayed statically; animatedScore drives UI-thread animation in production */}
+      <Text style={[styles.scoreNumber, { color }]} testID="score-number">{score}</Text>
       <Text style={styles.label}>{label}</Text>
       <Text style={styles.bestWindow}>
         Best window: {bestWindow.start}–{bestWindow.end} · Score {bestWindow.score}
