@@ -68,14 +68,14 @@ export async function fetchNwsData(spot: Spot): Promise<NwsData> {
   const periods: any[] = hourly.properties.periods ?? []
   if (periods.length === 0) throw new Error('NWS returned no forecast periods')
 
-  const now = new Date()
-  const currentHour = now.getHours()
+  const nowMs = Date.now()
 
-  // Find the period closest to current hour
+  // Find the most recent period that has already started
   const currentPeriod = periods.reduce((best: any, p: any) => {
-    const pHour = new Date(p.startTime).getHours()
-    const bestHour = new Date(best.startTime).getHours()
-    return Math.abs(pHour - currentHour) < Math.abs(bestHour - currentHour) ? p : best
+    const pMs = new Date(p.startTime).getTime()
+    const bestMs = new Date(best.startTime).getTime()
+    if (pMs <= nowMs && pMs > bestMs) return p
+    return best
   }, periods[0])
 
   const rainChance = currentPeriod.probabilityOfPrecipitation?.value ?? 0
@@ -106,7 +106,7 @@ export async function fetchNwsData(spot: Spot): Promise<NwsData> {
     },
     wind: {
       speed: windSpeed,
-      gusts: windSpeed + 5,
+      gusts: currentPeriod.windGust ? parseWindSpeed(currentPeriod.windGust) : windSpeed + 5,
       direction: directionToDegrees(currentPeriod.windDirection),
       directionLabel: currentPeriod.windDirection,
       unit: 'mph',
