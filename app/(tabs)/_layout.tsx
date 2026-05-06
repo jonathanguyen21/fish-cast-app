@@ -2,9 +2,11 @@ import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
 import { Colors } from '../../theme/colors';
 
-function TabIcon({ label, focused }: { label: string; focused: boolean }) {
-  const icons: Record<string, string> = { Dashboard: '🧭', Spots: '📍', Settings: '⚙️' };
-  return <Text style={{ fontSize: focused ? 22 : 18, opacity: focused ? 1 : 0.5 }}>{icons[label]}</Text>;
+type TabLabel = 'Dashboard' | 'Spots' | 'Settings';
+
+function TabIcon({ label, focused }: { label: TabLabel; focused: boolean }) {
+  const icons: Record<TabLabel, string> = { Dashboard: '🧭', Spots: '📍', Settings: '⚙️' };
+  return <Text style={{ fontSize: focused ? 22 : 18, opacity: focused ? 1 : 0.5 }}>{icons[label] ?? '📌'}</Text>;
 }
 
 export default function TabLayout() {
