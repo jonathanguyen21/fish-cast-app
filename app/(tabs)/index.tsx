@@ -30,7 +30,7 @@ export default function DashboardScreen() {
   const { data: forecast } = useForecast(activeSpot)
   const isPro = useSettingsStore(s => s.isPro)
 
-  const now = useMemo(() => new Date(), [])
+  const now = new Date()
   const currentHour = now.getHours()
 
   const scoredSpecies = useMemo(() => {
@@ -82,7 +82,7 @@ export default function DashboardScreen() {
       <ScrollView
         style={styles.screen}
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor={Colors.accent} />}
+        refreshControl={<RefreshControl refreshing={isLoading && !!conditions} onRefresh={refetch} tintColor={Colors.accent} />}
       >
         <View style={styles.header}>
           <Text style={styles.spotName}>{activeSpot.name}</Text>
