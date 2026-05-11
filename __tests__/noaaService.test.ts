@@ -99,4 +99,15 @@ describe('fetchNoaaData', () => {
     const result = await fetchNoaaData(SPOT)
     expect(result.wind).toBeNull()
   })
+
+  it('includes readings array on pressure (oldest to newest)', async () => {
+    mockAllProducts()
+    const result = await fetchNoaaData(SPOT)
+    expect(Array.isArray(result.pressure?.readings)).toBe(true)
+    expect(result.pressure!.readings!.length).toBe(5)
+    // oldest first: 30.18 comes before 30.02 in the fixture
+    const readings = result.pressure!.readings!
+    expect(readings[0]).toBeCloseTo(30.18, 2)
+    expect(readings[readings.length - 1]).toBeCloseTo(30.02, 2)
+  })
 })

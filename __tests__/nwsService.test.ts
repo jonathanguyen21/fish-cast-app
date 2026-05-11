@@ -56,4 +56,11 @@ describe('fetchNwsData', () => {
     ;(global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 404 })
     await expect(fetchNwsData(SPOT)).rejects.toThrow()
   })
+
+  it('includes windDirection in each hourlyForecast item', async () => {
+    mockNws()
+    const result = await fetchNwsData(SPOT)
+    expect(result.hourlyForecast[0]).toHaveProperty('windDirection')
+    expect(result.hourlyForecast[0].windDirection).toBe('SW')
+  })
 })

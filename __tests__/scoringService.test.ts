@@ -35,8 +35,8 @@ const NWS: NwsData = {
   sky: { condition: 'Partly Cloudy', rainChance: 15, icon: 'partly-cloudy' },
   wind: { speed: 10, gusts: 15, direction: 225, directionLabel: 'SW', unit: 'mph' },
   hourlyForecast: [
-    { hour: 5, windSpeed: 5, cloudCover: 30, rainChance: 10 },
-    { hour: 14, windSpeed: 10, cloudCover: 50, rainChance: 15 },
+    { hour: 5, windSpeed: 5, cloudCover: 30, rainChance: 10, windDirection: 'SW' },
+    { hour: 14, windSpeed: 10, cloudCover: 50, rainChance: 15, windDirection: 'W' },
   ],
 }
 

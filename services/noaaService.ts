@@ -72,6 +72,9 @@ function parsePressure(data: any): PressureData | null {
     .filter((v: number) => !isNaN(v))
   if (readings.length === 0) return null
 
+  // data arrives newest-first; reverse so index 0 = oldest (left of chart)
+  const orderedReadings = [...readings].reverse()
+
   const current = readings[0]
   const threeHrAgo = readings[Math.min(3, readings.length - 1)]
   const delta = current - threeHrAgo
@@ -82,7 +85,7 @@ function parsePressure(data: any): PressureData | null {
   const rate: PressureData['rate'] =
     abs < 0.06 ? 'slow' : abs < 0.12 ? 'normal' : 'fast'
 
-  return { value: current, trend, rate, unit: 'inHg' }
+  return { value: current, trend, rate, unit: 'inHg', readings: orderedReadings }
 }
 
 export async function fetchNoaaData(spot: Spot): Promise<NoaaData> {

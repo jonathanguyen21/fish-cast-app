@@ -5,7 +5,13 @@ export interface NwsData {
   air: AirData
   sky: SkyData
   wind: WindData
-  hourlyForecast: { hour: number; windSpeed: number; cloudCover: number; rainChance: number }[]
+  hourlyForecast: {
+    hour: number
+    windSpeed: number
+    cloudCover: number
+    rainChance: number
+    windDirection: string
+  }[]
 }
 
 const NWS_BASE = 'https://api.weather.gov'
@@ -89,6 +95,7 @@ export async function fetchNwsData(spot: Spot): Promise<NwsData> {
     windSpeed: parseWindSpeed(p.windSpeed),
     cloudCover: p.shortForecast.toLowerCase().includes('cloud') ? 70 : 20,
     rainChance: p.probabilityOfPrecipitation?.value ?? 0,
+    windDirection: (p.windDirection || 'N') as string,
   }))
 
   return {
