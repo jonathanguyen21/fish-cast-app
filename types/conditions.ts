@@ -35,6 +35,7 @@ export interface PressureData {
   trend: 'rising' | 'falling' | 'stable'
   rate: 'slow' | 'fast' | 'normal'
   unit: string
+  readings?: number[]
 }
 
 export interface SwellData {
@@ -63,6 +64,12 @@ export interface MoonData {
   minorPeriods: { start: string; end: string }[]
 }
 
+export interface HourlyWind {
+  hour: number
+  speed: number
+  directionLabel: string
+}
+
 export interface HourlyScore {
   hour: string
   score: number
@@ -81,6 +88,7 @@ export interface ConditionsData {
   scoreLabel: string
   bestWindow: { start: string; end: string; score: number }
   wind: WindData
+  windHourly?: HourlyWind[]
   tide: TideData | null
   water: { temp: number; unit: string }
   air: AirData
