@@ -26,7 +26,7 @@ const NOAA: NoaaData = {
   },
   wind: { speed: 8, gusts: 14, direction: 225, directionLabel: 'SW', unit: 'mph' },
   waterTemp: 57,
-  pressure: { value: 30.02, trend: 'falling', rate: 'slow', unit: 'inHg' },
+  pressure: { value: 30.02, trend: 'falling', rate: 'slow', unit: 'inHg', readings: [30.18, 30.05, 30.02] },
   airTemp: null,
 }
 
@@ -110,5 +110,24 @@ describe('buildConditionsData', () => {
     const result = buildConditionsData(NOAA, NWS, SWELL, SOLUNAR, SPOT, NOW)
     expect(result.moon.phase).toBe('Waxing Gibbous')
     expect(result.sun.sunrise).toBe('6:12 AM')
+  })
+
+  it('includes windHourly derived from NWS hourlyForecast', () => {
+    const result = buildConditionsData(NOAA, NWS, null, SOLUNAR, SPOT, new Date())
+    expect(Array.isArray(result.windHourly)).toBe(true)
+    expect(result.windHourly!.length).toBe(NWS!.hourlyForecast.length)
+    expect(result.windHourly![0]).toHaveProperty('hour')
+    expect(result.windHourly![0]).toHaveProperty('speed')
+    expect(result.windHourly![0]).toHaveProperty('directionLabel')
+  })
+
+  it('returns empty windHourly when NWS unavailable', () => {
+    const result = buildConditionsData(NOAA, null, null, SOLUNAR, SPOT, new Date())
+    expect(result.windHourly).toEqual([])
+  })
+
+  it('passes through pressure.readings from NOAA data', () => {
+    const result = buildConditionsData(NOAA, NWS, null, SOLUNAR, SPOT, new Date())
+    expect(result.pressure.readings).toEqual(NOAA!.pressure!.readings)
   })
 })

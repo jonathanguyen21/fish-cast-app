@@ -8,7 +8,7 @@ import type { SolunarData } from './solunarService'
 import type { SwellData } from '../types/conditions'
 import type { ScoringInputs } from '../features/score/scoringEngine'
 
-const NEUTRAL_PRESSURE: PressureData = { value: 29.92, trend: 'stable', rate: 'normal', unit: 'inHg' }
+const NEUTRAL_PRESSURE: PressureData = { value: 29.92, trend: 'stable', rate: 'normal', unit: 'inHg', readings: [] }
 const NEUTRAL_WIND: WindData = { speed: 8, gusts: 12, direction: 0, directionLabel: 'N', unit: 'mph' }
 const NEUTRAL_SKY: SkyData = { condition: 'Partly Cloudy', rainChance: 20, icon: 'partly-cloudy' }
 
@@ -162,6 +162,11 @@ export function buildConditionsData(
     scoreLabel: scoreLabel(currentScore),
     bestWindow,
     wind,
+    windHourly: nws?.hourlyForecast.map(h => ({
+      hour: h.hour,
+      speed: h.windSpeed,
+      directionLabel: h.windDirection,
+    })) ?? [],
     tide,
     water: { temp: waterTempValue, unit: '°F' },
     air: nws?.air ?? { temp: 65, high: 70, low: 58, humidity: 70, unit: '°F' },
