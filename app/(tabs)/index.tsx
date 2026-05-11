@@ -29,8 +29,7 @@ export default function ForecastScreen() {
   const { data: conditions, isLoading, isError, refetch } = useConditions(activeSpot)
   const { data: forecast } = useForecast(activeSpot)
   const isPro = useSettingsStore(s => s.isPro)
-
-  const { tempUnit } = useSettingsStore(s => ({ tempUnit: s.tempUnit }))
+  const tempUnit = useSettingsStore(s => s.tempUnit)
 
   const now = new Date()
   const currentHour = now.getHours()
