@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native'
 import { Svg, Path, Defs, LinearGradient, Stop, Line, Circle } from 'react-native-svg'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
+import { useSettingsStore } from '../../store/settingsStore'
 import type { TideData } from '../../types/conditions'
 
 interface Props {
@@ -28,6 +29,11 @@ function curvePath(points: { x: number; y: number }[]): string {
 }
 
 export function TideChart({ tide, currentHour }: Props) {
+  const lengthUnit = useSettingsStore(s => s.lengthUnit)
+  const fmtHeight = (h: number) =>
+    lengthUnit === 'm' ? (h * 0.3048).toFixed(1) : h.toFixed(1)
+  const heightUnit = lengthUnit === 'm' ? 'm' : 'ft'
+
   const curve = tide.hourlyCurve
   const minH = Math.min(...curve)
   const maxH = Math.max(...curve)
@@ -66,9 +72,9 @@ export function TideChart({ tide, currentHour }: Props) {
         <Circle cx={nowX} cy={nowY} r={4} fill={Colors.accent} />
       </Svg>
       <View style={styles.events}>
-        {hiLo.map((ev, i) => (
+        {hiLo.map((ev) => (
           <Text key={ev.time} style={styles.eventText}>
-            {ev.type === 'high' ? '▲' : '▼'} {ev.time} {ev.height.toFixed(1)} ft
+            {ev.type === 'high' ? '▲' : '▼'} {ev.time} {fmtHeight(ev.height)} {heightUnit}
           </Text>
         ))}
       </View>

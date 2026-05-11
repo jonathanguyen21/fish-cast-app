@@ -30,6 +30,8 @@ export default function ForecastScreen() {
   const { data: forecast } = useForecast(activeSpot)
   const isPro = useSettingsStore(s => s.isPro)
 
+  const { tempUnit } = useSettingsStore(s => ({ tempUnit: s.tempUnit }))
+
   const now = new Date()
   const currentHour = now.getHours()
 
@@ -110,8 +112,12 @@ export default function ForecastScreen() {
               )}
               <View style={styles.quickCard}>
                 <Text style={styles.quickLabel}>Water</Text>
-                <Text style={styles.quickValue}>{conditions.water.temp}°</Text>
-                <Text style={styles.quickSub}>{conditions.water.unit}</Text>
+                <Text style={styles.quickValue}>
+                  {tempUnit === 'C'
+                    ? Math.round((conditions.water.temp - 32) * 5 / 9)
+                    : conditions.water.temp}°
+                </Text>
+                <Text style={styles.quickSub}>{tempUnit === 'C' ? '°C' : '°F'}</Text>
               </View>
             </View>
             {conditions.tide && <TideChart tide={conditions.tide} currentHour={currentHour} />}
