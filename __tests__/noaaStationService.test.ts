@@ -1,4 +1,4 @@
-import { resolveNearestStation, haversineKm } from '../services/noaaStationService'
+import { resolveNearestStation, haversineKm, getNearbyStations } from '../services/noaaStationService'
 
 const stationsFixture = require('./fixtures/noaaStations.json')
 
@@ -53,5 +53,42 @@ describe('resolveNearestStation', () => {
     })
     const id = await resolveNearestStation(38.33, -123.05)
     expect(id).toBeNull()
+  })
+})
+
+describe('getNearbyStations', () => {
+  it('returns stations sorted by distance within radius', async () => {
+    ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => stationsFixture,
+    })
+    const results = await getNearbyStations(37.8, -122.4, 150)
+    expect(Array.isArray(results)).toBe(true)
+    results.forEach(s => {
+      expect(s).toHaveProperty('id')
+      expect(s).toHaveProperty('name')
+      expect(s).toHaveProperty('lat')
+      expect(s).toHaveProperty('lng')
+    })
+    if (results.length >= 2) {
+      const d0 = haversineKm(37.8, -122.4, results[0].lat, results[0].lng)
+      const d1 = haversineKm(37.8, -122.4, results[1].lat, results[1].lng)
+      expect(d0).toBeLessThanOrEqual(d1)
+    }
+  })
+
+  it('caps results at 20 stations', async () => {
+    ;(global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: async () => stationsFixture,
+    })
+    const results = await getNearbyStations(37.8, -122.4, 10000)
+    expect(results.length).toBeLessThanOrEqual(20)
+  })
+
+  it('returns empty array on fetch failure', async () => {
+    ;(global.fetch as jest.Mock).mockRejectedValueOnce(new Error('network'))
+    const results = await getNearbyStations(37.8, -122.4)
+    expect(results).toEqual([])
   })
 })

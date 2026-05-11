@@ -40,3 +40,42 @@ export async function resolveNearestStation(lat: number, lng: number): Promise<s
     return null
   }
 }
+
+export interface NearbyStation {
+  id: string
+  name: string
+  lat: number
+  lng: number
+}
+
+export async function getNearbyStations(
+  lat: number,
+  lng: number,
+  radiusKm = 150
+): Promise<NearbyStation[]> {
+  try {
+    const res = await fetch(STATION_LIST_URL)
+    if (!res.ok) return []
+    const { stations } = await res.json()
+    if (!stations?.length) return []
+
+    const nearby: Array<NearbyStation & { dist: number }> = []
+
+    for (const s of stations) {
+      const sLat = parseFloat(s.lat)
+      const sLng = parseFloat(s.lng)
+      if (isNaN(sLat) || isNaN(sLng) || !s.id || !s.name) continue
+      const dist = haversineKm(lat, lng, sLat, sLng)
+      if (dist <= radiusKm) {
+        nearby.push({ id: s.id, name: s.name, lat: sLat, lng: sLng, dist })
+      }
+    }
+
+    return nearby
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 20)
+      .map(({ dist: _dist, ...station }) => station)
+  } catch {
+    return []
+  }
+}
