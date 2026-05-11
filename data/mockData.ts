@@ -32,7 +32,7 @@ export const MOCK_CONDITIONS: ConditionsData = {
   },
   water: { temp: 57, unit: '°F' },
   air: { temp: 62, high: 67, low: 52, humidity: 78, unit: '°F' },
-  pressure: { value: 30.02, trend: 'falling', rate: 'slow', unit: 'inHg' },
+  pressure: { value: 30.02, trend: 'falling', rate: 'slow', unit: 'inHg', readings: [] },
   swell: { height: 4.5, period: 12, direction: 290, directionLabel: 'WNW', unit: 'ft' },
   sky: { condition: 'Partly Cloudy', rainChance: 15, icon: 'partly-cloudy' },
   sun: { sunrise: '6:12 AM', sunset: '7:58 PM' },
