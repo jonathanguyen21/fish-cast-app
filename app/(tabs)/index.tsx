@@ -22,7 +22,7 @@ import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { useRouter } from 'expo-router'
 
-export default function DashboardScreen() {
+export default function ForecastScreen() {
   const router = useRouter()
   const netInfo = useNetInfo()
   const { activeSpot, spots } = useSpots()

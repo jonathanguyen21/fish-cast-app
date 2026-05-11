@@ -2,10 +2,10 @@ import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
 import { Colors } from '../../theme/colors';
 
-type TabLabel = 'Dashboard' | 'Spots' | 'Settings';
+type TabLabel = 'Forecast' | 'Spots' | 'Settings';
 
 function TabIcon({ label, focused }: { label: TabLabel; focused: boolean }) {
-  const icons: Record<TabLabel, string> = { Dashboard: '🧭', Spots: '📍', Settings: '⚙️' };
+  const icons: Record<TabLabel, string> = { Forecast: '🧭', Spots: '📍', Settings: '⚙️' };
   return <Text style={{ fontSize: focused ? 22 : 18, opacity: focused ? 1 : 0.5 }}>{icons[label] ?? '📌'}</Text>;
 }
 
@@ -23,9 +23,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
+          title: 'Forecast',
           headerShown: false,
-          tabBarIcon: ({ focused }) => <TabIcon label="Dashboard" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon label="Forecast" focused={focused} />,
         }}
       />
       <Tabs.Screen
