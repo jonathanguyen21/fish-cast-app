@@ -11,7 +11,7 @@ export interface NoaaData {
 }
 
 const BASE = 'https://api.tidesandcurrents.noaa.gov/api/prod/datagetter'
-const COMMON = 'time_zone=LST/LDT&units=english&format=json'
+const COMMON = 'time_zone=lst_ldt&units=english&format=json'
 
 function buildUrl(station: string, product: string, extra = ''): string {
   return `${BASE}?station=${station}&date=today&${COMMON}&product=${product}${extra}`
@@ -95,8 +95,8 @@ export async function fetchNoaaData(spot: Spot): Promise<NoaaData> {
 
   const id = spot.stationId
   const [hiLoRes, curveRes, tempRes, windRes, pressureRes] = await Promise.allSettled([
-    fetchProduct(buildUrl(id, 'predictions', '&interval=hilo')),
-    fetchProduct(buildUrl(id, 'predictions', '&interval=h')),
+    fetchProduct(buildUrl(id, 'predictions', '&interval=hilo&datum=MLLW')),
+    fetchProduct(buildUrl(id, 'predictions', '&interval=h&datum=MLLW')),
     fetchProduct(buildUrl(id, 'water_temperature')),
     fetchProduct(buildUrl(id, 'wind', '&range=1')),
     fetchProduct(buildUrl(id, 'air_pressure', '&range=7')),
@@ -115,7 +115,7 @@ export async function fetchNoaaData(spot: Spot): Promise<NoaaData> {
   const hourlyCurve = parseHourlyCurve(curveData)
   const hasTideData = hiLoData !== null || curveData !== null
 
-  let tide: TideData | null = null
+let tide: TideData | null = null
   if (hasTideData && events.length > 0) {
     const now = new Date()
     const currentHour = now.getHours()
