@@ -115,10 +115,10 @@ describe('buildConditionsData', () => {
   it('includes windHourly derived from NWS hourlyForecast', () => {
     const result = buildConditionsData(NOAA, NWS, null, SOLUNAR, SPOT, new Date())
     expect(Array.isArray(result.windHourly)).toBe(true)
-    expect(result.windHourly!.length).toBe(NWS!.hourlyForecast.length)
-    expect(result.windHourly![0]).toHaveProperty('hour')
-    expect(result.windHourly![0]).toHaveProperty('speed')
-    expect(result.windHourly![0]).toHaveProperty('directionLabel')
+    expect(result.windHourly.length).toBe(NWS!.hourlyForecast.length)
+    expect(result.windHourly[0]).toHaveProperty('hour')
+    expect(result.windHourly[0]).toHaveProperty('speed')
+    expect(result.windHourly[0]).toHaveProperty('directionLabel')
   })
 
   it('returns empty windHourly when NWS unavailable', () => {
