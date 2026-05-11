@@ -1,6 +1,6 @@
-import React from 'react'
-import { View, Text, StyleSheet } from 'react-native'
-import { Svg, Path, Defs, LinearGradient, Stop, Line, Circle } from 'react-native-svg'
+import React, { useState, useMemo, useRef } from 'react'
+import { View, Text, StyleSheet, PanResponder, PanResponderInstance } from 'react-native'
+import { Svg, Path, Defs, LinearGradient, Stop, Line, Circle, Text as SvgText } from 'react-native-svg'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { useSettingsStore } from '../../store/settingsStore'
@@ -55,10 +55,31 @@ export function TideChart({ tide, currentHour }: Props) {
 
   const hiLo = tide.events.slice(0, 2)
 
+  const [cursorIndex, setCursorIndex] = useState<number | null>(null)
+  const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const panResponder = useMemo<PanResponderInstance>(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: (e) => {
+      if (fadeTimer.current) clearTimeout(fadeTimer.current)
+      const rawIdx = (e.nativeEvent.locationX - PADDING.left) / chartW * (curve.length - 1)
+      setCursorIndex(Math.max(0, Math.min(Math.round(rawIdx), curve.length - 1)))
+    },
+    onPanResponderMove: (e) => {
+      const rawIdx = (e.nativeEvent.locationX - PADDING.left) / chartW * (curve.length - 1)
+      setCursorIndex(Math.max(0, Math.min(Math.round(rawIdx), curve.length - 1)))
+    },
+    onPanResponderRelease: () => {
+      fadeTimer.current = setTimeout(() => setCursorIndex(null), 2000)
+    },
+  }), [curve.length, chartW])
+
   return (
     <View style={styles.container} testID="tide-chart">
       <Text style={styles.sectionTitle}>Tides</Text>
-      <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
+      <View {...panResponder.panHandlers}>
+        <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
         <Defs>
           <LinearGradient id="tideGrad" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor={Colors.ocean} stopOpacity={0.4} />
@@ -70,7 +91,27 @@ export function TideChart({ tide, currentHour }: Props) {
         <Line x1={nowX} y1={PADDING.top} x2={nowX} y2={CHART_HEIGHT - PADDING.bottom}
           stroke={Colors.accent} strokeWidth={1.5} strokeDasharray="4 2" />
         <Circle cx={nowX} cy={nowY} r={4} fill={Colors.accent} />
+        {cursorIndex !== null && (
+          <>
+            <Line
+              x1={toX(cursorIndex)} y1={PADDING.top}
+              x2={toX(cursorIndex)} y2={CHART_HEIGHT - PADDING.bottom}
+              stroke={Colors.accent} strokeWidth={1} strokeDasharray="3 2"
+            />
+            <Circle cx={toX(cursorIndex)} cy={toY(curve[cursorIndex])} r={5} fill={Colors.accent} />
+            <SvgText
+              x={Math.min(toX(cursorIndex) + 6, CHART_WIDTH - 60)}
+              y={Math.max(toY(curve[cursorIndex]) - 8, PADDING.top + 12)}
+              fill={Colors.textPrimary}
+              fontSize={11}
+              fontWeight="600"
+            >
+              {fmtHeight(curve[cursorIndex])} {heightUnit}
+            </SvgText>
+          </>
+        )}
       </Svg>
+      </View>
       <View style={styles.events}>
         {hiLo.map((ev) => (
           <Text key={ev.time} style={styles.eventText}>
