@@ -35,6 +35,12 @@ export default function ForecastScreen() {
   const now = new Date()
   const currentHour = now.getHours()
 
+  const windPeak = conditions?.windHourly?.length
+    ? Math.max(...conditions.windHourly.map(h => h.speed))
+    : undefined
+
+  const tideNextHigh = conditions?.tide?.events.find(e => e.type === 'high')
+
   const scoredSpecies = useMemo(() => {
     if (!activeSpot || !conditions) return []
     const tidePhase = conditions.tide
@@ -102,12 +108,23 @@ export default function ForecastScreen() {
             />
             <ScoreTimeline hourlyScores={conditions.hourlyScores} />
             <View style={styles.quickStats}>
-              <WindDisplay wind={conditions.wind} />
+              <WindDisplay
+                wind={conditions.wind}
+                peakSpeed={windPeak}
+                onPress={() => router.push({
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  pathname: '/detail/wind' as any,
+                  params: { data: JSON.stringify(conditions.windHourly) },
+                })}
+              />
               {conditions.tide && (
                 <View style={styles.quickCard}>
                   <Text style={styles.quickLabel}>Tide</Text>
                   <Text style={styles.quickValue}>{conditions.tide.current.height} ft</Text>
                   <Text style={styles.quickSub}>{conditions.tide.current.rising ? '▲ Rising' : '▼ Falling'}</Text>
+                  {tideNextHigh && (
+                    <Text style={styles.quickPeak}>▲ {tideNextHigh.height.toFixed(1)} ft {tideNextHigh.time}</Text>
+                  )}
                 </View>
               )}
               <View style={styles.quickCard}>
@@ -187,6 +204,7 @@ const styles = StyleSheet.create({
   quickLabel: { fontSize: 11, color: Colors.textTertiary },
   quickValue: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary },
   quickSub: { fontSize: 11, color: Colors.textSecondary },
+  quickPeak: { fontSize: 10, color: Colors.textTertiary, marginTop: 2 },
   section: { marginHorizontal: Spacing.screenPad, marginBottom: Spacing.md },
   sectionTitle: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm },
 })
