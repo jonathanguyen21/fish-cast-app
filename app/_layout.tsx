@@ -51,6 +51,10 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="spot/new" options={{ title: 'Add Spot', presentation: 'modal' }} />
         <Stack.Screen name="species/[id]" options={{ title: 'Species Detail', presentation: 'modal' }} />
+        <Stack.Screen
+          name="detail/wind"
+          options={{ title: 'Wind Detail', presentation: 'modal', headerShown: true }}
+        />
       </Stack>
     </PersistQueryClientProvider>
   )

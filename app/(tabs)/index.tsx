@@ -112,8 +112,7 @@ export default function ForecastScreen() {
                 wind={conditions.wind}
                 peakSpeed={windPeak}
                 onPress={() => router.push({
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  pathname: '/detail/wind' as any,
+                  pathname: '/detail/wind',
                   params: { data: JSON.stringify(conditions.windHourly) },
                 })}
               />
