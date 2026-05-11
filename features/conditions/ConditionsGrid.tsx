@@ -9,16 +9,17 @@ import type { ConditionsData } from '../../types/conditions'
 
 interface Props {
   conditions: Pick<ConditionsData, 'pressure' | 'swell' | 'air' | 'sky' | 'moon' | 'sun'>
+  onPressPressure?: () => void
 }
 
-export function ConditionsGrid({ conditions }: Props) {
+export function ConditionsGrid({ conditions, onPressPressure }: Props) {
   const { pressure, swell, air, sky, moon, sun } = conditions
 
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Conditions</Text>
       <View style={styles.row}>
-        <PressureCard pressure={pressure} />
+        <PressureCard pressure={pressure} onPress={onPressPressure} />
         <View style={cardStyles.card}>
           <Text style={cardStyles.label}>Swell</Text>
           {swell ? (

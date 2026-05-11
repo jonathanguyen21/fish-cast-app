@@ -137,7 +137,13 @@ export default function ForecastScreen() {
               </View>
             </View>
             {conditions.tide && <TideChart tide={conditions.tide} currentHour={currentHour} />}
-            <ConditionsGrid conditions={conditions} />
+            <ConditionsGrid
+                conditions={conditions}
+                onPressPressure={() => router.push({
+                  pathname: '/detail/pressure' as any,
+                  params: { data: JSON.stringify(conditions.pressure) },
+                })}
+              />
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>What's Biting</Text>
               {scoredSpecies.map(ss => (
