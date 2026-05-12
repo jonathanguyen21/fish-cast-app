@@ -25,11 +25,13 @@ function mockAllProducts() {
 beforeEach(() => { global.fetch = jest.fn() })
 afterEach(() => { jest.resetAllMocks() })
 
+const FIXTURE_DATE = '2026-05-06'
+
 describe('fetchNoaaData', () => {
-  it('returns null tide/wind/pressure for spot with no stationId', async () => {
+  it('returns empty tideByDay/wind/pressure for spot with no stationId', async () => {
     const spotNoStation = { ...SPOT, stationId: null }
     const result = await fetchNoaaData(spotNoStation)
-    expect(result.tide).toBeNull()
+    expect(result.tideByDay).toEqual({})
     expect(result.wind).toBeNull()
     expect(result.pressure).toBeNull()
     expect(result.waterTemp).toBeNull()
@@ -61,32 +63,33 @@ describe('fetchNoaaData', () => {
   it('detects falling pressure trend from fixture', async () => {
     mockAllProducts()
     const result = await fetchNoaaData(SPOT)
-    // fixture goes from 30.18 → 30.02 over several hours = falling
     expect(result.pressure?.trend).toBe('falling')
   })
 
-  it('parses tide events with correct types', async () => {
+  it('parses tide events keyed by day', async () => {
     mockAllProducts()
     const result = await fetchNoaaData(SPOT)
-    expect(result.tide?.events.length).toBeGreaterThan(0)
-    expect(['high', 'low']).toContain(result.tide?.events[0].type)
+    const day = result.tideByDay[FIXTURE_DATE]
+    expect(day).not.toBeNull()
+    expect(day!.events.length).toBeGreaterThan(0)
+    expect(['high', 'low']).toContain(day!.events[0].type)
   })
 
-  it('hourlyCurve has 24 entries', async () => {
+  it('hourlyCurve for day has 24 entries', async () => {
     mockAllProducts()
     const result = await fetchNoaaData(SPOT)
-    expect(result.tide?.hourlyCurve).toHaveLength(24)
+    expect(result.tideByDay[FIXTURE_DATE]?.hourlyCurve).toHaveLength(24)
   })
 
-  it('returns null tide when both prediction products are missing', async () => {
+  it('returns null entry for day when both prediction products are missing', async () => {
     ;(global.fetch as jest.Mock)
-      .mockResolvedValueOnce({ ok: true, json: async () => missingFixture }) // hi/lo missing
-      .mockResolvedValueOnce({ ok: true, json: async () => missingFixture }) // curve missing
+      .mockResolvedValueOnce({ ok: true, json: async () => missingFixture })
+      .mockResolvedValueOnce({ ok: true, json: async () => missingFixture })
       .mockResolvedValueOnce({ ok: true, json: async () => tempFixture })
       .mockResolvedValueOnce({ ok: true, json: async () => windFixture })
       .mockResolvedValueOnce({ ok: true, json: async () => pressureFixture })
     const result = await fetchNoaaData(SPOT)
-    expect(result.tide).toBeNull()
+    expect(Object.keys(result.tideByDay)).toHaveLength(0)
   })
 
   it('returns null wind when wind product is missing', async () => {
@@ -94,7 +97,7 @@ describe('fetchNoaaData', () => {
       .mockResolvedValueOnce({ ok: true, json: async () => predictionsFixture })
       .mockResolvedValueOnce({ ok: true, json: async () => curveFixture })
       .mockResolvedValueOnce({ ok: true, json: async () => tempFixture })
-      .mockResolvedValueOnce({ ok: true, json: async () => missingFixture }) // wind missing
+      .mockResolvedValueOnce({ ok: true, json: async () => missingFixture })
       .mockResolvedValueOnce({ ok: true, json: async () => pressureFixture })
     const result = await fetchNoaaData(SPOT)
     expect(result.wind).toBeNull()
@@ -105,7 +108,6 @@ describe('fetchNoaaData', () => {
     const result = await fetchNoaaData(SPOT)
     expect(Array.isArray(result.pressure?.readings)).toBe(true)
     expect(result.pressure!.readings!.length).toBe(5)
-    // oldest first: 30.18 comes before 30.02 in the fixture
     const readings = result.pressure!.readings!
     expect(readings[0]).toBeCloseTo(30.18, 2)
     expect(readings[readings.length - 1]).toBeCloseTo(30.02, 2)

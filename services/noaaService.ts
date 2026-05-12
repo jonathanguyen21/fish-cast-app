@@ -3,7 +3,7 @@ import type { Spot } from '../types/spot'
 import { detectPhase } from '../features/tide/tideUtils'
 
 export interface NoaaData {
-  tide: TideData | null
+  tideByDay: Record<string, TideData | null>
   wind: WindData | null
   waterTemp: number | null
   pressure: PressureData | null
@@ -13,8 +13,29 @@ export interface NoaaData {
 const BASE = 'https://api.tidesandcurrents.noaa.gov/api/prod/datagetter'
 const COMMON = 'time_zone=lst_ldt&units=english&format=json'
 
+function noaaDateStr(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}${m}${day}`
+}
+
+function localDateKey(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 function buildUrl(station: string, product: string, extra = ''): string {
   return `${BASE}?station=${station}&date=today&${COMMON}&product=${product}${extra}`
+}
+
+function buildPredictionsUrl(station: string, interval: string): string {
+  const today = new Date()
+  const end = new Date(today)
+  end.setDate(today.getDate() + 6)
+  return `${BASE}?station=${station}&begin_date=${noaaDateStr(today)}&end_date=${noaaDateStr(end)}&${COMMON}&product=predictions&interval=${interval}&datum=MLLW`
 }
 
 async function fetchProduct(url: string): Promise<any> {
@@ -34,23 +55,56 @@ function formatNoaaTime(t: string): string {
   return `${displayH}:${m.toString().padStart(2, '0')} ${period}`
 }
 
-function parseHourlyCurve(data: any): number[] {
-  const curve = new Array(24).fill(0)
-  if (!data?.predictions) return curve
+function parseTideEventsByDay(data: any): Record<string, TideEvent[]> {
+  if (!data?.predictions) return {}
+  const byDay: Record<string, TideEvent[]> = {}
   for (const p of data.predictions) {
-    const hour = parseInt((p.t.split(' ')[1] ?? '0:00').split(':')[0], 10)
-    if (hour >= 0 && hour < 24) curve[hour] = parseFloat(p.v) || 0
+    const dateStr = p.t.slice(0, 10)
+    if (!byDay[dateStr]) byDay[dateStr] = []
+    byDay[dateStr].push({
+      type: (p.type === 'H' ? 'high' : 'low') as 'high' | 'low',
+      time: formatNoaaTime(p.t),
+      height: parseFloat(p.v),
+    })
   }
-  return curve
+  return byDay
 }
 
-function parseTideEvents(data: any): TideEvent[] {
-  if (!data?.predictions) return []
-  return data.predictions.map((p: any) => ({
-    type: (p.type === 'H' ? 'high' : 'low') as 'high' | 'low',
-    time: formatNoaaTime(p.t),
-    height: parseFloat(p.v),
-  }))
+function parseHourlyCurvesByDay(data: any): Record<string, number[]> {
+  if (!data?.predictions) return {}
+  const byDay: Record<string, number[]> = {}
+  for (const p of data.predictions) {
+    const dateStr = p.t.slice(0, 10)
+    const hour = parseInt((p.t.split(' ')[1] ?? '0:00').split(':')[0], 10)
+    if (!byDay[dateStr]) byDay[dateStr] = new Array(24).fill(0)
+    if (hour >= 0 && hour < 24) byDay[dateStr][hour] = parseFloat(p.v) || 0
+  }
+  return byDay
+}
+
+function buildTideForDay(events: TideEvent[], curve: number[], refHour: number): TideData | null {
+  if (events.length === 0) return null
+  const currentHeight = curve[refHour] ?? 0
+  const prevHeight = curve[Math.max(0, refHour - 1)] ?? 0
+  const phase = detectPhase(curve, refHour)
+  const nowMinutes = refHour * 60
+  const futureEvent = events.find(e => {
+    const match = e.time.match(/(\d+):(\d+)\s*(AM|PM)/i)
+    if (!match) return false
+    let h = parseInt(match[1])
+    const m = parseInt(match[2])
+    const p = match[3].toUpperCase()
+    if (p === 'PM' && h !== 12) h += 12
+    if (p === 'AM' && h === 12) h = 0
+    return h * 60 + m > nowMinutes
+  }) ?? events[0]
+  return {
+    current: { height: parseFloat(currentHeight.toFixed(1)), rising: currentHeight > prevHeight, unit: 'ft' },
+    next: futureEvent,
+    events,
+    hourlyCurve: curve,
+    phase,
+  }
 }
 
 function parseWind(data: any): WindData | null {
@@ -80,23 +134,24 @@ function parsePressure(data: any): PressureData | null {
   const delta = current - threeHrAgo
   const abs = Math.abs(delta)
 
-  const trend: PressureData['trend'] =
-    delta > 0.03 ? 'rising' : delta < -0.03 ? 'falling' : 'stable'
-  const rate: PressureData['rate'] =
-    abs < 0.06 ? 'slow' : abs < 0.12 ? 'normal' : 'fast'
-
-  return { value: current, trend, rate, unit: 'inHg', readings: orderedReadings }
+  return {
+    value: current,
+    trend: delta > 0.03 ? 'rising' : delta < -0.03 ? 'falling' : 'stable',
+    rate: abs < 0.06 ? 'slow' : abs < 0.12 ? 'normal' : 'fast',
+    unit: 'inHg',
+    readings: orderedReadings,
+  }
 }
 
 export async function fetchNoaaData(spot: Spot): Promise<NoaaData> {
   if (!spot.stationId) {
-    return { tide: null, wind: null, waterTemp: null, pressure: null, airTemp: null }
+    return { tideByDay: {}, wind: null, waterTemp: null, pressure: null, airTemp: null }
   }
 
   const id = spot.stationId
   const [hiLoRes, curveRes, tempRes, windRes, pressureRes] = await Promise.allSettled([
-    fetchProduct(buildUrl(id, 'predictions', '&interval=hilo&datum=MLLW')),
-    fetchProduct(buildUrl(id, 'predictions', '&interval=h&datum=MLLW')),
+    fetchProduct(buildPredictionsUrl(id, 'hilo')),
+    fetchProduct(buildPredictionsUrl(id, 'h')),
     fetchProduct(buildUrl(id, 'water_temperature')),
     fetchProduct(buildUrl(id, 'wind', '&range=1')),
     fetchProduct(buildUrl(id, 'air_pressure', '&range=7')),
@@ -107,49 +162,30 @@ export async function fetchNoaaData(spot: Spot): Promise<NoaaData> {
 
   const hiLoData = val(hiLoRes)
   const curveData = val(curveRes)
+
+  const eventsByDay = parseTideEventsByDay(hiLoData)
+  const curvesByDay = parseHourlyCurvesByDay(curveData)
+
+  const today = new Date()
+  const todayKey = localDateKey(today)
+  const refHour = today.getHours()
+
+  const tideByDay: Record<string, TideData | null> = {}
+  const allDays = new Set([...Object.keys(eventsByDay), ...Object.keys(curvesByDay)])
+  for (const day of allDays) {
+    const events = eventsByDay[day] ?? []
+    const curve = curvesByDay[day] ?? new Array(24).fill(0)
+    tideByDay[day] = buildTideForDay(events, curve, day === todayKey ? refHour : 12)
+  }
+
   const tempData = val(tempRes)
   const windData = val(windRes)
   const pressureData = val(pressureRes)
 
-  const events = parseTideEvents(hiLoData)
-  const hourlyCurve = parseHourlyCurve(curveData)
-  const hasTideData = hiLoData !== null || curveData !== null
-
-let tide: TideData | null = null
-  if (hasTideData && events.length > 0) {
-    const now = new Date()
-    const currentHour = now.getHours()
-    const currentHeight = hourlyCurve[currentHour] ?? 0
-    const prevHeight = hourlyCurve[Math.max(0, currentHour - 1)] ?? 0
-    const phase = detectPhase(hourlyCurve, currentHour)
-    const nowMinutes = now.getHours() * 60 + now.getMinutes()
-
-    const futureEvent = events.find(e => {
-      const match = e.time.match(/(\d+):(\d+)\s*(AM|PM)/i)
-      if (!match) return false
-      let h = parseInt(match[1])
-      const m = parseInt(match[2])
-      const p = match[3].toUpperCase()
-      if (p === 'PM' && h !== 12) h += 12
-      if (p === 'AM' && h === 12) h = 0
-      return h * 60 + m > nowMinutes
-    }) ?? events[0]
-
-    tide = {
-      current: { height: parseFloat(currentHeight.toFixed(1)), rising: currentHeight > prevHeight, unit: 'ft' },
-      next: futureEvent,
-      events,
-      hourlyCurve,
-      phase,
-    }
-  }
-
-  const waterTemp = tempData?.data?.[0]?.v ? parseFloat(tempData.data[0].v) : null
-
   return {
-    tide,
+    tideByDay,
     wind: parseWind(windData),
-    waterTemp,
+    waterTemp: tempData?.data?.[0]?.v ? parseFloat(tempData.data[0].v) : null,
     pressure: parsePressure(pressureData),
     airTemp: null,
   }
