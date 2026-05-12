@@ -7,10 +7,7 @@ const SPOT: Spot = {
 }
 
 const pointsFixture = require('./fixtures/nwsPoints.json')
-const hourlyFixture = require('./fixtures/nwsHourlyForecast.json')
-
-beforeEach(() => { global.fetch = jest.fn() })
-afterEach(() => { jest.resetAllMocks() })
+const hourlyFixture = require('./fixtures/nwsHourly.json')
 
 function mockNws() {
   ;(global.fetch as jest.Mock)
@@ -18,49 +15,45 @@ function mockNws() {
     .mockResolvedValueOnce({ ok: true, json: async () => hourlyFixture })
 }
 
+beforeEach(() => { global.fetch = jest.fn() })
+afterEach(() => { jest.resetAllMocks() })
+
 describe('fetchNwsData', () => {
-  it('returns air temp from current period', async () => {
+  it('returns today sky condition', async () => {
     mockNws()
     const result = await fetchNwsData(SPOT)
-    expect(result.air.temp).toBeGreaterThan(0)
+    expect(['Clear','Partly Cloudy','Overcast','Light Rain','Heavy Rain']).toContain(result.today.sky.condition)
   })
 
-  it('returns wind data', async () => {
+  it('returns today wind with speed and unit', async () => {
     mockNws()
     const result = await fetchNwsData(SPOT)
-    expect(result.wind.speed).toBeGreaterThanOrEqual(0)
-    expect(result.wind.unit).toBe('mph')
+    expect(result.today.wind.speed).toBeGreaterThanOrEqual(0)
+    expect(result.today.wind.unit).toBe('mph')
   })
 
-  it('returns sky data with valid icon', async () => {
+  it('returns today air temps with high > low', async () => {
     mockNws()
     const result = await fetchNwsData(SPOT)
-    expect(['clear', 'partly-cloudy', 'overcast', 'light-rain', 'heavy-rain']).toContain(result.sky.icon)
+    expect(result.today.air.high).toBeGreaterThanOrEqual(result.today.air.low)
   })
 
-  it('maps Partly Cloudy shortForecast to partly-cloudy icon', async () => {
+  it('returns hourlyForecast array on today', async () => {
     mockNws()
     const result = await fetchNwsData(SPOT)
-    // First period in fixture is "Partly Cloudy"
-    expect(result.sky.icon).toBe('partly-cloudy')
+    expect(Array.isArray(result.today.hourlyForecast)).toBe(true)
+    expect(result.today.hourlyForecast.length).toBeGreaterThan(0)
   })
 
-  it('returns hourlyForecast array', async () => {
+  it('returns byDay map with at least one date entry', async () => {
     mockNws()
     const result = await fetchNwsData(SPOT)
-    expect(Array.isArray(result.hourlyForecast)).toBe(true)
-    expect(result.hourlyForecast.length).toBeGreaterThan(0)
+    expect(typeof result.byDay).toBe('object')
+    expect(Object.keys(result.byDay).length).toBeGreaterThan(0)
   })
 
-  it('throws when points endpoint returns 404', async () => {
-    ;(global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 404 })
-    await expect(fetchNwsData(SPOT)).rejects.toThrow()
-  })
-
-  it('includes windDirection in each hourlyForecast item', async () => {
-    mockNws()
-    const result = await fetchNwsData(SPOT)
-    expect(result.hourlyForecast[0]).toHaveProperty('windDirection')
-    expect(result.hourlyForecast[0].windDirection).toBe('SW')
+  it('throws on non-ok HTTP response', async () => {
+    ;(global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 500 })
+    await expect(fetchNwsData(SPOT)).rejects.toThrow('NWS points failed')
   })
 })

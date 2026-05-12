@@ -14,6 +14,11 @@ export interface NwsData {
   }[]
 }
 
+export interface NwsMultiDay {
+  today: NwsData
+  byDay: Record<string, NwsData>
+}
+
 const NWS_BASE = 'https://api.weather.gov'
 const USER_AGENT = `FishCast/1.0 (${process.env.EXPO_PUBLIC_NWS_CONTACT ?? 'fishcast.app@gmail.com'})`
 
@@ -49,16 +54,75 @@ function mapSkyIcon(forecast: string, rainChance: number): SkyData['icon'] {
 
 function iconToCondition(icon: SkyData['icon']): SkyData['condition'] {
   const map: Record<SkyData['icon'], SkyData['condition']> = {
-    'clear': 'Clear',
-    'partly-cloudy': 'Partly Cloudy',
-    'overcast': 'Overcast',
-    'light-rain': 'Light Rain',
-    'heavy-rain': 'Heavy Rain',
+    'clear': 'Clear', 'partly-cloudy': 'Partly Cloudy', 'overcast': 'Overcast',
+    'light-rain': 'Light Rain', 'heavy-rain': 'Heavy Rain',
   }
   return map[icon]
 }
 
-export async function fetchNwsData(spot: Spot): Promise<NwsData> {
+function buildNwsDataForPeriods(periods: any[]): NwsData {
+  if (periods.length === 0) {
+    return {
+      air: { temp: 65, high: 70, low: 58, humidity: 70, unit: '°F' },
+      sky: { condition: 'Partly Cloudy', rainChance: 20, icon: 'partly-cloudy' },
+      wind: { speed: 8, gusts: 13, direction: 0, directionLabel: 'N', unit: 'mph' },
+      hourlyForecast: [],
+    }
+  }
+  const nowMs = Date.now()
+  const currentPeriod = periods.reduce((best: any, p: any) => {
+    const pMs = new Date(p.startTime).getTime()
+    const bestMs = new Date(best.startTime).getTime()
+    if (pMs <= nowMs && pMs > bestMs) return p
+    return best
+  }, periods[0])
+
+  const rainChance = currentPeriod.probabilityOfPrecipitation?.value ?? 0
+  const icon = mapSkyIcon(currentPeriod.shortForecast, rainChance)
+  const temps = periods.map((p: any) => p.temperature as number)
+  const windSpeed = parseWindSpeed(currentPeriod.windSpeed)
+
+  return {
+    air: {
+      temp: currentPeriod.temperature,
+      high: Math.max(...temps),
+      low: Math.min(...temps),
+      humidity: currentPeriod.relativeHumidity?.value ?? 70,
+      unit: '°F',
+    },
+    sky: { condition: iconToCondition(icon), rainChance, icon },
+    wind: {
+      speed: windSpeed,
+      gusts: currentPeriod.windGust ? parseWindSpeed(currentPeriod.windGust) : windSpeed + 5,
+      direction: directionToDegrees(currentPeriod.windDirection),
+      directionLabel: currentPeriod.windDirection,
+      unit: 'mph',
+    },
+    hourlyForecast: periods.map((p: any) => ({
+      hour: new Date(p.startTime).getHours(),
+      windSpeed: parseWindSpeed(p.windSpeed),
+      cloudCover: p.shortForecast.toLowerCase().includes('cloud') ? 70 : 20,
+      rainChance: p.probabilityOfPrecipitation?.value ?? 0,
+      windDirection: (p.windDirection || 'N') as string,
+    })),
+  }
+}
+
+function groupByDay(periods: any[]): Record<string, NwsData> {
+  const dayMap: Record<string, any[]> = {}
+  for (const p of periods) {
+    const dateStr = p.startTime.slice(0, 10)
+    if (!dayMap[dateStr]) dayMap[dateStr] = []
+    dayMap[dateStr].push(p)
+  }
+  const result: Record<string, NwsData> = {}
+  for (const [date, dayPeriods] of Object.entries(dayMap)) {
+    result[date] = buildNwsDataForPeriods(dayPeriods)
+  }
+  return result
+}
+
+export async function fetchNwsData(spot: Spot): Promise<NwsMultiDay> {
   const pointsRes = await fetch(
     `${NWS_BASE}/points/${spot.lat.toFixed(4)},${spot.lng.toFixed(4)}`,
     { headers: nwsHeaders() }
@@ -74,50 +138,8 @@ export async function fetchNwsData(spot: Spot): Promise<NwsData> {
   const periods: any[] = hourly.properties.periods ?? []
   if (periods.length === 0) throw new Error('NWS returned no forecast periods')
 
-  const nowMs = Date.now()
-
-  // Find the most recent period that has already started
-  const currentPeriod = periods.reduce((best: any, p: any) => {
-    const pMs = new Date(p.startTime).getTime()
-    const bestMs = new Date(best.startTime).getTime()
-    if (pMs <= nowMs && pMs > bestMs) return p
-    return best
-  }, periods[0])
-
-  const rainChance = currentPeriod.probabilityOfPrecipitation?.value ?? 0
-  const icon = mapSkyIcon(currentPeriod.shortForecast, rainChance)
-
-  const temps = periods.map((p: any) => p.temperature as number)
-  const windSpeed = parseWindSpeed(currentPeriod.windSpeed)
-
-  const hourlyForecast = periods.map((p: any) => ({
-    hour: new Date(p.startTime).getHours(),
-    windSpeed: parseWindSpeed(p.windSpeed),
-    cloudCover: p.shortForecast.toLowerCase().includes('cloud') ? 70 : 20,
-    rainChance: p.probabilityOfPrecipitation?.value ?? 0,
-    windDirection: (p.windDirection || 'N') as string,
-  }))
-
   return {
-    air: {
-      temp: currentPeriod.temperature,
-      high: Math.max(...temps),
-      low: Math.min(...temps),
-      humidity: currentPeriod.relativeHumidity?.value ?? 70,
-      unit: '°F',
-    },
-    sky: {
-      condition: iconToCondition(icon),
-      rainChance,
-      icon,
-    },
-    wind: {
-      speed: windSpeed,
-      gusts: currentPeriod.windGust ? parseWindSpeed(currentPeriod.windGust) : windSpeed + 5,
-      direction: directionToDegrees(currentPeriod.windDirection),
-      directionLabel: currentPeriod.windDirection,
-      unit: 'mph',
-    },
-    hourlyForecast,
+    today: buildNwsDataForPeriods(periods),
+    byDay: groupByDay(periods),
   }
 }

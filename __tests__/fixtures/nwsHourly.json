@@ -1,0 +1,46 @@
+{
+  "properties": {
+    "periods": [
+      {
+        "number": 1, "startTime": "2026-05-11T05:00:00-07:00",
+        "temperature": 55, "temperatureUnit": "F",
+        "windSpeed": "5 mph", "windDirection": "SW",
+        "shortForecast": "Partly Cloudy",
+        "probabilityOfPrecipitation": { "value": 10 },
+        "relativeHumidity": { "value": 82 }
+      },
+      {
+        "number": 2, "startTime": "2026-05-11T14:00:00-07:00",
+        "temperature": 62, "temperatureUnit": "F",
+        "windSpeed": "12 mph", "windDirection": "W",
+        "shortForecast": "Partly Cloudy",
+        "probabilityOfPrecipitation": { "value": 20 },
+        "relativeHumidity": { "value": 72 }
+      },
+      {
+        "number": 3, "startTime": "2026-05-11T20:00:00-07:00",
+        "temperature": 58, "temperatureUnit": "F",
+        "windSpeed": "18 mph", "windDirection": "NW",
+        "shortForecast": "Partly Cloudy",
+        "probabilityOfPrecipitation": { "value": 35 },
+        "relativeHumidity": { "value": 85 }
+      },
+      {
+        "number": 4, "startTime": "2026-05-12T06:00:00-07:00",
+        "temperature": 60, "temperatureUnit": "F",
+        "windSpeed": "8 mph", "windDirection": "N",
+        "shortForecast": "Clear",
+        "probabilityOfPrecipitation": { "value": 5 },
+        "relativeHumidity": { "value": 70 }
+      },
+      {
+        "number": 5, "startTime": "2026-05-12T14:00:00-07:00",
+        "temperature": 68, "temperatureUnit": "F",
+        "windSpeed": "10 mph", "windDirection": "NW",
+        "shortForecast": "Clear",
+        "probabilityOfPrecipitation": { "value": 0 },
+        "relativeHumidity": { "value": 60 }
+      }
+    ]
+  }
+}
