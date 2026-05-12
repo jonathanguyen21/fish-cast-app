@@ -14,10 +14,7 @@ const BASE = 'https://api.tidesandcurrents.noaa.gov/api/prod/datagetter'
 const COMMON = 'time_zone=lst_ldt&units=english&format=json'
 
 function noaaDateStr(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}${m}${day}`
+  return localDateKey(d).replace(/-/g, '')
 }
 
 function localDateKey(d: Date): string {
@@ -175,6 +172,7 @@ export async function fetchNoaaData(spot: Spot): Promise<NoaaData> {
   for (const day of allDays) {
     const events = eventsByDay[day] ?? []
     const curve = curvesByDay[day] ?? new Array(24).fill(0)
+    // future days use noon as representative hour; scoringService re-slices per actual hour
     tideByDay[day] = buildTideForDay(events, curve, day === todayKey ? refHour : 12)
   }
 

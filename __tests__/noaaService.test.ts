@@ -81,7 +81,7 @@ describe('fetchNoaaData', () => {
     expect(result.tideByDay[FIXTURE_DATE]?.hourlyCurve).toHaveLength(24)
   })
 
-  it('returns null entry for day when both prediction products are missing', async () => {
+  it('returns empty tideByDay when both prediction products are missing', async () => {
     ;(global.fetch as jest.Mock)
       .mockResolvedValueOnce({ ok: true, json: async () => missingFixture })
       .mockResolvedValueOnce({ ok: true, json: async () => missingFixture })
