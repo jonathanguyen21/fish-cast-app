@@ -15,9 +15,7 @@ interface UseConditionsResult {
   refetch: () => void
 }
 
-const todayKey = () => new Date().toISOString().slice(0, 10)
-
-export function useConditions(spot: Spot | null): UseConditionsResult {
+export function useConditions(spot: Spot | null, selectedDate: string): UseConditionsResult {
   const enabled = !!spot
 
   const noaaQuery = useQuery({
@@ -45,8 +43,11 @@ export function useConditions(spot: Spot | null): UseConditionsResult {
   })
 
   const solunarQuery = useQuery({
-    queryKey: ['solunar', spot?.id, todayKey()],
-    queryFn: () => calculateSolunar(spot!.lat, spot!.lng, new Date()),
+    queryKey: ['solunar', spot?.id, selectedDate],
+    queryFn: () => {
+      const refDate = new Date(selectedDate + 'T12:00:00')
+      return calculateSolunar(spot!.lat, spot!.lng, refDate)
+    },
     enabled,
     staleTime: 24 * 60 * 60 * 1000,
     gcTime: 48 * 60 * 60 * 1000,
@@ -55,22 +56,29 @@ export function useConditions(spot: Spot | null): UseConditionsResult {
   const isLoading =
     noaaQuery.isLoading || nwsQuery.isLoading || marineQuery.isLoading || solunarQuery.isLoading
 
-  // Only total failure if both primary weather sources fail
   const isError = (noaaQuery.isError && nwsQuery.isError) || solunarQuery.isError
 
   const data = useMemo(() => {
     if (!spot || !solunarQuery.data) return null
+    const todayStr = (() => {
+      const n = new Date()
+      const y = n.getFullYear()
+      const m = String(n.getMonth() + 1).padStart(2, '0')
+      const d = String(n.getDate()).padStart(2, '0')
+      return `${y}-${m}-${d}`
+    })()
+    const refDate = selectedDate === todayStr ? new Date() : new Date(selectedDate + 'T12:00:00')
     return buildConditionsData(
+      selectedDate,
       noaaQuery.data ?? null,
-      nwsQuery.data ?? null,
+      nwsQuery.data?.byDay ?? null,
       marineQuery.data ?? null,
       solunarQuery.data,
       spot,
-      new Date()
+      refDate,
     )
-  }, [spot, noaaQuery.data, nwsQuery.data, marineQuery.data, solunarQuery.data])
+  }, [spot, selectedDate, noaaQuery.data, nwsQuery.data, marineQuery.data, solunarQuery.data])
 
-  // Solunar omitted — it's a local calculation with 24hr staleTime, not a network fetch
   function refetch() {
     noaaQuery.refetch()
     nwsQuery.refetch()

@@ -11,7 +11,8 @@ import type { Spot } from '../../types/spot'
 function SpotRow({ spot, isActive, onPress, onDelete }: {
   spot: Spot; isActive: boolean; onPress: () => void; onDelete: () => void
 }) {
-  const { data } = useConditions(spot)
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const { data } = useConditions(spot, todayStr)
   const score = data?.fishingScore ?? null
   const color = score !== null ? scoreColor(score) : Colors.textTertiary
 
