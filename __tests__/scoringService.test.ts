@@ -56,6 +56,11 @@ const MARINE: Record<string, MarineDay> = {
     swell: { height: 1.4, period: 12, direction: 290, directionLabel: 'WNW', unit: 'ft' },
     waterTemp: 57.2,
     pressure: { value: 29.98, trend: 'stable', rate: 'slow', unit: 'inHg', readings: [] },
+    swellHourly: [
+      { hour: 8, height: 1.2, period: 11, directionLabel: 'WNW' },
+      { hour: 12, height: 1.4, period: 12, directionLabel: 'WNW' },
+      { hour: 16, height: 1.6, period: 13, directionLabel: 'W' },
+    ],
   },
 }
 
@@ -160,5 +165,12 @@ describe('buildConditionsData', () => {
     expect(result.windHourly.length).toBeGreaterThan(0)
     expect(result.windHourly[0]).toHaveProperty('gusts')
     expect(result.windHourly[0]).toHaveProperty('direction')
+  })
+
+  it('passes swellHourly from marine data to result', () => {
+    const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
+    expect(result.swellHourly).not.toBeNull()
+    expect(result.swellHourly!.length).toBe(3)
+    expect(result.swellHourly![0]).toHaveProperty('period')
   })
 })

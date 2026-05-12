@@ -5,6 +5,7 @@ export interface MarineDay {
   swell: SwellData | null
   waterTemp: number | null
   pressure: PressureData | null
+  swellHourly: { hour: number; height: number; period: number; directionLabel: string }[]
 }
 
 const MARINE_BASE = 'https://marine-api.open-meteo.com/v1/marine'
@@ -97,6 +98,14 @@ export async function fetchMarineData(spot: Spot): Promise<Record<string, Marine
         swell,
         waterTemp,
         pressure: buildPressureFromHourly(data.pressures),
+        swellHourly: data.heights
+          .map((h, i) => ({
+            hour: i,
+            height: parseFloat(h.toFixed(1)),
+            period: Math.round(data.periods[i] ?? 0),
+            directionLabel: degreesToLabel(data.directions[i] ?? 0),
+          }))
+          .filter(h => h.height > 0),
       }
     }
 

@@ -186,7 +186,7 @@ export function buildConditionsData(
       rainChance: h.rainChance,
       cloudCover: h.cloudCover,
     })) ?? [],
-    swellHourly: (marine as any)?.swellHourly ?? null,
+    swellHourly: marine?.swellHourly ?? null,
     tide,
     water: { temp: waterTempValue, unit: '°F' },
     air: nws?.air ?? { temp: 65, high: 70, low: 58, humidity: 70, unit: '°F' },
