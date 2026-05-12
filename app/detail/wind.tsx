@@ -3,17 +3,31 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   PanResponder, PanResponderInstance, useWindowDimensions,
 } from 'react-native'
-import { Svg, Rect, Text as SvgText } from 'react-native-svg'
+import {
+  Svg, Path, Defs, LinearGradient, Stop,
+  Line, Circle, Text as SvgText, G,
+} from 'react-native-svg'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useSettingsStore } from '../../store/settingsStore'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
+import type { HourlyWind } from '../../types/conditions'
 
-type WindHourly = { hour: number; speed: number; directionLabel: string }
+const CHART_HEIGHT = 200
+const PADDING = { top: 24, bottom: 36, left: 36, right: 16 }
 
-const CHART_HEIGHT = 160
-const PADDING = { top: 16, bottom: 32, left: 8, right: 8 }
-const BAR_GAP = 3
+const DIRECTION_ARROWS = ['N','NE','E','SE','S','SW','W','NW']
+
+function directionArrow(deg: number): string {
+  const idx = Math.round(((deg % 360) + 360) / 45) % 8
+  return DIRECTION_ARROWS[idx]
+}
+
+function hourLabel(h: number) {
+  const period = h < 12 ? 'AM' : 'PM'
+  const display = h === 0 ? 12 : h > 12 ? h - 12 : h
+  return `${display}${period}`
+}
 
 export default function WindDetailScreen() {
   const { data } = useLocalSearchParams<{ data: string }>()
@@ -21,7 +35,7 @@ export default function WindDetailScreen() {
   const { width } = useWindowDimensions()
   const speedUnit = useSettingsStore(s => s.speedUnit)
 
-  const windHourly = useMemo<WindHourly[]>(
+  const windHourly = useMemo<HourlyWind[]>(
     () => (data ? JSON.parse(data) : []),
     [data]
   )
@@ -33,16 +47,34 @@ export default function WindDetailScreen() {
 
   const chartW = width - Spacing.screenPad * 2 - Spacing.md * 2
   const innerW = chartW - PADDING.left - PADDING.right
-  const barW = windHourly.length > 0
-    ? innerW / windHourly.length - BAR_GAP
-    : 0
-  const chartH = CHART_HEIGHT - PADDING.top - PADDING.bottom
-  const maxSpeed = windHourly.length > 0
-    ? Math.max(...windHourly.map(h => h.speed), 1)
-    : 1
-  const peakEntry = windHourly.reduce<WindHourly | null>(
-    (best, h) => (!best || h.speed > best.speed ? h : best), null
+  const innerH = CHART_HEIGHT - PADDING.top - PADDING.bottom
+
+  const allSpeeds = windHourly.map(h => h.speed)
+  const allGusts = windHourly.map(h => h.gusts ?? h.speed)
+  const maxVal = Math.max(...allGusts, 1)
+  const gridLines = [0, Math.round(maxVal * 0.25), Math.round(maxVal * 0.5), Math.round(maxVal * 0.75), maxVal]
+
+  const toX = useCallback(
+    (i: number) => PADDING.left + (i / Math.max(windHourly.length - 1, 1)) * innerW,
+    [innerW, windHourly.length]
   )
+  const toY = useCallback(
+    (v: number) => PADDING.top + innerH - (v / maxVal) * innerH,
+    [innerH, maxVal]
+  )
+
+  const speedPath = windHourly.length >= 2
+    ? windHourly.map((h, i) => `${i === 0 ? 'M' : 'L'} ${toX(i)} ${toY(h.speed)}`).join(' ')
+    : ''
+  const fillPath = speedPath
+    ? `${speedPath} L ${toX(windHourly.length - 1)} ${PADDING.top + innerH} L ${PADDING.left} ${PADDING.top + innerH} Z`
+    : ''
+
+  const gustBandPath = windHourly.length >= 2
+    ? windHourly.map((h, i) => `${i === 0 ? 'M' : 'L'} ${toX(i)} ${toY(h.gusts ?? h.speed)}`).join(' ')
+      + ' ' + [...windHourly].reverse().map((h, i, arr) => `${i === 0 ? 'L' : 'L'} ${toX(arr.length - 1 - i)} ${toY(h.speed)}`).join(' ')
+      + ' Z'
+    : ''
 
   const [cursorIdx, setCursorIdx] = useState<number | null>(null)
 
@@ -51,84 +83,134 @@ export default function WindDetailScreen() {
     onMoveShouldSetPanResponder: () => true,
     onPanResponderGrant: (e) => {
       const x = e.nativeEvent.locationX - PADDING.left
-      const idx = Math.round(x / (innerW / Math.max(windHourly.length, 1)))
+      const idx = Math.round((x / innerW) * (windHourly.length - 1))
       setCursorIdx(Math.max(0, Math.min(idx, windHourly.length - 1)))
     },
     onPanResponderMove: (e) => {
       const x = e.nativeEvent.locationX - PADDING.left
-      const idx = Math.round(x / (innerW / Math.max(windHourly.length, 1)))
+      const idx = Math.round((x / innerW) * (windHourly.length - 1))
       setCursorIdx(Math.max(0, Math.min(idx, windHourly.length - 1)))
     },
     onPanResponderRelease: () => {},
   }), [windHourly.length, innerW])
 
-  const toBarX = useCallback(
-    (i: number) => PADDING.left + i * (innerW / Math.max(windHourly.length, 1)),
-    [innerW, windHourly.length]
-  )
-  const toBarH = useCallback(
-    (speed: number) => (speed / maxSpeed) * chartH,
-    [maxSpeed, chartH]
-  )
-
-  function hourLabel(h: number) {
-    const period = h < 12 ? 'AM' : 'PM'
-    const display = h === 0 ? 12 : h > 12 ? h - 12 : h
-    return `${display}${period}`
-  }
-
   const cursor = cursorIdx !== null ? windHourly[cursorIdx] : null
+  const peakEntry = windHourly.reduce<HourlyWind | null>(
+    (best, h) => (!best || h.speed > best.speed ? h : best), null
+  )
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.title}>Wind Detail</Text>
+        <Text style={styles.title}>Wind</Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.close}>✕ Close</Text>
         </TouchableOpacity>
       </View>
 
-      {cursor && (
+      {cursor ? (
         <View style={styles.cursorInfo}>
           <Text style={styles.cursorText}>
-            {hourLabel(cursor.hour)} — {convert(cursor.speed)} {unitLabel} {cursor.directionLabel}
+            {hourLabel(cursor.hour)}  ·  {convert(cursor.speed)} {unitLabel}  ·  gusts {convert(cursor.gusts ?? cursor.speed)} {unitLabel}  ·  {directionArrow(cursor.direction ?? 0)} {cursor.directionLabel}
           </Text>
         </View>
-      )}
+      ) : peakEntry ? (
+        <View style={styles.cursorInfo}>
+          <Text style={styles.cursorSub}>Peak {convert(peakEntry.speed)} {unitLabel} at {hourLabel(peakEntry.hour)} · {directionArrow(peakEntry.direction ?? 0)} {peakEntry.directionLabel}</Text>
+        </View>
+      ) : null}
 
       {windHourly.length > 0 ? (
         <View style={styles.chartCard}>
           <View {...panResponder.panHandlers}>
             <Svg width={chartW} height={CHART_HEIGHT}>
-              {windHourly.map((item, i) => {
-                const bh = toBarH(item.speed)
-                const bx = toBarX(i)
-                const by = PADDING.top + chartH - bh
-                const isActive = cursorIdx === i
-                return (
-                  <Rect
-                    key={item.hour}
-                    x={bx}
-                    y={by}
-                    width={Math.max(barW, 2)}
-                    height={bh}
-                    rx={2}
-                    fill={isActive ? Colors.accent : Colors.ocean}
-                    opacity={isActive ? 1 : 0.6}
+              <Defs>
+                <LinearGradient id="windFill" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0" stopColor={Colors.ocean} stopOpacity={0.5} />
+                  <Stop offset="1" stopColor={Colors.ocean} stopOpacity={0.05} />
+                </LinearGradient>
+              </Defs>
+
+              {/* Y-axis grid lines */}
+              {gridLines.map((v) => (
+                <G key={v}>
+                  <Line
+                    x1={PADDING.left} y1={toY(v)}
+                    x2={PADDING.left + innerW} y2={toY(v)}
+                    stroke={Colors.textTertiary} strokeWidth={0.5} strokeOpacity={0.3}
                   />
+                  <SvgText
+                    x={PADDING.left - 4} y={toY(v) + 4}
+                    fill={Colors.textTertiary} fontSize={9} textAnchor="end"
+                  >
+                    {convert(v)}
+                  </SvgText>
+                </G>
+              ))}
+
+              {/* Gust band */}
+              {gustBandPath ? (
+                <Path d={gustBandPath} fill={Colors.ocean} fillOpacity={0.12} />
+              ) : null}
+
+              {/* Speed area fill */}
+              {fillPath ? (
+                <Path d={fillPath} fill="url(#windFill)" />
+              ) : null}
+
+              {/* Speed line */}
+              {speedPath ? (
+                <Path d={speedPath} stroke={Colors.ocean} strokeWidth={2} fill="none" />
+              ) : null}
+
+              {/* Direction arrows every 4 hrs */}
+              {windHourly.filter((_, i) => i % 4 === 0).map((item, idx) => {
+                const i = idx * 4
+                return (
+                  <SvgText
+                    key={item.hour}
+                    x={toX(i)}
+                    y={PADDING.top + innerH + 14}
+                    fill={Colors.textTertiary}
+                    fontSize={8}
+                    textAnchor="middle"
+                  >
+                    {directionArrow(item.direction ?? 0)}
+                  </SvgText>
                 )
               })}
-              {windHourly.filter((_, i) => i % 4 === 0).map((item, i) => (
-                <SvgText
-                  key={item.hour}
-                  x={toBarX(i * 4)}
-                  y={CHART_HEIGHT - 4}
-                  fill={Colors.textTertiary}
-                  fontSize={9}
-                >
-                  {hourLabel(item.hour)}
-                </SvgText>
-              ))}
+
+              {/* X-axis hour labels every 4 hrs */}
+              {windHourly.filter((_, i) => i % 4 === 0).map((item, idx) => {
+                const i = idx * 4
+                return (
+                  <SvgText
+                    key={`lbl-${item.hour}`}
+                    x={toX(i)}
+                    y={CHART_HEIGHT - 2}
+                    fill={Colors.textTertiary}
+                    fontSize={9}
+                    textAnchor="middle"
+                  >
+                    {hourLabel(item.hour)}
+                  </SvgText>
+                )
+              })}
+
+              {/* Cursor vertical line */}
+              {cursorIdx !== null && (
+                <>
+                  <Line
+                    x1={toX(cursorIdx)} y1={PADDING.top}
+                    x2={toX(cursorIdx)} y2={PADDING.top + innerH}
+                    stroke={Colors.accent} strokeWidth={1} strokeDasharray="4 2"
+                  />
+                  <Circle
+                    cx={toX(cursorIdx)} cy={toY(windHourly[cursorIdx].speed)}
+                    r={5} fill={Colors.accent}
+                  />
+                </>
+              )}
             </Svg>
           </View>
         </View>
@@ -136,11 +218,17 @@ export default function WindDetailScreen() {
         <Text style={styles.empty}>No hourly wind data available</Text>
       )}
 
-      {peakEntry && (
-        <Text style={styles.peakLine}>
-          Peak: {convert(peakEntry.speed)} {unitLabel} at {hourLabel(peakEntry.hour)} ({peakEntry.directionLabel})
-        </Text>
-      )}
+      {/* Legend */}
+      <View style={styles.legend}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendLine, { backgroundColor: Colors.ocean }]} />
+          <Text style={styles.legendLabel}>Wind speed</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendLine, { backgroundColor: Colors.ocean, opacity: 0.3 }]} />
+          <Text style={styles.legendLabel}>Gust band</Text>
+        </View>
+      </View>
     </ScrollView>
   )
 }
@@ -158,11 +246,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card, borderRadius: 8, padding: Spacing.sm,
     marginBottom: Spacing.sm,
   },
-  cursorText: { fontSize: 13, color: Colors.textPrimary, textAlign: 'center' },
+  cursorText: { fontSize: 13, color: Colors.textPrimary, textAlign: 'center', fontWeight: '600' },
+  cursorSub: { fontSize: 12, color: Colors.textSecondary, textAlign: 'center' },
   chartCard: {
     backgroundColor: Colors.card, borderRadius: Spacing.cardRadius,
     padding: Spacing.md, marginBottom: Spacing.md,
   },
-  peakLine: { fontSize: 13, color: Colors.textSecondary, textAlign: 'center' },
+  legend: { flexDirection: 'row', gap: Spacing.lg, justifyContent: 'center', marginTop: 4 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendLine: { width: 16, height: 3, borderRadius: 2 },
+  legendLabel: { fontSize: 11, color: Colors.textSecondary },
   empty: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', marginTop: Spacing.xl },
 })
