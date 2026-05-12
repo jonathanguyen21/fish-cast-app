@@ -54,6 +54,7 @@ export default function ForecastScreen() {
   const { activeSpot, spots } = useSpots()
   const [selectedDate, setSelectedDate] = useState<string>(() => localDateKey(new Date()))
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const dayPills = useMemo(() => getDayPills(), [])
   const { data: conditions, isLoading, isError, refetch } = useConditions(activeSpot, selectedDate)
   const { data: forecast } = useForecast(activeSpot)
   const isPro = useSettingsStore(s => s.isPro)
@@ -212,7 +213,7 @@ export default function ForecastScreen() {
           <Pressable style={styles.pickerSheet}>
             <Text style={styles.pickerTitle}>Select Date</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pickerScroll}>
-              {getDayPills().map(({ dateStr, label, dayNum }, i) => {
+              {dayPills.map(({ dateStr, label, dayNum }, i) => {
                 const isLocked = !isPro && i >= 7
                 const isSelected = dateStr === selectedDate
                 return (
