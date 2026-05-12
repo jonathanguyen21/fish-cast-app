@@ -138,8 +138,11 @@ export async function fetchNwsData(spot: Spot): Promise<NwsMultiDay> {
   const periods: any[] = hourly.properties.periods ?? []
   if (periods.length === 0) throw new Error('NWS returned no forecast periods')
 
+  const todayKey = new Date().toISOString().slice(0, 10)
+  const todayPeriods = periods.filter((p: any) => p.startTime.slice(0, 10) === todayKey)
+  const byDay = groupByDay(periods)
   return {
-    today: buildNwsDataForPeriods(periods),
-    byDay: groupByDay(periods),
+    today: buildNwsDataForPeriods(todayPeriods.length > 0 ? todayPeriods : periods),
+    byDay,
   }
 }
