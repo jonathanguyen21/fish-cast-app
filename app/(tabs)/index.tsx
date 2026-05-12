@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import {
   ScrollView, View, Text, StyleSheet, RefreshControl,
-  ActivityIndicator, Modal, Pressable, TouchableOpacity,
+  ActivityIndicator, TouchableOpacity,
 } from 'react-native'
 import { useNetInfo } from '@react-native-community/netinfo'
 import { useSpots } from '../../hooks/useSpots'
@@ -15,6 +15,7 @@ import { WindDisplay } from '../../features/wind/WindDisplay'
 import { ConditionsGrid } from '../../features/conditions/ConditionsGrid'
 import { SpeciesCard } from '../../features/species/SpeciesCard'
 import { ForecastStrip } from '../../features/forecast/ForecastStrip'
+import { DayCalendar } from '../../features/calendar/DayCalendar'
 import { scoreSpecies } from '../../features/species/speciesScoring'
 import { detectPhase } from '../../features/tide/tideUtils'
 import { getSpeciesForRegion } from '../../data/species'
@@ -36,25 +37,13 @@ function formatDateChip(dateStr: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
-function getDayPills(): { dateStr: string; label: string; dayNum: number }[] {
-  return Array.from({ length: 14 }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() + i)
-    return {
-      dateStr: localDateKey(d),
-      label: i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' }),
-      dayNum: d.getDate(),
-    }
-  })
-}
 
 export default function ForecastScreen() {
   const router = useRouter()
   const netInfo = useNetInfo()
   const { activeSpot, spots } = useSpots()
   const [selectedDate, setSelectedDate] = useState<string>(() => localDateKey(new Date()))
-  const [showDatePicker, setShowDatePicker] = useState(false)
-  const dayPills = useMemo(() => getDayPills(), [])
+  const [showCalendar, setShowCalendar] = useState(false)
   const { data: conditions, isLoading, isError, refetch } = useConditions(activeSpot, selectedDate)
   const { data: forecast } = useForecast(activeSpot)
   const isPro = useSettingsStore(s => s.isPro)
@@ -127,10 +116,26 @@ export default function ForecastScreen() {
           )}
         </View>
 
-        <TouchableOpacity style={styles.dateChip} onPress={() => setShowDatePicker(true)}>
-          <Text style={styles.dateChipText}>{formatDateChip(selectedDate)}</Text>
-          <Text style={styles.dateChipArrow}> ▾</Text>
+        <TouchableOpacity
+          style={styles.dateChip}
+          onPress={() => setShowCalendar(v => !v)}
+        >
+          <Text style={styles.dateChipText}>
+            {formatDateChip(selectedDate) === 'Today'
+              ? `Today — ${formatDateChip(selectedDate)}`
+              : formatDateChip(selectedDate)}
+          </Text>
+          <Text style={styles.dateChipArrow}>{showCalendar ? ' ▴' : ' ▾'}</Text>
         </TouchableOpacity>
+
+        {showCalendar && (
+          <DayCalendar
+            selectedDate={selectedDate}
+            onSelect={(d) => { setSelectedDate(d); setShowCalendar(false) }}
+            todayScore={conditions?.fishingScore ?? null}
+            isPro={isPro}
+          />
+        )}
 
         {conditions && (
           <>
@@ -223,50 +228,6 @@ export default function ForecastScreen() {
         </View>
       )}
 
-      <Modal
-        visible={showDatePicker}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowDatePicker(false)}
-      >
-        <Pressable style={styles.modalBackdrop} onPress={() => setShowDatePicker(false)}>
-          <Pressable style={styles.pickerSheet}>
-            <Text style={styles.pickerTitle}>Select Date</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pickerScroll}>
-              {dayPills.map(({ dateStr, label, dayNum }, i) => {
-                const isLocked = !isPro && i >= 7
-                const isSelected = dateStr === selectedDate
-                return (
-                  <TouchableOpacity
-                    key={dateStr}
-                    style={[
-                      styles.dayPill,
-                      isSelected && styles.dayPillSelected,
-                      isLocked && styles.dayPillLocked,
-                    ]}
-                    onPress={() => {
-                      if (isLocked) {
-                        setShowDatePicker(false)
-                        router.push('/settings')
-                      } else {
-                        setSelectedDate(dateStr)
-                        setShowDatePicker(false)
-                      }
-                    }}
-                  >
-                    <Text style={[styles.dayPillLabel, isSelected && styles.dayPillLabelSelected]}>
-                      {isLocked ? '🔒' : label}
-                    </Text>
-                    <Text style={[styles.dayPillNum, isSelected && styles.dayPillLabelSelected]}>
-                      {dayNum}
-                    </Text>
-                  </TouchableOpacity>
-                )
-              })}
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
     </View>
   )
 }
@@ -320,37 +281,4 @@ const styles = StyleSheet.create({
   },
   dateChipText: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   dateChipArrow: { fontSize: 12, color: Colors.textSecondary },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  pickerSheet: {
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingTop: Spacing.md,
-    paddingBottom: 32,
-  },
-  pickerTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: Spacing.md,
-  },
-  pickerScroll: { paddingHorizontal: Spacing.screenPad, gap: Spacing.sm },
-  dayPill: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 56,
-    paddingVertical: Spacing.sm,
-    borderRadius: 12,
-    backgroundColor: Colors.background,
-  },
-  dayPillSelected: { backgroundColor: Colors.accent },
-  dayPillLocked: { opacity: 0.4 },
-  dayPillLabel: { fontSize: 11, color: Colors.textSecondary, fontWeight: '500' },
-  dayPillNum: { fontSize: 16, color: Colors.textPrimary, fontWeight: '700' },
-  dayPillLabelSelected: { color: Colors.background },
 })
