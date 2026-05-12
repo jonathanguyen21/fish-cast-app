@@ -15,9 +15,9 @@ describe('TideChart', () => {
     expect(screen.getByTestId('tide-chart')).toBeTruthy()
   })
 
-  it('shows high tide event label', () => {
+  it('shows tide event tick marks', () => {
     render(<TideChart {...props} />)
-    expect(screen.getByText(/3:42 PM/)).toBeTruthy()
+    expect(screen.getByTestId('tide-tick-high-1')).toBeTruthy()
   })
 
   it('shows formatted time below height when scrubbing', () => {

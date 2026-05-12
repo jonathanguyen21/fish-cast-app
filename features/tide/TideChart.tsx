@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react'
 import { View, Text, StyleSheet, PanResponder, PanResponderInstance } from 'react-native'
-import { Svg, Path, Defs, LinearGradient, Stop, Line, Circle, Text as SvgText } from 'react-native-svg'
+import { Svg, Path, Defs, LinearGradient, Stop, Line, Circle, Text as SvgText, G } from 'react-native-svg'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { useSettingsStore } from '../../store/settingsStore'
@@ -14,7 +14,7 @@ interface Props {
 
 const CHART_WIDTH = 340
 const CHART_HEIGHT = 140
-const PADDING = { top: 20, bottom: 30, left: 8, right: 8 }
+const PADDING = { top: 20, bottom: 40, left: 8, right: 8 }
 
 function curvePath(points: { x: number; y: number }[]): string {
   if (points.length < 2) return ''
@@ -27,6 +27,16 @@ function curvePath(points: { x: number; y: number }[]): string {
     d += ` C ${cp1x} ${prev.y}, ${cp2x} ${curr.y}, ${curr.x} ${curr.y}`
   }
   return d
+}
+
+function parseEventHour(timeStr: string): number {
+  const m = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i)
+  if (!m) return 0
+  let h = parseInt(m[1])
+  const min = parseInt(m[2])
+  if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12
+  if (m[3].toUpperCase() === 'AM' && h === 12) h = 0
+  return h + min / 60
 }
 
 export function TideChart({ tide, currentHour }: Props) {
@@ -43,7 +53,7 @@ export function TideChart({ tide, currentHour }: Props) {
   const chartW = CHART_WIDTH - PADDING.left - PADDING.right
   const chartH = CHART_HEIGHT - PADDING.top - PADDING.bottom
 
-  const toX = (i: number) => PADDING.left + (i / (curve.length - 1)) * chartW
+  const toX = (hour: number) => PADDING.left + (hour / (curve.length - 1)) * chartW
   const toY = (h: number) => PADDING.top + chartH - ((h - minH) / range) * chartH
 
   const points = curve.map((h, i) => ({ x: toX(i), y: toY(h) }))
@@ -53,8 +63,6 @@ export function TideChart({ tide, currentHour }: Props) {
   const clampedHour = Math.min(Math.max(currentHour, 0), curve.length - 1)
   const nowX = toX(clampedHour)
   const nowY = toY(curve[clampedHour])
-
-  const hiLo = tide.events.slice(0, 2)
 
   const [cursorIndex, setCursorIndex] = useState<number | null>(null)
   const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -76,58 +84,92 @@ export function TideChart({ tide, currentHour }: Props) {
     },
   }), [curve.length, chartW])
 
+  const baseline = CHART_HEIGHT - PADDING.bottom
+
   return (
     <View style={styles.container} testID="tide-chart">
       <Text style={styles.sectionTitle}>Tides</Text>
       <View {...panResponder.panHandlers}>
         <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
-        <Defs>
-          <LinearGradient id="tideGrad" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={Colors.ocean} stopOpacity={0.4} />
-            <Stop offset="1" stopColor={Colors.ocean} stopOpacity={0.0} />
-          </LinearGradient>
-        </Defs>
-        <Path d={fillD} fill="url(#tideGrad)" />
-        <Path d={pathD} stroke={Colors.ocean} strokeWidth={2} fill="none" />
-        <Line x1={nowX} y1={PADDING.top} x2={nowX} y2={CHART_HEIGHT - PADDING.bottom}
-          stroke={Colors.accent} strokeWidth={1.5} strokeDasharray="4 2" />
-        <Circle cx={nowX} cy={nowY} r={4} fill={Colors.accent} />
-        {cursorIndex !== null && (
-          <>
-            <Line
-              x1={toX(cursorIndex)} y1={PADDING.top}
-              x2={toX(cursorIndex)} y2={CHART_HEIGHT - PADDING.bottom}
-              stroke={Colors.accent} strokeWidth={1} strokeDasharray="3 2"
-            />
-            <Circle cx={toX(cursorIndex)} cy={toY(curve[cursorIndex])} r={5} fill={Colors.accent} />
-            <SvgText
-              x={Math.min(toX(cursorIndex) + 6, CHART_WIDTH - 60)}
-              y={Math.max(toY(curve[cursorIndex]) - 8, PADDING.top + 12)}
-              fill={Colors.textPrimary}
-              fontSize={11}
-              fontWeight="600"
-            >
-              {fmtHeight(curve[cursorIndex])} {heightUnit}
-            </SvgText>
-            <SvgText
-              x={Math.min(toX(cursorIndex) + 6, CHART_WIDTH - 60)}
-              y={Math.max(toY(curve[cursorIndex]) + 6, PADDING.top + 24)}
-              fill={Colors.textSecondary}
-              fontSize={10}
-            >
-              {/* hourlyCurve is always 24 entries indexed from hour 0, so cursorIndex equals the wall-clock hour */}
-              {formatScrubTime(cursorIndex)}
-            </SvgText>
-          </>
-        )}
-      </Svg>
-      </View>
-      <View style={styles.events}>
-        {hiLo.map((ev) => (
-          <Text key={ev.time} style={styles.eventText}>
-            {ev.type === 'high' ? '▲' : '▼'} {ev.time} {fmtHeight(ev.height)} {heightUnit}
-          </Text>
-        ))}
+          <Defs>
+            <LinearGradient id="tideGrad" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={Colors.ocean} stopOpacity={0.4} />
+              <Stop offset="1" stopColor={Colors.ocean} stopOpacity={0.0} />
+            </LinearGradient>
+          </Defs>
+          <Path d={fillD} fill="url(#tideGrad)" />
+          <Path d={pathD} stroke={Colors.ocean} strokeWidth={2} fill="none" />
+          <Line x1={nowX} y1={PADDING.top} x2={nowX} y2={baseline}
+            stroke={Colors.accent} strokeWidth={1.5} strokeDasharray="4 2" />
+          <Circle cx={nowX} cy={nowY} r={4} fill={Colors.accent} />
+
+          {/* Tide event tick marks */}
+          {tide.events.map((ev, idx) => {
+            const evHour = parseEventHour(ev.time)
+            const ex = Math.max(PADDING.left + 20, Math.min(PADDING.left + chartW - 20, toX(evHour)))
+            const symbol = ev.type === 'high' ? '▲' : '▼'
+            const symbolColor = ev.type === 'high' ? Colors.accent : Colors.textSecondary
+
+            const prevHours = tide.events.slice(0, idx).map(e => parseEventHour(e.time))
+            const tooClose = prevHours.some(ph => Math.abs(toX(ph) - ex) < 30)
+
+            return (
+              <G key={ev.time} testID={`tide-tick-${ev.type}-${idx}`}>
+                <Line
+                  x1={ex} y1={baseline}
+                  x2={ex} y2={baseline + 5}
+                  stroke={symbolColor} strokeWidth={1.5}
+                />
+                <SvgText
+                  x={ex} y={baseline + 14}
+                  fill={symbolColor} fontSize={9} textAnchor="middle"
+                >
+                  {symbol}
+                </SvgText>
+                <SvgText
+                  x={ex} y={baseline + 24}
+                  fill={Colors.textSecondary} fontSize={8} textAnchor="middle"
+                >
+                  {fmtHeight(ev.height)}{heightUnit}
+                </SvgText>
+                {!tooClose && (
+                  <SvgText
+                    x={ex} y={baseline + 34}
+                    fill={Colors.textTertiary} fontSize={7} textAnchor="middle"
+                  >
+                    {ev.time}
+                  </SvgText>
+                )}
+              </G>
+            )
+          })}
+
+          {/* Drag cursor */}
+          {cursorIndex !== null && (
+            <>
+              <Line
+                x1={toX(cursorIndex)} y1={PADDING.top}
+                x2={toX(cursorIndex)} y2={baseline}
+                stroke={Colors.accent} strokeWidth={1} strokeDasharray="3 2"
+              />
+              <Circle cx={toX(cursorIndex)} cy={toY(curve[cursorIndex])} r={5} fill={Colors.accent} />
+              <SvgText
+                x={Math.min(toX(cursorIndex) + 6, CHART_WIDTH - 60)}
+                y={Math.max(toY(curve[cursorIndex]) - 8, PADDING.top + 12)}
+                fill={Colors.textPrimary} fontSize={11} fontWeight="600"
+              >
+                {fmtHeight(curve[cursorIndex])} {heightUnit}
+              </SvgText>
+              <SvgText
+                x={Math.min(toX(cursorIndex) + 6, CHART_WIDTH - 60)}
+                y={Math.max(toY(curve[cursorIndex]) + 6, PADDING.top + 24)}
+                fill={Colors.textSecondary} fontSize={10}
+              >
+                {formatScrubTime(cursorIndex)}
+              </SvgText>
+            </>
+          )}
+        </Svg>
       </View>
     </View>
   )
@@ -142,6 +184,4 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
   },
   sectionTitle: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm },
-  events: { flexDirection: 'row', gap: Spacing.lg, paddingTop: Spacing.xs },
-  eventText: { fontSize: 12, color: Colors.textSecondary },
 })
