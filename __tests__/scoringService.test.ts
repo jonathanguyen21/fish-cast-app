@@ -97,8 +97,19 @@ describe('buildConditionsData', () => {
   })
 
   it('uses NOAA pressure for today (priority over marine)', () => {
+    // Mock new Date() to return the test date
+    const originalDate = global.Date
+    global.Date = class extends originalDate {
+      constructor(...args: any[]) {
+        if (args.length === 0) return new originalDate('2026-05-06T14:00:00')
+        return new originalDate(...args)
+      }
+    } as any
+
     const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
     expect(result.pressure.value).toBeCloseTo(30.02, 2)
+
+    global.Date = originalDate
   })
 
   it('uses marine pressure for non-today dates', () => {

@@ -101,7 +101,7 @@ export function buildConditionsData(
   const marine = marineByDay?.[date] ?? null
   const tide = noaa?.tideByDay[date] ?? null
 
-  const todayKey = localDateKey(refDate)
+  const todayKey = localDateKey(new Date())
   const isToday = date === todayKey
 
   const pressure = (isToday ? noaa?.pressure : null) ?? marine?.pressure ?? NEUTRAL_PRESSURE
