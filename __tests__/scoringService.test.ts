@@ -45,7 +45,7 @@ const NWS: NwsData = {
     rainChance: 10,
     windDirection: 'SW',
     directionDeg: 225,
-    temp: 62 + i,
+    temp: 60 + i,
   })),
 }
 
@@ -145,5 +145,20 @@ describe('buildConditionsData', () => {
     }
     const result = buildConditionsData(DATE, noNoaa, NWS_BY_DAY, noMarine, SOLUNAR, SPOT, NOW)
     expect(result.pressure.value).toBeCloseTo(29.92, 2)
+  })
+
+  it('includes airHourly with temp, rainChance, cloudCover', () => {
+    const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
+    expect(result.airHourly.length).toBeGreaterThan(0)
+    expect(result.airHourly[0]).toHaveProperty('temp')
+    expect(result.airHourly[0]).toHaveProperty('rainChance')
+    expect(result.airHourly[0]).toHaveProperty('cloudCover')
+  })
+
+  it('includes windHourly with gusts and direction', () => {
+    const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
+    expect(result.windHourly.length).toBeGreaterThan(0)
+    expect(result.windHourly[0]).toHaveProperty('gusts')
+    expect(result.windHourly[0]).toHaveProperty('direction')
   })
 })

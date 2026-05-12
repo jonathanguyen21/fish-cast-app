@@ -99,7 +99,7 @@ export function buildConditionsData(
 ): ConditionsData {
   const nws = nwsByDay?.[date] ?? null
   const marine = marineByDay?.[date] ?? null
-  const tide = noaa?.tideByDay[date] ?? null
+  const tide = noaa?.tideByDay?.[date] ?? null
 
   const todayKey = localDateKey(new Date())
   const isToday = date === todayKey
@@ -176,8 +176,17 @@ export function buildConditionsData(
     windHourly: nws?.hourlyForecast.map(h => ({
       hour: h.hour,
       speed: h.windSpeed,
+      gusts: h.windGust,
+      direction: h.directionDeg,
       directionLabel: h.windDirection,
     })) ?? [],
+    airHourly: nws?.hourlyForecast.map(h => ({
+      hour: h.hour,
+      temp: h.temp,
+      rainChance: h.rainChance,
+      cloudCover: h.cloudCover,
+    })) ?? [],
+    swellHourly: (marine as any)?.swellHourly ?? null,
     tide,
     water: { temp: waterTempValue, unit: '°F' },
     air: nws?.air ?? { temp: 65, high: 70, low: 58, humidity: 70, unit: '°F' },

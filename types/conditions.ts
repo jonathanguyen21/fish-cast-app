@@ -67,6 +67,8 @@ export interface MoonData {
 export interface HourlyWind {
   hour: number
   speed: number
+  gusts: number
+  direction: number
   directionLabel: string
 }
 
@@ -89,6 +91,8 @@ export interface ConditionsData {
   bestWindow: { start: string; end: string; score: number }
   wind: WindData
   windHourly: HourlyWind[]
+  airHourly: { hour: number; temp: number; rainChance: number; cloudCover: number }[]
+  swellHourly: { hour: number; height: number; period: number; directionLabel: string }[] | null
   tide: TideData | null
   water: { temp: number; unit: string }
   air: AirData

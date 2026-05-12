@@ -18,6 +18,8 @@ export const MOCK_CONDITIONS: ConditionsData = {
   bestWindow: { start: '2:00 PM', end: '5:00 PM', score: 91 },
   wind: { speed: 8, gusts: 14, direction: 225, directionLabel: 'SW', unit: 'mph' },
   windHourly: [],
+  airHourly: [],
+  swellHourly: null,
   tide: {
     current: { height: 3.2, rising: true, unit: 'ft' },
     next: { type: 'high', time: '3:42 PM', height: 5.1 },
