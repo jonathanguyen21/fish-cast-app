@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   PanResponder, PanResponderInstance, useWindowDimensions,
 } from 'react-native'
-import { Svg, Polyline, Circle, Text as SvgText } from 'react-native-svg'
+import { Svg, Polyline, Circle, Text as SvgText, Line, G } from 'react-native-svg'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
@@ -40,6 +40,14 @@ export default function PressureDetailScreen() {
     [data]
   )
   const readings = pressure?.readings ?? []
+  const currentHour = new Date().getHours()
+  const hourForIndex = (i: number) => {
+    const raw = currentHour - (readings.length - 1 - i)
+    const h = ((raw % 24) + 24) % 24
+    const period = h < 12 ? 'AM' : 'PM'
+    const display = h === 0 ? 12 : h > 12 ? h - 12 : h
+    return `${display} ${period}`
+  }
   const chartW = width - Spacing.screenPad * 2 - Spacing.md * 2
   const innerW = chartW - PADDING.left - PADDING.right
   const innerH = CHART_HEIGHT - PADDING.top - PADDING.bottom
@@ -93,7 +101,7 @@ export default function PressureDetailScreen() {
       {cursorIdx !== null && readings[cursorIdx] !== undefined && (
         <View style={styles.cursorInfo}>
           <Text style={styles.cursorText}>
-            {readings[cursorIdx].toFixed(2)} inHg
+            {readings[cursorIdx].toFixed(2)} inHg · {hourForIndex(cursorIdx)}
           </Text>
         </View>
       )}
@@ -102,6 +110,22 @@ export default function PressureDetailScreen() {
         <View style={styles.chartCard}>
           <View {...panResponder.panHandlers}>
             <Svg width={chartW} height={CHART_HEIGHT}>
+              {/* Y-axis grid lines */}
+              {[minR, (minR + maxR) / 2, maxR].map((v) => (
+                <G key={v.toFixed(2)}>
+                  <Line
+                    x1={PADDING.left} y1={toY(v)}
+                    x2={PADDING.left + innerW} y2={toY(v)}
+                    stroke={Colors.textTertiary} strokeWidth={0.5} strokeOpacity={0.3}
+                  />
+                  <SvgText
+                    x={PADDING.left - 2} y={toY(v) + 3}
+                    fill={Colors.textTertiary} fontSize={8} textAnchor="end"
+                  >
+                    {v.toFixed(2)}
+                  </SvgText>
+                </G>
+              ))}
               <Polyline
                 points={points}
                 fill="none"
@@ -115,9 +139,16 @@ export default function PressureDetailScreen() {
                   fill={cursorIdx === i ? Colors.accent : Colors.ocean}
                 />
               ))}
-              <SvgText x={PADDING.left} y={CHART_HEIGHT - 4} fill={Colors.textTertiary} fontSize={9}>
-                {readings.length} readings
-              </SvgText>
+              {readings.map((_, i) => (
+                <SvgText
+                  key={i}
+                  x={toX(i)} y={CHART_HEIGHT - 4}
+                  fill={i === readings.length - 1 ? Colors.accent : Colors.textTertiary}
+                  fontSize={8} textAnchor="middle"
+                >
+                  {i === readings.length - 1 ? 'Now' : hourForIndex(i)}
+                </SvgText>
+              ))}
             </Svg>
           </View>
         </View>
