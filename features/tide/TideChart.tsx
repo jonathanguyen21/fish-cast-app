@@ -28,6 +28,12 @@ function curvePath(points: { x: number; y: number }[]): string {
   return d
 }
 
+function formatScrubTime(h: number): string {
+  const period = h < 12 ? 'AM' : 'PM'
+  const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h
+  return `${displayH}:00 ${period}`
+}
+
 export function TideChart({ tide, currentHour }: Props) {
   const lengthUnit = useSettingsStore(s => s.lengthUnit)
   const fmtHeight = (h: number) =>
@@ -107,6 +113,14 @@ export function TideChart({ tide, currentHour }: Props) {
               fontWeight="600"
             >
               {fmtHeight(curve[cursorIndex])} {heightUnit}
+            </SvgText>
+            <SvgText
+              x={Math.min(toX(cursorIndex) + 6, CHART_WIDTH - 60)}
+              y={Math.max(toY(curve[cursorIndex]) + 6, PADDING.top + 24)}
+              fill={Colors.textSecondary}
+              fontSize={10}
+            >
+              {formatScrubTime(cursorIndex)}
             </SvgText>
           </>
         )}
