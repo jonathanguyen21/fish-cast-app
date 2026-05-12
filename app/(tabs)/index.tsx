@@ -171,12 +171,32 @@ export default function ForecastScreen() {
             </View>
             {conditions.tide && <TideChart tide={conditions.tide} currentHour={currentHour} />}
             <ConditionsGrid
-                conditions={conditions}
-                onPressPressure={() => router.push({
-                  pathname: '/detail/pressure' as any,
-                  params: { data: JSON.stringify(conditions.pressure) },
-                })}
-              />
+              conditions={conditions}
+              onPressPressure={() => router.push({
+                pathname: '/detail/pressure' as any,
+                params: { data: JSON.stringify(conditions.pressure) },
+              })}
+              onPressSwell={() => router.push({
+                pathname: '/detail/swell' as any,
+                params: { data: JSON.stringify(conditions.swellHourly) },
+              })}
+              onPressAir={() => router.push({
+                pathname: '/detail/airtemp' as any,
+                params: { data: JSON.stringify(conditions.airHourly) },
+              })}
+              onPressSky={() => router.push({
+                pathname: '/detail/sky' as any,
+                params: { data: JSON.stringify(conditions.airHourly) },
+              })}
+              onPressMoon={() => router.push({
+                pathname: '/detail/moon' as any,
+                params: { data: JSON.stringify(conditions.moon) },
+              })}
+              onPressSun={() => router.push({
+                pathname: '/detail/sun' as any,
+                params: { data: JSON.stringify(conditions.sun) },
+              })}
+            />
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>What's Biting</Text>
               {scoredSpecies.map(ss => (

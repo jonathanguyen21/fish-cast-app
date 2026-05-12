@@ -59,6 +59,26 @@ export default function RootLayout() {
           name="detail/pressure"
           options={{ title: 'Pressure Detail', presentation: 'modal', headerShown: true }}
         />
+        <Stack.Screen
+          name="detail/swell"
+          options={{ title: 'Swell Detail', presentation: 'modal', headerShown: true }}
+        />
+        <Stack.Screen
+          name="detail/airtemp"
+          options={{ title: 'Air Temp', presentation: 'modal', headerShown: true }}
+        />
+        <Stack.Screen
+          name="detail/sky"
+          options={{ title: 'Sky & Rain', presentation: 'modal', headerShown: true }}
+        />
+        <Stack.Screen
+          name="detail/moon"
+          options={{ title: 'Moon & Solunar', presentation: 'modal', headerShown: true }}
+        />
+        <Stack.Screen
+          name="detail/sun"
+          options={{ title: 'Sun', presentation: 'modal', headerShown: true }}
+        />
       </Stack>
     </PersistQueryClientProvider>
   )

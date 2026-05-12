@@ -1,20 +1,21 @@
 import React from 'react'
-import { View, Text } from 'react-native'
+import { TouchableOpacity, Text } from 'react-native'
 import { cardStyles } from '../../theme/cardStyles'
 import type { MoonData } from '../../types/conditions'
 
 interface Props {
   moon: MoonData
+  onPress?: () => void
 }
 
-export function MoonCard({ moon }: Props) {
+export function MoonCard({ moon, onPress }: Props) {
   const nextMajor = moon.majorPeriods[0]
   return (
-    <View style={cardStyles.card}>
+    <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.75}>
       <Text style={cardStyles.label}>Moon</Text>
       <Text style={cardStyles.value}>{moon.illumination}%</Text>
       <Text style={cardStyles.sub}>{moon.phase}</Text>
       {nextMajor && <Text style={cardStyles.sub}>Major {nextMajor.start}</Text>}
-    </View>
+    </TouchableOpacity>
   )
 }
