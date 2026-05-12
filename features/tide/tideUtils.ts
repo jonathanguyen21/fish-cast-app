@@ -27,3 +27,9 @@ export function hoursFromLastTurn(hourlyCurve: number[], currentHour: number): n
 export function formatTideHeight(height: number, unit: string): string {
   return `${height.toFixed(1)} ${unit}`
 }
+
+export function formatScrubTime(h: number): string {
+  const period = h < 12 ? 'AM' : 'PM'
+  const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h
+  return `${displayH}:00 ${period}`
+}

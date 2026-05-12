@@ -5,6 +5,7 @@ import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { useSettingsStore } from '../../store/settingsStore'
 import type { TideData } from '../../types/conditions'
+import { formatScrubTime } from './tideUtils'
 
 interface Props {
   tide: TideData
@@ -26,12 +27,6 @@ function curvePath(points: { x: number; y: number }[]): string {
     d += ` C ${cp1x} ${prev.y}, ${cp2x} ${curr.y}, ${curr.x} ${curr.y}`
   }
   return d
-}
-
-function formatScrubTime(h: number): string {
-  const period = h < 12 ? 'AM' : 'PM'
-  const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h
-  return `${displayH}:00 ${period}`
 }
 
 export function TideChart({ tide, currentHour }: Props) {
@@ -120,6 +115,7 @@ export function TideChart({ tide, currentHour }: Props) {
               fill={Colors.textSecondary}
               fontSize={10}
             >
+              {/* hourlyCurve is always 24 entries indexed from hour 0, so cursorIndex equals the wall-clock hour */}
               {formatScrubTime(cursorIndex)}
             </SvgText>
           </>

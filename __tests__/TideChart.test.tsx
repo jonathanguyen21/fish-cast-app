@@ -1,6 +1,7 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react-native'
 import { TideChart } from '../features/tide/TideChart'
+import { formatScrubTime } from '../features/tide/tideUtils'
 import { MOCK_CONDITIONS } from '../data/mockData'
 
 describe('TideChart', () => {
@@ -20,11 +21,6 @@ describe('TideChart', () => {
   })
 
   it('shows formatted time below height when scrubbing', () => {
-    function formatScrubTime(h: number): string {
-      const period = h < 12 ? 'AM' : 'PM'
-      const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h
-      return `${displayH}:00 ${period}`
-    }
     expect(formatScrubTime(0)).toBe('12:00 AM')
     expect(formatScrubTime(12)).toBe('12:00 PM')
     expect(formatScrubTime(14)).toBe('2:00 PM')
