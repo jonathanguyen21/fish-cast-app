@@ -8,9 +8,12 @@ export interface NwsData {
   hourlyForecast: {
     hour: number
     windSpeed: number
+    windGust: number
     cloudCover: number
     rainChance: number
     windDirection: string
+    directionDeg: number
+    temp: number
   }[]
 }
 
@@ -101,9 +104,12 @@ function buildNwsDataForPeriods(periods: any[]): NwsData {
     hourlyForecast: periods.map((p: any) => ({
       hour: new Date(p.startTime).getHours(),
       windSpeed: parseWindSpeed(p.windSpeed),
+      windGust: p.windGust ? parseWindSpeed(p.windGust) : parseWindSpeed(p.windSpeed) + 5,
       cloudCover: p.shortForecast.toLowerCase().includes('cloud') ? 70 : 20,
       rainChance: p.probabilityOfPrecipitation?.value ?? 0,
       windDirection: (p.windDirection || 'N') as string,
+      directionDeg: directionToDegrees(p.windDirection || 'N'),
+      temp: p.temperature as number ?? 65,
     })),
   }
 }

@@ -40,9 +40,12 @@ const NWS: NwsData = {
   hourlyForecast: Array.from({ length: 16 }, (_, i) => ({
     hour: 5 + i,
     windSpeed: 8 + i,
+    windGust: 12 + i,
     cloudCover: 80,
     rainChance: 10,
     windDirection: 'SW',
+    directionDeg: 225,
+    temp: 62 + i,
   })),
 }
 
