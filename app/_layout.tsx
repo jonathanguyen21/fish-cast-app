@@ -2,13 +2,17 @@ import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { QueryClient } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import 'react-native-reanimated'
 import { Colors } from '../theme/colors'
+import { useSpotsStore } from '../store/spotsStore'
+import { DEFAULT_SPOTS } from '../data/defaultSpots'
+import { resolveNearestStation } from '../services/noaaStationService'
+import { detectRegion } from '../data/species'
 
 export { ErrorBoundary } from 'expo-router'
 
@@ -29,9 +33,30 @@ const asyncStoragePersister = createAsyncStoragePersister({
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({})
+  const spots = useSpotsStore(s => s.spots)
+  const addSpot = useSpotsStore(s => s.addSpot)
+  const hasSeeded = useRef(false)
 
   useEffect(() => { if (error) throw error }, [error])
   useEffect(() => { if (loaded) SplashScreen.hideAsync() }, [loaded])
+  useEffect(() => {
+    if (hasSeeded.current || spots.length > 0) return
+    hasSeeded.current = true
+    DEFAULT_SPOTS.forEach(async (s) => {
+      const stationId = s.type === 'saltwater'
+        ? await resolveNearestStation(s.lat, s.lng)
+        : null
+      addSpot({
+        id: `default-${s.name.replace(/\s+/g, '-').toLowerCase()}`,
+        name: s.name,
+        lat: s.lat,
+        lng: s.lng,
+        type: s.type,
+        stationId,
+        region: detectRegion(s.lat, s.lng),
+      })
+    })
+  }, [])
 
   if (!loaded) return null
 
