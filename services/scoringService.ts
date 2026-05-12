@@ -4,13 +4,20 @@ import type { ConditionsData, SkyData, WindData, PressureData, HourlyScore } fro
 import type { Spot } from '../types/spot'
 import type { NoaaData } from './noaaService'
 import type { NwsData } from './nwsService'
+import type { MarineDay } from './marineService'
 import type { SolunarData } from './solunarService'
-import type { SwellData } from '../types/conditions'
 import type { ScoringInputs } from '../features/score/scoringEngine'
 
 const NEUTRAL_PRESSURE: PressureData = { value: 29.92, trend: 'stable', rate: 'normal', unit: 'inHg', readings: [] }
 const NEUTRAL_WIND: WindData = { speed: 8, gusts: 12, direction: 0, directionLabel: 'N', unit: 'mph' }
 const NEUTRAL_SKY: SkyData = { condition: 'Partly Cloudy', rainChance: 20, icon: 'partly-cloudy' }
+
+function localDateKey(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
 
 function parseHourFromTimeString(t: string): number {
   const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i)
@@ -82,20 +89,27 @@ function getHourlySky(nws: NwsData | null, hour: number): SkyData {
 }
 
 export function buildConditionsData(
+  date: string,
   noaa: NoaaData | null,
-  nws: NwsData | null,
-  marine: SwellData | null,
+  nwsByDay: Record<string, NwsData> | null,
+  marineByDay: Record<string, MarineDay> | null,
   solunar: SolunarData,
   spot: Spot,
-  now: Date
+  refDate: Date
 ): ConditionsData {
-  const pressure = noaa?.pressure ?? NEUTRAL_PRESSURE
-  const wind = noaa?.wind ?? nws?.wind ?? NEUTRAL_WIND
-  const sky = nws?.sky ?? NEUTRAL_SKY
-  const waterTempValue = noaa?.waterTemp ?? (spot.type === 'saltwater' ? 65 : 68)
-  const tide = noaa?.tide ?? null
+  const nws = nwsByDay?.[date] ?? null
+  const marine = marineByDay?.[date] ?? null
+  const tide = noaa?.tideByDay[date] ?? null
 
-  const currentHour = now.getHours()
+  const todayKey = localDateKey(refDate)
+  const isToday = date === todayKey
+
+  const pressure = (isToday ? noaa?.pressure : null) ?? marine?.pressure ?? NEUTRAL_PRESSURE
+  const wind = (isToday ? noaa?.wind : null) ?? nws?.wind ?? NEUTRAL_WIND
+  const sky = nws?.sky ?? NEUTRAL_SKY
+  const waterTempValue = (isToday ? noaa?.waterTemp : null) ?? marine?.waterTemp ?? (spot.type === 'saltwater' ? 65 : 68)
+
+  const currentHour = refDate.getHours()
   const hourlyCurve = tide?.hourlyCurve ?? []
   const tideForScore = tide
     ? {
@@ -118,7 +132,6 @@ export function buildConditionsData(
     sky: { condition: sky.icon },
   })
 
-  // Hourly scores: 5AM (hour 5) to 8PM (hour 20) = 16 hours
   const hourlyScores: HourlyScore[] = []
   for (let h = 5; h <= 20; h++) {
     const hourTide = hourlyCurve.length > 0
@@ -127,7 +140,6 @@ export function buildConditionsData(
     const hourSky = getHourlySky(nws, h)
     const hourWind = getHourlyWind(nws, h)
     const hourSolunar = getHourlySolunar(solunar, h)
-
     hourlyScores.push({
       hour: formatHourLabel(h),
       score: calculateScore({
@@ -142,7 +154,6 @@ export function buildConditionsData(
     })
   }
 
-  // Best 3-hour window
   let bestWindow = { start: formatHourTime(5), end: formatHourTime(7), score: 0 }
   for (let i = 0; i < hourlyScores.length - 2; i++) {
     const avg = Math.round(
@@ -171,7 +182,7 @@ export function buildConditionsData(
     water: { temp: waterTempValue, unit: '°F' },
     air: nws?.air ?? { temp: 65, high: 70, low: 58, humidity: 70, unit: '°F' },
     pressure,
-    swell: marine,
+    swell: marine?.swell ?? null,
     sky,
     sun: solunar.sun,
     moon: solunar.moon,
@@ -179,7 +190,6 @@ export function buildConditionsData(
   }
 }
 
-// Keep legacy stub shape for forecastService (Phase B2)
 export async function fetchConditions(_spot: Spot): Promise<ConditionsData> {
   throw new Error('fetchConditions not used in Phase B1 — use buildConditionsData via useConditions')
 }

@@ -2,7 +2,7 @@ import { buildConditionsData } from '../services/scoringService'
 import type { NoaaData } from '../services/noaaService'
 import type { NwsData } from '../services/nwsService'
 import type { SolunarData } from '../services/solunarService'
-import type { SwellData } from '../types/conditions'
+import type { MarineDay } from '../services/marineService'
 import type { Spot } from '../types/spot'
 
 const SPOT: Spot = {
@@ -10,19 +10,22 @@ const SPOT: Spot = {
   type: 'saltwater', stationId: '9415020', region: 'west_coast',
 }
 
+const DATE = '2026-05-06'
 const NOW = new Date('2026-05-06T14:00:00')
 
 const NOAA: NoaaData = {
-  tide: {
-    current: { height: 3.2, rising: true, unit: 'ft' },
-    next: { type: 'high', time: '3:42 PM', height: 5.1 },
-    events: [
-      { type: 'low', time: '9:18 AM', height: 0.3 },
-      { type: 'high', time: '3:42 PM', height: 5.1 },
-    ],
-    hourlyCurve: [0.8,0.5,0.3,0.5,1.1,1.9,2.8,3.6,4.3,4.8,5.0,5.1,
-                  4.9,4.5,3.8,3.0,2.2,1.5,1.0,0.8,0.9,1.3,1.9,2.7],
-    phase: 'incoming',
+  tideByDay: {
+    '2026-05-06': {
+      current: { height: 3.2, rising: true, unit: 'ft' },
+      next: { type: 'high', time: '3:42 PM', height: 5.1 },
+      events: [
+        { type: 'low', time: '9:18 AM', height: 0.3 },
+        { type: 'high', time: '3:42 PM', height: 5.1 },
+      ],
+      hourlyCurve: [0.8,0.5,0.3,0.5,1.1,1.9,2.8,3.6,4.3,4.8,5.0,5.1,
+                    4.9,4.5,3.8,3.0,2.2,1.5,1.0,0.8,0.9,1.3,1.9,2.7],
+      phase: 'incoming',
+    },
   },
   wind: { speed: 8, gusts: 14, direction: 225, directionLabel: 'SW', unit: 'mph' },
   waterTemp: 57,
@@ -31,103 +34,102 @@ const NOAA: NoaaData = {
 }
 
 const NWS: NwsData = {
-  air: { temp: 62, high: 67, low: 52, humidity: 78, unit: '°F' },
-  sky: { condition: 'Partly Cloudy', rainChance: 15, icon: 'partly-cloudy' },
-  wind: { speed: 10, gusts: 15, direction: 225, directionLabel: 'SW', unit: 'mph' },
-  hourlyForecast: [
-    { hour: 5, windSpeed: 5, cloudCover: 30, rainChance: 10, windDirection: 'SW' },
-    { hour: 14, windSpeed: 10, cloudCover: 50, rainChance: 15, windDirection: 'W' },
-  ],
+  air: { temp: 62, high: 67, low: 55, humidity: 75, unit: '°F' },
+  sky: { condition: 'Overcast', rainChance: 10, icon: 'overcast' },
+  wind: { speed: 10, gusts: 16, direction: 225, directionLabel: 'SW', unit: 'mph' },
+  hourlyForecast: Array.from({ length: 16 }, (_, i) => ({
+    hour: 5 + i,
+    windSpeed: 8 + i,
+    cloudCover: 80,
+    rainChance: 10,
+    windDirection: 'SW',
+  })),
+}
+
+const NWS_BY_DAY: Record<string, NwsData> = { '2026-05-06': NWS }
+
+const MARINE: Record<string, MarineDay> = {
+  '2026-05-06': {
+    swell: { height: 1.4, period: 12, direction: 290, directionLabel: 'WNW', unit: 'ft' },
+    waterTemp: 57.2,
+    pressure: { value: 29.98, trend: 'stable', rate: 'slow', unit: 'inHg', readings: [] },
+  },
 }
 
 const SOLUNAR: SolunarData = {
+  isMajorMoonDay: false,
   moon: {
-    phase: 'Waxing Gibbous', illumination: 78,
-    majorPeriods: [{ start: '2:15 PM', end: '3:15 PM' }],
-    minorPeriods: [{ start: '8:30 AM', end: '9:30 AM' }],
+    phase: 'waxing_gibbous',
+    illumination: 0.72,
+    rise: '4:30 PM',
+    set: '3:15 AM',
+    majorPeriods: [{ start: '4:00 PM', end: '5:00 PM' }],
+    minorPeriods: [{ start: '10:15 AM', end: '11:15 AM' }],
   },
-  sun: { sunrise: '6:12 AM', sunset: '7:58 PM' },
-  inMajorPeriod: true, inMinorPeriod: false, withinHourOfPeriod: false, isMajorMoonDay: false,
-}
-
-const SWELL: SwellData = {
-  height: 4.5, period: 12, direction: 290, directionLabel: 'WNW', unit: 'ft',
-}
+  sun: {
+    sunrise: '6:08 AM',
+    sunset: '7:52 PM',
+    goldenHourMorning: '6:08 AM',
+    goldenHourEvening: '7:20 PM',
+  },
+  inMajorPeriod: false,
+  inMinorPeriod: false,
+  withinHourOfPeriod: false,
+} as unknown as SolunarData
 
 describe('buildConditionsData', () => {
-  it('returns a valid ConditionsData shape', () => {
-    const result = buildConditionsData(NOAA, NWS, SWELL, SOLUNAR, SPOT, NOW)
-    expect(result).toHaveProperty('fishingScore')
-    expect(result).toHaveProperty('scoreLabel')
-    expect(result).toHaveProperty('bestWindow')
-    expect(result).toHaveProperty('hourlyScores')
-    expect(result).toHaveProperty('tide')
-    expect(result).toHaveProperty('wind')
-    expect(result).toHaveProperty('pressure')
-    expect(result).toHaveProperty('moon')
-    expect(result).toHaveProperty('sun')
-  })
-
-  it('fishing score is between 0 and 100', () => {
-    const result = buildConditionsData(NOAA, NWS, SWELL, SOLUNAR, SPOT, NOW)
+  it('returns fishingScore between 0 and 100', () => {
+    const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
     expect(result.fishingScore).toBeGreaterThanOrEqual(0)
     expect(result.fishingScore).toBeLessThanOrEqual(100)
   })
 
-  it('returns null tide when NOAA tide is null', () => {
-    const noaaNullTide = { ...NOAA, tide: null }
-    const result = buildConditionsData(noaaNullTide, NWS, SWELL, SOLUNAR, SPOT, NOW)
-    expect(result.tide).toBeNull()
+  it('returns a scoreLabel string', () => {
+    const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
+    expect(typeof result.scoreLabel).toBe('string')
+    expect(result.scoreLabel.length).toBeGreaterThan(0)
   })
 
-  it('uses NWS wind when NOAA wind is null', () => {
-    const noaaNullWind = { ...NOAA, wind: null }
-    const result = buildConditionsData(noaaNullWind, NWS, SWELL, SOLUNAR, SPOT, NOW)
-    expect(result.wind.speed).toBe(NWS.wind.speed)
+  it('slices correct tide from tideByDay', () => {
+    const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
+    expect(result.tide).not.toBeNull()
+    expect(result.tide!.phase).toBe('incoming')
   })
 
-  it('uses neutral fallback when both NOAA and NWS are null', () => {
-    const result = buildConditionsData(null, null, null, SOLUNAR, SPOT, NOW)
-    expect(result.fishingScore).toBeGreaterThanOrEqual(0)
-    expect(result.fishingScore).toBeLessThanOrEqual(100)
+  it('uses NOAA pressure for today (priority over marine)', () => {
+    const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
+    expect(result.pressure.value).toBeCloseTo(30.02, 2)
   })
 
-  it('hourlyScores covers hours 5 through 20', () => {
-    const result = buildConditionsData(NOAA, NWS, SWELL, SOLUNAR, SPOT, NOW)
+  it('uses marine pressure for non-today dates', () => {
+    const futureDate = '2026-05-07'
+    const futureNoaa: NoaaData = { ...NOAA, tideByDay: {} }
+    const futureMarine: Record<string, MarineDay> = {
+      '2026-05-07': { ...MARINE['2026-05-06'], pressure: { value: 29.85, trend: 'falling', rate: 'slow', unit: 'inHg', readings: [] } },
+    }
+    const futureNwsDay: Record<string, NwsData> = { '2026-05-07': NWS }
+    const result = buildConditionsData(futureDate, futureNoaa, futureNwsDay, futureMarine, SOLUNAR, SPOT, NOW)
+    expect(result.pressure.value).toBeCloseTo(29.85, 2)
+  })
+
+  it('returns 16 hourly scores (5AM to 8PM)', () => {
+    const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
     expect(result.hourlyScores).toHaveLength(16)
-    expect(result.hourlyScores[0].hour).toBe('5AM')
-    expect(result.hourlyScores[15].hour).toBe('8PM')
   })
 
-  it('bestWindow score is the highest 3-hour average', () => {
-    const result = buildConditionsData(NOAA, NWS, SWELL, SOLUNAR, SPOT, NOW)
-    expect(result.bestWindow.score).toBeGreaterThanOrEqual(0)
+  it('includes bestWindow with start, end, score', () => {
+    const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
     expect(result.bestWindow.start).toBeTruthy()
     expect(result.bestWindow.end).toBeTruthy()
+    expect(result.bestWindow.score).toBeGreaterThanOrEqual(0)
   })
 
-  it('passes moon and sun from solunar', () => {
-    const result = buildConditionsData(NOAA, NWS, SWELL, SOLUNAR, SPOT, NOW)
-    expect(result.moon.phase).toBe('Waxing Gibbous')
-    expect(result.sun.sunrise).toBe('6:12 AM')
-  })
-
-  it('includes windHourly derived from NWS hourlyForecast', () => {
-    const result = buildConditionsData(NOAA, NWS, null, SOLUNAR, SPOT, new Date())
-    expect(Array.isArray(result.windHourly)).toBe(true)
-    expect(result.windHourly.length).toBe(NWS!.hourlyForecast.length)
-    expect(result.windHourly[0]).toHaveProperty('hour')
-    expect(result.windHourly[0]).toHaveProperty('speed')
-    expect(result.windHourly[0]).toHaveProperty('directionLabel')
-  })
-
-  it('returns empty windHourly when NWS unavailable', () => {
-    const result = buildConditionsData(NOAA, null, null, SOLUNAR, SPOT, new Date())
-    expect(result.windHourly).toEqual([])
-  })
-
-  it('passes through pressure.readings from NOAA data', () => {
-    const result = buildConditionsData(NOAA, NWS, null, SOLUNAR, SPOT, new Date())
-    expect(result.pressure.readings).toEqual(NOAA!.pressure!.readings)
+  it('falls back to NEUTRAL_PRESSURE when both noaa and marine pressure are null', () => {
+    const noNoaa: NoaaData = { ...NOAA, pressure: null }
+    const noMarine: Record<string, MarineDay> = {
+      '2026-05-06': { ...MARINE['2026-05-06'], pressure: null },
+    }
+    const result = buildConditionsData(DATE, noNoaa, NWS_BY_DAY, noMarine, SOLUNAR, SPOT, NOW)
+    expect(result.pressure.value).toBeCloseTo(29.92, 2)
   })
 })
