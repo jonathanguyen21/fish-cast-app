@@ -139,8 +139,8 @@ export default function WindDetailScreen() {
               </Defs>
 
               {/* Y-axis grid lines */}
-              {gridLines.map((v) => (
-                <G key={v}>
+              {gridLines.map((v, i) => (
+                <G key={`grid-${i}`}>
                   <Line
                     x1={PADDING.left} y1={toY(v)}
                     x2={PADDING.left + innerW} y2={toY(v)}

@@ -168,24 +168,36 @@ export function buildConditionsData(
     }
   }
 
+  // Extend today's partial NWS data to 24 hours by borrowing from the next day
+  const todayHourly = nws?.hourlyForecast ?? []
+  const nextStr = (() => {
+    const d = new Date(date + 'T12:00:00')
+    d.setDate(d.getDate() + 1)
+    return localDateKey(d)
+  })()
+  const nextHourly = nwsByDay?.[nextStr]?.hourlyForecast ?? []
+  const extendedHourly = todayHourly.length < 24
+    ? [...todayHourly, ...nextHourly.slice(0, 24 - todayHourly.length)]
+    : todayHourly
+
   return {
     fishingScore: currentScore,
     scoreLabel: scoreLabel(currentScore),
     bestWindow,
     wind,
-    windHourly: nws?.hourlyForecast.map(h => ({
+    windHourly: extendedHourly.map(h => ({
       hour: h.hour,
       speed: h.windSpeed,
       gusts: h.windGust,
       direction: h.directionDeg,
       directionLabel: h.windDirection,
-    })) ?? [],
-    airHourly: nws?.hourlyForecast.map(h => ({
+    })),
+    airHourly: extendedHourly.map(h => ({
       hour: h.hour,
       temp: h.temp,
       rainChance: h.rainChance,
       cloudCover: h.cloudCover,
-    })) ?? [],
+    })),
     swellHourly: marine?.swellHourly ?? null,
     tide,
     water: { temp: waterTempValue, unit: '°F' },

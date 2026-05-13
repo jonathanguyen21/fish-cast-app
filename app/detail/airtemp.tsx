@@ -46,7 +46,7 @@ export default function AirTempDetailScreen() {
   const innerW = chartW - PADDING.left - PADDING.right
   const innerH = CHART_HEIGHT - PADDING.top - PADDING.bottom
 
-  const temps = airHourly.map(h => h.temp)
+  const temps = airHourly.map(h => h.temp).filter(Number.isFinite)
   const minT = temps.length ? Math.min(...temps) - 2 : 50
   const maxT = temps.length ? Math.max(...temps) + 2 : 90
   const range = maxT - minT || 1
@@ -124,8 +124,8 @@ export default function AirTempDetailScreen() {
               </Defs>
 
               {/* Grid lines */}
-              {gridTemps.map(t => (
-                <G key={t}>
+              {gridTemps.map((t, i) => (
+                <G key={`grid-${i}`}>
                   <Line
                     x1={PADDING.left} y1={toY(t)}
                     x2={PADDING.left + innerW} y2={toY(t)}
