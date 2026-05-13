@@ -18,6 +18,7 @@ const PADDING = { top: 24, bottom: 36, left: 36, right: 16 }
 
 // Cold [0,119,182] → Hot [255,87,34]
 function tempToRgb(temp: number, minT: number, maxT: number): string {
+  if (!Number.isFinite(temp) || !Number.isFinite(minT) || !Number.isFinite(maxT)) return 'rgb(0,119,182)'
   const t = Math.max(0, Math.min(1, (temp - minT) / Math.max(maxT - minT, 1)))
   const r = Math.round(0 + t * (255 - 0))
   const g = Math.round(119 + t * (87 - 119))

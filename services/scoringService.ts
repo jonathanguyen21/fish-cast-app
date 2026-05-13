@@ -168,16 +168,13 @@ export function buildConditionsData(
     }
   }
 
-  // Extend today's partial NWS data to 24 hours by borrowing from the next day
+  // Always produce hours 0-23 for the selected day.
+  // Past hours not returned by NWS are backfilled with the first available entry.
   const todayHourly = nws?.hourlyForecast ?? []
-  const nextStr = (() => {
-    const d = new Date(date + 'T12:00:00')
-    d.setDate(d.getDate() + 1)
-    return localDateKey(d)
-  })()
-  const nextHourly = nwsByDay?.[nextStr]?.hourlyForecast ?? []
-  const extendedHourly = todayHourly.length < 24
-    ? [...todayHourly, ...nextHourly.slice(0, 24 - todayHourly.length)]
+  const hourMap = new Map(todayHourly.map(h => [h.hour, h]))
+  const firstEntry = todayHourly[0]
+  const extendedHourly = firstEntry
+    ? Array.from({ length: 24 }, (_, hour) => hourMap.get(hour) ?? { ...firstEntry, hour })
     : todayHourly
 
   return {
