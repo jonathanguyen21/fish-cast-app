@@ -181,10 +181,10 @@ export default function ForecastScreen() {
                 pathname: '/detail/pressure' as any,
                 params: { data: JSON.stringify(conditions.pressure) },
               })}
-              onPressSwell={() => router.push({
+              onPressSwell={conditions.swellHourly ? () => router.push({
                 pathname: '/detail/swell' as any,
                 params: { data: JSON.stringify(conditions.swellHourly) },
-              })}
+              }) : undefined}
               onPressAir={() => router.push({
                 pathname: '/detail/airtemp' as any,
                 params: { data: JSON.stringify(conditions.airHourly) },

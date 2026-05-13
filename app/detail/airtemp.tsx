@@ -36,10 +36,11 @@ export default function AirTempDetailScreen() {
   const router = useRouter()
   const { width } = useWindowDimensions()
 
-  const airHourly = useMemo<AirHour[]>(
-    () => (data ? JSON.parse(data) : []),
-    [data]
-  )
+  const airHourly = useMemo<AirHour[]>(() => {
+    if (!data) return []
+    const parsed = JSON.parse(data)
+    return Array.isArray(parsed) ? parsed : []
+  }, [data])
 
   const chartW = width - Spacing.screenPad * 2 - Spacing.md * 2
   const innerW = chartW - PADDING.left - PADDING.right
@@ -105,6 +106,12 @@ export default function AirTempDetailScreen() {
         )}
       </View>
 
+      {airHourly.length > 0 && airHourly[0].hour > 0 && (
+        <Text style={styles.rangeNote}>
+          Forecast from {hourLabel(airHourly[0].hour)} · {airHourly.length} hours
+        </Text>
+      )}
+
       {airHourly.length > 0 ? (
         <View style={styles.chartCard}>
           <View {...panResponder.panHandlers}>
@@ -113,16 +120,6 @@ export default function AirTempDetailScreen() {
                 <LinearGradient id="airFill" x1="0" y1="0" x2="0" y2="1">
                   <Stop offset="0" stopColor={tempToRgb(maxT, minT, maxT)} stopOpacity={0.4} />
                   <Stop offset="1" stopColor={tempToRgb(minT, minT, maxT)} stopOpacity={0.05} />
-                </LinearGradient>
-                <LinearGradient
-                  id="tempLine"
-                  gradientUnits="userSpaceOnUse"
-                  x1={String(PADDING.left)} y1={String(PADDING.top + innerH)}
-                  x2={String(PADDING.left)} y2={String(PADDING.top)}
-                >
-                  <Stop offset="0" stopColor={tempToRgb(minT, minT, maxT)} />
-                  <Stop offset="0.5" stopColor={tempToRgb((minT + maxT) / 2, minT, maxT)} />
-                  <Stop offset="1" stopColor={tempToRgb(maxT, minT, maxT)} />
                 </LinearGradient>
               </Defs>
 
@@ -143,8 +140,21 @@ export default function AirTempDetailScreen() {
               {/* Fill */}
               {fillPath ? <Path d={fillPath} fill="url(#airFill)" /> : null}
 
-              {/* Temperature-mapped gradient line */}
-              {linePath ? <Path d={linePath} stroke="url(#tempLine)" strokeWidth={2.5} fill="none" /> : null}
+              {/* Temperature-mapped line: per-segment colored lines */}
+              {airHourly.map((h, i, arr) => {
+                if (i === arr.length - 1) return null
+                const midTemp = (h.temp + arr[i + 1].temp) / 2
+                return (
+                  <Line
+                    key={`seg-${i}`}
+                    x1={toX(i)} y1={toY(h.temp)}
+                    x2={toX(i + 1)} y2={toY(arr[i + 1].temp)}
+                    stroke={tempToRgb(midTemp, minT, maxT)}
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                  />
+                )
+              })}
 
               {/* Colored dots */}
               {airHourly.map((h, i) => (
@@ -215,5 +225,6 @@ const styles = StyleSheet.create({
   gradient: { alignItems: 'center', marginTop: 4 },
   gradientLabels: { flexDirection: 'row', justifyContent: 'space-between', width: 120, marginTop: 2 },
   gradLabel: { fontSize: 11, fontWeight: '600' },
+  rangeNote: { fontSize: 11, color: Colors.textTertiary, textAlign: 'center', marginBottom: Spacing.sm },
   empty: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', marginTop: Spacing.xl },
 })

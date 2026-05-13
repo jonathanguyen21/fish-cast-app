@@ -28,10 +28,11 @@ export default function SwellDetailScreen() {
   const router = useRouter()
   const { width } = useWindowDimensions()
 
-  const swellHourly = useMemo<SwellHour[]>(
-    () => (data ? JSON.parse(data) : []),
-    [data]
-  )
+  const swellHourly = useMemo<SwellHour[]>(() => {
+    if (!data) return []
+    const parsed = JSON.parse(data)
+    return Array.isArray(parsed) ? parsed : []
+  }, [data])
 
   const chartW = width - Spacing.screenPad * 2 - Spacing.md * 2
   const innerW = chartW - PADDING.left - PADDING.right

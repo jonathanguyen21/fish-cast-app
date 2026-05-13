@@ -35,10 +35,11 @@ export default function WindDetailScreen() {
   const { width } = useWindowDimensions()
   const speedUnit = useSettingsStore(s => s.speedUnit)
 
-  const windHourly = useMemo<HourlyWind[]>(
-    () => (data ? JSON.parse(data) : []),
-    [data]
-  )
+  const windHourly = useMemo<HourlyWind[]>(() => {
+    if (!data) return []
+    const parsed = JSON.parse(data)
+    return Array.isArray(parsed) ? parsed : []
+  }, [data])
   const convert = useCallback(
     (mph: number) => speedUnit === 'kts' ? Math.round(mph * 0.868) : mph,
     [speedUnit]
@@ -119,6 +120,12 @@ export default function WindDetailScreen() {
           <Text style={styles.cursorSub}>Peak {convert(peakEntry.speed)} {unitLabel} at {hourLabel(peakEntry.hour)} · {directionArrow(peakEntry.direction ?? 0)} {peakEntry.directionLabel}</Text>
         </View>
       ) : null}
+
+      {windHourly.length > 0 && windHourly[0].hour > 0 && (
+        <Text style={styles.rangeNote}>
+          Forecast from {hourLabel(windHourly[0].hour)} · {windHourly.length} hours
+        </Text>
+      )}
 
       {windHourly.length > 0 ? (
         <View style={styles.chartCard}>
@@ -256,5 +263,6 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendLine: { width: 16, height: 3, borderRadius: 2 },
   legendLabel: { fontSize: 11, color: Colors.textSecondary },
+  rangeNote: { fontSize: 11, color: Colors.textTertiary, textAlign: 'center', marginBottom: Spacing.sm },
   empty: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', marginTop: Spacing.xl },
 })
