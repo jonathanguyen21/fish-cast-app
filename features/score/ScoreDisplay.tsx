@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import Animated, { useSharedValue, useAnimatedProps, withTiming, Easing } from 'react-native-reanimated'
 import { Svg, Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
+import { scoreColor } from './scoringEngine'
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export function ScoreDisplay({ score, label, bestWindow }: Props) {
+  const gradientId = useRef(`scoreGrad-${Math.random().toString(36).slice(2)}`).current
   const animatedOffset = useSharedValue(CIRCUMFERENCE)
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export function ScoreDisplay({ score, label, bestWindow }: Props) {
         {/* SVG rotated so arc starts at top */}
         <Svg width={SIZE} height={SIZE} style={styles.svg}>
           <Defs>
-            <LinearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="0">
+            <LinearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
               <Stop offset="0" stopColor={GRAD_START} />
               <Stop offset="1" stopColor={GRAD_END} />
             </LinearGradient>
@@ -56,7 +58,7 @@ export function ScoreDisplay({ score, label, bestWindow }: Props) {
           <AnimatedCircle
             cx={SIZE / 2} cy={SIZE / 2} r={RADIUS}
             fill="none"
-            stroke="url(#scoreGrad)"
+            stroke={`url(#${gradientId})`}
             strokeWidth={STROKE_WIDTH}
             strokeDasharray={CIRCUMFERENCE}
             strokeLinecap="round"
@@ -65,14 +67,18 @@ export function ScoreDisplay({ score, label, bestWindow }: Props) {
         </Svg>
         {/* Text overlay — native Text nodes so tests can find them */}
         <View style={styles.textOverlay} pointerEvents="none">
-          <Text style={styles.scoreNumber} testID="score-number">{score}</Text>
+          <Text style={[styles.scoreNumber, { color: scoreColor(score) }]} testID="score-number">{score}</Text>
           <Text style={styles.scoreName}>FISHING SCORE</Text>
           <Text style={styles.scoreLabel}>{label}</Text>
         </View>
       </View>
-      <Text style={styles.bestWindow}>
-        Best window: {bestWindow.start}–{bestWindow.end} · Score {bestWindow.score}
-      </Text>
+      <View style={styles.bestWindowRow}>
+        <Text style={styles.bestWindowLabel}>Best window</Text>
+        <View style={styles.bestWindowPill}>
+          <Text style={styles.bestWindowTime}>{bestWindow.start}–{bestWindow.end}</Text>
+          <Text style={styles.bestWindowScore}> · {bestWindow.score}</Text>
+        </View>
+      </View>
     </View>
   )
 }
@@ -103,23 +109,47 @@ const styles = StyleSheet.create({
   scoreNumber: {
     fontSize: 48,
     fontWeight: '800',
-    color: Colors.textPrimary,
     lineHeight: 52,
   },
   scoreName: {
-    fontSize: 9,
+    fontSize: 11,
     color: GRAD_END,
-    letterSpacing: 1.2,
+    letterSpacing: 1.5,
     marginTop: 2,
+    fontWeight: '600',
   },
   scoreLabel: {
-    fontSize: 9,
-    color: Colors.textSecondary,
-    marginTop: 3,
-  },
-  bestWindow: {
     fontSize: 12,
     color: Colors.textSecondary,
+    marginTop: 4,
+  },
+  bestWindowRow: {
     marginTop: Spacing.sm,
+    alignItems: 'center',
+    gap: 4,
+  },
+  bestWindowLabel: {
+    fontSize: 11,
+    color: Colors.textTertiary,
+    letterSpacing: 0.5,
+  },
+  bestWindowPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.accent + '1A',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: Colors.accent + '40',
+  },
+  bestWindowTime: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.accent,
+  },
+  bestWindowScore: {
+    fontSize: 12,
+    color: Colors.textSecondary,
   },
 })

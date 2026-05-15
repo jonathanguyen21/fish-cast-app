@@ -33,7 +33,8 @@ export function WindDisplay({ wind, peakSpeed, onPress }: Props) {
   const rotation = useSharedValue(wind.direction)
 
   useEffect(() => {
-    rotation.value = withTiming(wind.direction, { duration: 800 })
+    const delta = ((wind.direction - rotation.value) % 360 + 540) % 360 - 180
+    rotation.value = withTiming(rotation.value + delta, { duration: 800 })
   }, [wind.direction, rotation])
 
   const arrowStyle = useAnimatedStyle(() => ({
@@ -42,6 +43,7 @@ export function WindDisplay({ wind, peakSpeed, onPress }: Props) {
 
   const card = (
     <View style={styles.card} testID="wind-display">
+      <Text style={styles.icon}>💨</Text>
       <Text style={styles.label}>Wind</Text>
       <View style={styles.row}>
         <Animated.Text style={[styles.arrow, arrowStyle]}>↑</Animated.Text>
@@ -74,6 +76,7 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     alignItems: 'center',
   },
+  icon: { fontSize: 18, marginBottom: 2 },
   label: { fontSize: 11, color: Colors.textTertiary, marginBottom: 2 },
   row: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
   arrow: { fontSize: 20, color: Colors.accent, marginRight: 2 },
