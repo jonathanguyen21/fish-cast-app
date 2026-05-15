@@ -14,7 +14,6 @@ import { ScoreTimeline } from '../../features/score/ScoreTimeline'
 import { TideChart } from '../../features/tide/TideChart'
 import { WindDisplay } from '../../features/wind/WindDisplay'
 import { ConditionsGrid } from '../../features/conditions/ConditionsGrid'
-import { SpeciesCard } from '../../features/species/SpeciesCard'
 import { ActiveRightNow } from '../../features/species/ActiveRightNow'
 import { ForecastStrip } from '../../features/forecast/ForecastStrip'
 import { DayCalendar } from '../../features/calendar/DayCalendar'
@@ -231,6 +230,8 @@ export default function ForecastScreen() {
                 .map(ss => ss.species)}
               hourlyByMap={scoredHourlyByMap}
               currentHour={currentHour}
+              maxRows={2}
+              onSeeAll={() => router.push('/(tabs)/species' as any)}
               onPressSpecies={(id) => {
                 const ss = scoredSpecies.find(s => s.species.id === id)
                 if (!ss) return
@@ -240,25 +241,6 @@ export default function ForecastScreen() {
                 })
               }}
             />
-            <View style={styles.section}>
-              <Text style={Typography.sectionTitle}>What's Biting</Text>
-              {scoredSpecies.every(ss => ss.score === 0) ? (
-                <Text style={styles.emptySpecies}>Nothing active right now</Text>
-              ) : (
-                scoredSpecies.map(ss => (
-                  <SpeciesCard
-                    key={ss.species.id}
-                    speciesScore={ss}
-                    hourly={scoredHourlyByMap[ss.species.id]}
-                    isPro={isPro}
-                    onPress={() => {
-                      if (ss.species.tier === 'pro' && !isPro) return
-                      router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss), hourlyData: JSON.stringify(scoredHourlyByMap[ss.species.id] ?? []) } })
-                    }}
-                  />
-                ))
-              )}
-            </View>
             <ForecastStrip forecast={forecast} isPro={isPro} onUpgrade={() => router.push('/settings')} />
           </>
         )}
@@ -341,8 +323,4 @@ const styles = StyleSheet.create({
   },
   dateChipText: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   dateChipArrow: { fontSize: 12, color: Colors.textSecondary },
-  emptySpecies: {
-    fontSize: 14, color: Colors.textSecondary,
-    textAlign: 'center', paddingVertical: Spacing.md,
-  },
 })

@@ -12,6 +12,8 @@ interface Props {
   hourlyByMap: Record<string, SpeciesHourlyScore[]>
   currentHour: number
   onPressSpecies: (id: string) => void
+  maxRows?: number
+  onSeeAll?: () => void
 }
 
 function formatHour(h: number): string {
@@ -30,7 +32,7 @@ function hintLabel(hourly: SpeciesHourlyScore[], currentHour: number): string {
   }
 }
 
-export function ActiveRightNow({ species, hourlyByMap, currentHour, onPressSpecies }: Props) {
+export function ActiveRightNow({ species, hourlyByMap, currentHour, onPressSpecies, maxRows = 3, onSeeAll }: Props) {
   const rows = useMemo(() => {
     return species
       .map(sp => {
@@ -43,8 +45,8 @@ export function ActiveRightNow({ species, hourlyByMap, currentHour, onPressSpeci
       })
       .filter((r): r is NonNullable<typeof r> => r !== null)
       .sort((a, b) => b.currentScore - a.currentScore)
-      .slice(0, 3)
-  }, [species, hourlyByMap, currentHour])
+      .slice(0, maxRows)
+  }, [species, hourlyByMap, currentHour, maxRows])
 
   if (rows.length === 0) return null
 
@@ -69,6 +71,11 @@ export function ActiveRightNow({ species, hourlyByMap, currentHour, onPressSpeci
             </TouchableOpacity>
           )
         })}
+        {onSeeAll && (
+          <TouchableOpacity style={styles.seeAll} onPress={onSeeAll}>
+            <Text style={styles.seeAllText}>See all species →</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   )
@@ -89,4 +96,12 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   badgeScore: { fontSize: 13, fontWeight: '700' },
+  seeAll: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.surface,
+    alignItems: 'center',
+  },
+  seeAllText: { fontSize: 13, color: Colors.accent, fontWeight: '600' },
 })
