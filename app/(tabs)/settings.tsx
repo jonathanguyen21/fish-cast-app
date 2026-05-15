@@ -107,7 +107,11 @@ export default function SettingsScreen() {
             <Text style={styles.proActiveIcon}>✦</Text>
             <Text style={styles.proActiveLabel}>FishCast Pro</Text>
           </View>
-          <TouchableOpacity onPress={() => Linking.openURL('https://apps.apple.com/account/subscriptions')}>
+          <TouchableOpacity
+            accessibilityRole="link"
+            accessibilityLabel="Manage your subscription"
+            onPress={() => Linking.openURL('https://apps.apple.com/account/subscriptions').catch(() => {})}
+          >
             <Text style={styles.manageLink}>Manage Subscription</Text>
           </TouchableOpacity>
         </View>
@@ -132,7 +136,11 @@ export default function SettingsScreen() {
       )}
 
       <Text style={styles.version}>FishCast v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
-      <TouchableOpacity onPress={() => Linking.openURL('https://fishcast.app/privacy')}>
+      <TouchableOpacity
+        accessibilityRole="link"
+        accessibilityLabel="Privacy Policy"
+        onPress={() => Linking.openURL('https://fishcast.app/privacy').catch(() => {})}
+      >
         <Text style={styles.privacyLink}>Privacy Policy</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -195,7 +203,7 @@ const styles = StyleSheet.create({
     margin: Spacing.md,
     marginTop: Spacing.sm,
     backgroundColor: Colors.accent,
-    borderRadius: 12,
+    borderRadius: Spacing.cardRadius,
     paddingVertical: 14,
     alignItems: 'center',
   },
