@@ -1,4 +1,5 @@
 import { calculateScore, scoreLabel } from '../features/score/scoringEngine'
+import { findBestThreeHourWindow } from '../features/score/bestWindow'
 import { detectPhase, hoursFromLastTurn } from '../features/tide/tideUtils'
 import type { ConditionsData, SkyData, WindData, PressureData, HourlyScore } from '../types/conditions'
 import type { Spot } from '../types/spot'
@@ -7,6 +8,7 @@ import type { NwsData } from './nwsService'
 import type { MarineDay } from './marineService'
 import type { SolunarData } from './solunarService'
 import type { ScoringInputs } from '../features/score/scoringEngine'
+import type { TidePhase } from '../features/tide/tideUtils'
 
 const NEUTRAL_PRESSURE: PressureData = { value: 29.92, trend: 'stable', rate: 'normal', unit: 'inHg', readings: [] }
 const NEUTRAL_WIND: WindData = { speed: 8, gusts: 12, direction: 0, directionLabel: 'N', unit: 'mph' }
@@ -133,9 +135,12 @@ export function buildConditionsData(
   })
 
   const hourlyScores: HourlyScore[] = []
+  const tidePhasesByHour: Record<number, TidePhase> = {}
   for (let h = 5; h <= 20; h++) {
+    const phase = hourlyCurve.length > 0 ? detectPhase(hourlyCurve, h) : 'slack'
+    tidePhasesByHour[h] = phase
     const hourTide = hourlyCurve.length > 0
-      ? { phase: detectPhase(hourlyCurve, h), hoursFromTurn: hoursFromLastTurn(hourlyCurve, h) }
+      ? { phase, hoursFromTurn: hoursFromLastTurn(hourlyCurve, h) }
       : null
     const hourSky = getHourlySky(nws, h)
     const hourWind = getHourlyWind(nws, h)
@@ -154,19 +159,14 @@ export function buildConditionsData(
     })
   }
 
-  let bestWindow = { start: formatHourTime(5), end: formatHourTime(7), score: 0 }
-  for (let i = 0; i < hourlyScores.length - 2; i++) {
-    const avg = Math.round(
-      (hourlyScores[i].score + hourlyScores[i + 1].score + hourlyScores[i + 2].score) / 3
-    )
-    if (avg > bestWindow.score) {
-      bestWindow = {
-        start: formatHourTime(5 + i),
-        end: formatHourTime(5 + i + 2),
-        score: avg,
+  const windowResult = findBestThreeHourWindow(hourlyScores.map(h => h.score), 5)
+  const bestWindow = windowResult
+    ? {
+        start: formatHourTime(windowResult.startHour),
+        end: formatHourTime(windowResult.endHour),
+        score: windowResult.avgScore,
       }
-    }
-  }
+    : { start: formatHourTime(5), end: formatHourTime(7), score: 0 }
 
   // Always produce hours 0-23 for the selected day.
   // Past hours not returned by NWS are backfilled with the first available entry.
@@ -205,6 +205,7 @@ export function buildConditionsData(
     sun: solunar.sun,
     moon: solunar.moon,
     hourlyScores,
+    tidePhasesByHour,
   }
 }
 

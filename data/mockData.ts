@@ -55,6 +55,12 @@ export const MOCK_CONDITIONS: ConditionsData = {
     { hour: '5PM', score: 82 }, { hour: '6PM', score: 75 },
     { hour: '7PM', score: 70 }, { hour: '8PM', score: 62 },
   ],
+  tidePhasesByHour: {
+    5: 'incoming', 6: 'incoming', 7: 'incoming', 8: 'incoming',
+    9: 'incoming', 10: 'incoming', 11: 'slack', 12: 'outgoing',
+    13: 'outgoing', 14: 'outgoing', 15: 'outgoing', 16: 'outgoing',
+    17: 'slack', 18: 'incoming', 19: 'incoming', 20: 'incoming',
+  },
 }
 
 const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']

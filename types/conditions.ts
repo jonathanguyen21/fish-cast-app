@@ -102,4 +102,5 @@ export interface ConditionsData {
   sun: SunData
   moon: MoonData
   hourlyScores: HourlyScore[]
+  tidePhasesByHour: Record<number, TidePhase>
 }

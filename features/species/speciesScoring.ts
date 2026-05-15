@@ -35,7 +35,7 @@ function timePoints(species: Species, hour: number): number {
   return 5
 }
 
-function hourToTimeOfDay(hour: number): TimeOfDay {
+export function hourToTimeOfDay(hour: number): TimeOfDay {
   if (hour >= 5 && hour <= 7) return 'dawn'
   if (hour >= 8 && hour <= 11) return 'morning'
   if (hour >= 12 && hour <= 14) return 'midday'

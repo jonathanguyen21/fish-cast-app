@@ -4,6 +4,7 @@ import type { NwsData } from '../services/nwsService'
 import type { SolunarData } from '../services/solunarService'
 import type { MarineDay } from '../services/marineService'
 import type { Spot } from '../types/spot'
+import type { TidePhase } from '../features/tide/tideUtils'
 
 const SPOT: Spot = {
   id: 'spot_1', name: 'Bodega Bay', lat: 38.33, lng: -123.05,
@@ -172,5 +173,25 @@ describe('buildConditionsData', () => {
     expect(result.swellHourly).not.toBeNull()
     expect(result.swellHourly!.length).toBe(3)
     expect(result.swellHourly![0]).toHaveProperty('period')
+  })
+
+  it('populates tidePhasesByHour with 16 keys for saltwater', () => {
+    const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
+    const keys = Object.keys(result.tidePhasesByHour).map(Number).sort((a, b) => a - b)
+    expect(keys).toEqual([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+    for (const phase of Object.values(result.tidePhasesByHour)) {
+      expect(['incoming', 'outgoing', 'slack']).toContain(phase)
+    }
+  })
+
+  it('populates tidePhasesByHour with all slack for freshwater', () => {
+    const freshwaterSpot: Spot = {
+      id: 'spot_fw', name: 'Lake Tahoe', lat: 39.10, lng: -120.04,
+      type: 'freshwater', stationId: null, region: 'west_coast',
+    }
+    const result = buildConditionsData(DATE, null, NWS_BY_DAY, null, SOLUNAR, freshwaterSpot, NOW)
+    for (const phase of Object.values(result.tidePhasesByHour)) {
+      expect(phase).toBe('slack')
+    }
   })
 })
