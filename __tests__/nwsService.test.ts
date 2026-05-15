@@ -1,4 +1,4 @@
-import { fetchNwsData } from '../services/nwsService'
+import { fetchNwsData, shortForecastToCloudCover } from '../services/nwsService'
 import type { Spot } from '../types/spot'
 
 const SPOT: Spot = {
@@ -56,4 +56,22 @@ describe('fetchNwsData', () => {
     ;(global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 500 })
     await expect(fetchNwsData(SPOT)).rejects.toThrow('NWS points failed')
   })
+
+  it('uses windGust field when present instead of windSpeed + 5', async () => {
+    mockNws()
+    const result = await fetchNwsData(SPOT)
+    // Period 2 in the fixture has windSpeed "12 mph" and windGust "15 mph"
+    const periodWithGust = result.today.hourlyForecast.find(h => h.windSpeed === 12)
+    expect(periodWithGust).toBeDefined()
+    expect(periodWithGust!.windGust).toBe(15)
+  })
+})
+
+describe('shortForecastToCloudCover', () => {
+  it('returns 90 for Overcast', () => expect(shortForecastToCloudCover('Overcast')).toBe(90))
+  it('returns 75 for Mostly Cloudy', () => expect(shortForecastToCloudCover('Mostly Cloudy')).toBe(75))
+  it('returns 40 for Partly Cloudy', () => expect(shortForecastToCloudCover('Partly Cloudy')).toBe(40))
+  it('returns 20 for Mostly Clear', () => expect(shortForecastToCloudCover('Mostly Clear')).toBe(20))
+  it('returns 60 for Cloudy', () => expect(shortForecastToCloudCover('Cloudy')).toBe(60))
+  it('returns 10 for Clear', () => expect(shortForecastToCloudCover('Clear')).toBe(10))
 })

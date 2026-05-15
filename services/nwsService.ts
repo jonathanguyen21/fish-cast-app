@@ -55,6 +55,16 @@ function mapSkyIcon(forecast: string, rainChance: number): SkyData['icon'] {
   return 'clear'
 }
 
+export function shortForecastToCloudCover(forecast: string): number {
+  const f = forecast.toLowerCase()
+  return f.includes('overcast') ? 90
+    : f.includes('mostly cloudy') ? 75
+    : f.includes('partly') ? 40
+    : f.includes('mostly clear') ? 20
+    : f.includes('cloud') ? 60
+    : 10
+}
+
 function iconToCondition(icon: SkyData['icon']): SkyData['condition'] {
   const map: Record<SkyData['icon'], SkyData['condition']> = {
     'clear': 'Clear', 'partly-cloudy': 'Partly Cloudy', 'overcast': 'Overcast',
@@ -105,15 +115,7 @@ function buildNwsDataForPeriods(periods: any[]): NwsData {
       hour: new Date(p.startTime).getHours(),
       windSpeed: parseWindSpeed(p.windSpeed),
       windGust: parseWindSpeed(p.windGust ?? '') || parseWindSpeed(p.windSpeed) + 5,
-      cloudCover: (() => {
-        const f = p.shortForecast.toLowerCase()
-        return f.includes('overcast') ? 90
-          : f.includes('mostly cloudy') ? 75
-          : f.includes('partly') ? 40
-          : f.includes('mostly clear') ? 20
-          : f.includes('cloud') ? 60
-          : 10
-      })(),
+      cloudCover: shortForecastToCloudCover(p.shortForecast),
       rainChance: p.probabilityOfPrecipitation?.value ?? 0,
       windDirection: (p.windDirection || 'N') as string,
       directionDeg: directionToDegrees(p.windDirection || 'N'),

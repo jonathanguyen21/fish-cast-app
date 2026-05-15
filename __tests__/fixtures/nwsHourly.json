@@ -12,8 +12,8 @@
       {
         "number": 2, "startTime": "2026-05-11T14:00:00-07:00",
         "temperature": 62, "temperatureUnit": "F",
-        "windSpeed": "12 mph", "windDirection": "W",
-        "shortForecast": "Partly Cloudy",
+        "windSpeed": "12 mph", "windGust": "15 mph", "windDirection": "W",
+        "shortForecast": "Mostly Cloudy",
         "probabilityOfPrecipitation": { "value": 20 },
         "relativeHumidity": { "value": 72 }
       },
