@@ -4,6 +4,9 @@ import Slider from '@react-native-community/slider'
 import * as Notifications from 'expo-notifications'
 import Constants from 'expo-constants'
 import { useSettingsStore } from '../../store/settingsStore'
+import { useSpots } from '../../hooks/useSpots'
+import { getSpeciesForRegion } from '../../data/species'
+import { SpeciesAlertsSection } from '../../features/settings/SpeciesAlertsSection'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
@@ -52,6 +55,9 @@ export default function SettingsScreen() {
     isPro,
   } = useSettingsStore()
 
+  const { activeSpot } = useSpots()
+  const speciesForRegion = activeSpot ? getSpeciesForRegion(activeSpot.lat, activeSpot.lng) : []
+
   const [permissionStatus, setPermissionStatus] = useState<string>('undetermined')
 
   useEffect(() => {
@@ -99,6 +105,8 @@ export default function SettingsScreen() {
           <Text style={styles.permGranted}>✓ Notifications enabled</Text>
         )}
       </View>
+
+      <SpeciesAlertsSection species={speciesForRegion} />
 
       <Text style={[Typography.sectionTitle, styles.sectionSpacer]}>Subscription</Text>
       {isPro ? (
