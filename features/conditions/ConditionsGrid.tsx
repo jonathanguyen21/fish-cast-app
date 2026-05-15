@@ -73,9 +73,8 @@ export function ConditionsGrid({
           <Text style={cardStyles.icon}>🌤️</Text>
           <Text style={cardStyles.label}>Air Temp</Text>
           <Text style={cardStyles.value}>{toDisplayTemp(air.temp)}°</Text>
-          <Text style={cardStyles.sub}>
-            H:{toDisplayTemp(air.high)}° L:{toDisplayTemp(air.low)}° {tempSuffix}
-          </Text>
+          <Text style={cardStyles.sub}>{tempSuffix}</Text>
+          <Text style={cardStyles.sub}>H:{toDisplayTemp(air.high)}° L:{toDisplayTemp(air.low)}°</Text>
         </TouchableOpacity>
       </View>
       <View style={[styles.row, { marginTop: Spacing.sm }]}>
