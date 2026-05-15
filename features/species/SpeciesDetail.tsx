@@ -2,6 +2,7 @@ import React from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
+import { scoreColor } from '../score/scoringEngine'
 import type { SpeciesScore } from '../../types/species'
 
 interface Props {
@@ -10,13 +11,29 @@ interface Props {
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
+const statusColor: Record<SpeciesScore['status'], string> = {
+  'Peak Season': Colors.success,
+  'Active': Colors.ocean,
+  'Present': Colors.textSecondary,
+  'Inactive': Colors.textTertiary,
+}
+
 export function SpeciesDetail({ speciesScore }: Props) {
-  const { species, waterTempMatch, tideMatch, timeMatch } = speciesScore
+  const { species, score, status, waterTempMatch, tideMatch, timeMatch } = speciesScore
+  const badgeColor = scoreColor(score)
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.name}>{species.common_name}</Text>
-      <Text style={styles.scientific}>{species.scientific_name}</Text>
+      <View style={styles.headerRow}>
+        <View style={styles.headerText}>
+          <Text style={styles.name}>{species.common_name}</Text>
+          <Text style={styles.scientific}>{species.scientific_name}</Text>
+        </View>
+        <View style={[styles.scoreBadge, { backgroundColor: badgeColor + '22', borderColor: badgeColor }]}>
+          <Text style={[styles.scoreNum, { color: badgeColor }]}>{score}</Text>
+          <Text style={[styles.scoreStatus, { color: statusColor[status] ?? Colors.textSecondary }]}>{status}</Text>
+        </View>
+      </View>
 
       <Text style={styles.sectionTitle}>Activity by Month</Text>
       <View style={styles.monthBar}>
@@ -60,8 +77,16 @@ export function SpeciesDetail({ speciesScore }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background, padding: Spacing.screenPad },
+  headerRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: Spacing.md },
+  headerText: { flex: 1, paddingRight: Spacing.md },
   name: { fontSize: 26, fontWeight: '700', color: Colors.textPrimary },
-  scientific: { fontSize: 14, color: Colors.textSecondary, fontStyle: 'italic', marginBottom: Spacing.md },
+  scientific: { fontSize: 14, color: Colors.textSecondary, fontStyle: 'italic', marginTop: 2 },
+  scoreBadge: {
+    width: 64, height: 64, borderRadius: 32, borderWidth: 2,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  scoreNum: { fontSize: 20, fontWeight: '700', lineHeight: 22 },
+  scoreStatus: { fontSize: 8, fontWeight: '600', textAlign: 'center', lineHeight: 11 },
   sectionTitle: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginTop: Spacing.md, marginBottom: Spacing.sm },
   monthBar: { flexDirection: 'row', gap: 4 },
   monthItem: { alignItems: 'center', flex: 1 },

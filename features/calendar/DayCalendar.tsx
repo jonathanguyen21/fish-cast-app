@@ -43,10 +43,13 @@ export function DayCalendar({ selectedDate, onSelect, todayScore, isPro }: Props
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
   const startDow = firstDay.getDay()
 
+  const isCurrentMonth = viewYear === today.getFullYear() && viewMonth === today.getMonth()
+
   const prevMonth = useCallback(() => {
+    if (isCurrentMonth) return
     if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11) }
     else setViewMonth(m => m - 1)
-  }, [viewMonth])
+  }, [viewMonth, isCurrentMonth])
 
   const nextMonth = useCallback(() => {
     if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0) }
@@ -105,8 +108,13 @@ export function DayCalendar({ selectedDate, onSelect, todayScore, isPro }: Props
   return (
     <View style={styles.container}>
       <View style={styles.calHeader}>
-        <TouchableOpacity onPress={prevMonth} style={styles.navBtn}>
-          <Text style={styles.navArrow}>‹</Text>
+        <TouchableOpacity
+          onPress={prevMonth}
+          style={styles.navBtn}
+          disabled={isCurrentMonth}
+          activeOpacity={isCurrentMonth ? 1 : 0.7}
+        >
+          <Text style={[styles.navArrow, isCurrentMonth && styles.navArrowDisabled]}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.monthLabel}>{MONTH_NAMES[viewMonth]} {viewYear}</Text>
         <TouchableOpacity onPress={nextMonth} style={styles.navBtn}>
@@ -120,6 +128,13 @@ export function DayCalendar({ selectedDate, onSelect, todayScore, isPro }: Props
       </View>
       <View style={styles.grid}>
         {cells}
+      </View>
+      <View style={styles.legend}>
+        <View style={styles.legendDot} />
+        <Text style={styles.legendText}>Today's score</Text>
+        <Text style={styles.legendSep}>·</Text>
+        <Text style={styles.legendLock}>🔒</Text>
+        <Text style={styles.legendText}>Pro only</Text>
       </View>
     </View>
   )
@@ -141,6 +156,7 @@ const styles = StyleSheet.create({
   },
   navBtn: { padding: 4 },
   navArrow: { fontSize: 18, color: Colors.textSecondary, fontWeight: '600' },
+  navArrowDisabled: { color: Colors.textTertiary, opacity: 0.3 },
   monthLabel: { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
   weekdayRow: {
     flexDirection: 'row', paddingHorizontal: 6, paddingTop: 6, paddingBottom: 2,
@@ -165,4 +181,12 @@ const styles = StyleSheet.create({
   dayNumPast: { color: Colors.textSecondary },
   dot: { width: 5, height: 5, borderRadius: 2.5, marginTop: 3 },
   lockIcon: { fontSize: 7, position: 'absolute', top: 2, right: 4 },
+  legend: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: Spacing.md, paddingTop: 4, paddingBottom: 6, gap: 5,
+  },
+  legendDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: Colors.success },
+  legendText: { fontSize: 11, color: Colors.textSecondary },
+  legendSep: { fontSize: 11, color: Colors.textTertiary },
+  legendLock: { fontSize: 11 },
 })

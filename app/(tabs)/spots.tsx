@@ -36,7 +36,6 @@ function SpotRow({ spot, isActive, onPress, onDelete }: {
           )}
         </View>
         <Text style={styles.rowType}>{spot.type}</Text>
-        <Text style={styles.rowHint}>Hold to delete</Text>
       </View>
       {score !== null && (
         <View style={[styles.scoreBadge, { borderColor: color, backgroundColor: color + '18' }]}>
@@ -131,7 +130,6 @@ const styles = StyleSheet.create({
   },
   activeBadgeText: { fontSize: 11, color: Colors.accent, fontWeight: '700' },
   rowType: { fontSize: 12, color: Colors.textSecondary, marginTop: 2, textTransform: 'capitalize' },
-  rowHint: { fontSize: 10, color: Colors.textTertiary, marginTop: 3 },
   scoreBadge: {
     width: 48, height: 48, borderRadius: 24, borderWidth: 1.5,
     alignItems: 'center', justifyContent: 'center', marginLeft: Spacing.sm,
