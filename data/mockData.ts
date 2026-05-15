@@ -57,12 +57,26 @@ export const MOCK_CONDITIONS: ConditionsData = {
   ],
 }
 
+const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+function buildForecastDate(offsetDays: number): { date: string; dayLabel: string } {
+  const d = new Date()
+  d.setDate(d.getDate() + offsetDays)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return {
+    date: `${year}-${month}-${day}`,
+    dayLabel: offsetDays === 0 ? 'Today' : SHORT_DAYS[d.getDay()],
+  }
+}
+
 export const MOCK_FORECAST: DayForecast[] = [
-  { date: '2026-05-04', dayLabel: 'Today', peakScore: 82, scoreLabel: 'Great day to fish', peakWindow: { start: '2 PM', end: '5 PM' } },
-  { date: '2026-05-05', dayLabel: 'Tue', peakScore: 71, scoreLabel: 'Great day to fish', peakWindow: { start: '3 PM', end: '6 PM' } },
-  { date: '2026-05-06', dayLabel: 'Wed', peakScore: 58, scoreLabel: 'Decent — pick your window', peakWindow: { start: '6 AM', end: '9 AM' } },
-  { date: '2026-05-07', dayLabel: 'Thu', peakScore: 44, scoreLabel: 'Tough but possible', peakWindow: { start: '7 AM', end: '9 AM' } },
-  { date: '2026-05-08', dayLabel: 'Fri', peakScore: 67, scoreLabel: 'Decent — pick your window', peakWindow: { start: '4 PM', end: '7 PM' } },
-  { date: '2026-05-09', dayLabel: 'Sat', peakScore: 88, scoreLabel: 'Great day to fish', peakWindow: { start: '7 AM', end: '10 AM' } },
-  { date: '2026-05-10', dayLabel: 'Sun', peakScore: 79, scoreLabel: 'Great day to fish', peakWindow: { start: '5 PM', end: '8 PM' } },
+  { ...buildForecastDate(0), peakScore: 82, scoreLabel: 'Great day to fish', peakWindow: { start: '2 PM', end: '5 PM' } },
+  { ...buildForecastDate(1), peakScore: 71, scoreLabel: 'Great day to fish', peakWindow: { start: '3 PM', end: '6 PM' } },
+  { ...buildForecastDate(2), peakScore: 58, scoreLabel: 'Decent — pick your window', peakWindow: { start: '6 AM', end: '9 AM' } },
+  { ...buildForecastDate(3), peakScore: 44, scoreLabel: 'Tough but possible', peakWindow: { start: '7 AM', end: '9 AM' } },
+  { ...buildForecastDate(4), peakScore: 67, scoreLabel: 'Decent — pick your window', peakWindow: { start: '4 PM', end: '7 PM' } },
+  { ...buildForecastDate(5), peakScore: 88, scoreLabel: 'Great day to fish', peakWindow: { start: '7 AM', end: '10 AM' } },
+  { ...buildForecastDate(6), peakScore: 79, scoreLabel: 'Great day to fish', peakWindow: { start: '5 PM', end: '8 PM' } },
 ]

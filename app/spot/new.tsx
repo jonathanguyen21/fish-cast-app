@@ -134,17 +134,19 @@ export default function AddSpotScreen() {
       >
         <Marker
           coordinate={{ latitude: coords.lat, longitude: coords.lng }}
-          pinColor={Colors.accent}
-        />
+        >
+          <View style={styles.markerAccent} />
+        </Marker>
         {stations.map(s => (
           <Marker
             key={s.id}
             coordinate={{ latitude: s.lat, longitude: s.lng }}
-            pinColor={Colors.ocean}
             title={s.name}
             description="Tap to use this station"
             onPress={() => handleStationPress(s)}
-          />
+          >
+            <View style={styles.markerOcean} />
+          </Marker>
         ))}
       </MapView>
 
@@ -237,4 +239,12 @@ const styles = StyleSheet.create({
   },
   saveDisabled: { backgroundColor: Colors.textTertiary },
   saveText: { fontSize: 16, fontWeight: '700', color: Colors.background },
+  markerAccent: {
+    width: 20, height: 20, borderRadius: 10,
+    backgroundColor: Colors.accent, borderWidth: 2, borderColor: '#fff',
+  },
+  markerOcean: {
+    width: 16, height: 16, borderRadius: 8,
+    backgroundColor: Colors.ocean, borderWidth: 2, borderColor: '#fff',
+  },
 })
