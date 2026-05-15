@@ -15,6 +15,7 @@ import { TideChart } from '../../features/tide/TideChart'
 import { WindDisplay } from '../../features/wind/WindDisplay'
 import { ConditionsGrid } from '../../features/conditions/ConditionsGrid'
 import { SpeciesCard } from '../../features/species/SpeciesCard'
+import { ActiveRightNow } from '../../features/species/ActiveRightNow'
 import { ForecastStrip } from '../../features/forecast/ForecastStrip'
 import { DayCalendar } from '../../features/calendar/DayCalendar'
 import { scoreSpecies } from '../../features/species/speciesScoring'
@@ -223,6 +224,21 @@ export default function ForecastScreen() {
                 pathname: '/detail/sun' as any,
                 params: { data: JSON.stringify(conditions.sun) },
               })}
+            />
+            <ActiveRightNow
+              species={scoredSpecies
+                .filter(ss => isPro || ss.species.tier === 'free')
+                .map(ss => ss.species)}
+              hourlyByMap={scoredHourlyByMap}
+              currentHour={currentHour}
+              onPressSpecies={(id) => {
+                const ss = scoredSpecies.find(s => s.species.id === id)
+                if (!ss) return
+                router.push({
+                  pathname: '/species/[id]',
+                  params: { id, data: JSON.stringify(ss), hourlyData: JSON.stringify(scoredHourlyByMap[id] ?? []) },
+                })
+              }}
             />
             <View style={styles.section}>
               <Text style={Typography.sectionTitle}>What's Biting</Text>
