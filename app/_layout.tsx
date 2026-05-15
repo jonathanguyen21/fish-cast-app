@@ -78,31 +78,31 @@ export default function RootLayout() {
         <Stack.Screen name="species/[id]" options={{ title: 'Species Detail', presentation: 'modal' }} />
         <Stack.Screen
           name="detail/wind"
-          options={{ title: 'Wind Detail', presentation: 'modal', headerShown: true }}
+          options={{ title: 'Wind Detail', presentation: 'modal', headerShown: false }}
         />
         <Stack.Screen
           name="detail/pressure"
-          options={{ title: 'Pressure Detail', presentation: 'modal', headerShown: true }}
+          options={{ title: 'Pressure Detail', presentation: 'modal', headerShown: false }}
         />
         <Stack.Screen
           name="detail/swell"
-          options={{ title: 'Swell Detail', presentation: 'modal', headerShown: true }}
+          options={{ title: 'Swell Detail', presentation: 'modal', headerShown: false }}
         />
         <Stack.Screen
           name="detail/airtemp"
-          options={{ title: 'Air Temp', presentation: 'modal', headerShown: true }}
+          options={{ title: 'Air Temp', presentation: 'modal', headerShown: false }}
         />
         <Stack.Screen
           name="detail/sky"
-          options={{ title: 'Sky & Rain', presentation: 'modal', headerShown: true }}
+          options={{ title: 'Sky & Rain', presentation: 'modal', headerShown: false }}
         />
         <Stack.Screen
           name="detail/moon"
-          options={{ title: 'Moon & Solunar', presentation: 'modal', headerShown: true }}
+          options={{ title: 'Moon & Solunar', presentation: 'modal', headerShown: false }}
         />
         <Stack.Screen
           name="detail/sun"
-          options={{ title: 'Sun', presentation: 'modal', headerShown: true }}
+          options={{ title: 'Sun', presentation: 'modal', headerShown: false }}
         />
       </Stack>
     </PersistQueryClientProvider>

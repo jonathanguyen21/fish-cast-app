@@ -7,6 +7,7 @@ import MapView, { Marker, MapPressEvent } from 'react-native-maps'
 import * as Location from 'expo-location'
 import { useRouter } from 'expo-router'
 import { useSpots } from '../../hooks/useSpots'
+import { useSettingsStore } from '../../store/settingsStore'
 import { detectRegion } from '../../data/species'
 import { resolveNearestStation, getNearbyStations, NearbyStation } from '../../services/noaaStationService'
 import { Colors } from '../../theme/colors'
@@ -20,7 +21,7 @@ const STATION_DELTA = { latitudeDelta: 0.3, longitudeDelta: 0.3 }
 export default function AddSpotScreen() {
   const router = useRouter()
   const { spots, addSpot } = useSpots()
-  const isPro = false
+  const isPro = useSettingsStore(s => s.isPro)
   const mapRef = useRef<MapView>(null)
 
   const [name, setName] = useState('')

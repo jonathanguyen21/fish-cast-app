@@ -43,7 +43,7 @@ export default function MoonDetailScreen() {
         <Text style={styles.moonEmoji}>{phaseEmoji}</Text>
         <View>
           <Text style={styles.moonPhase}>{moon.phase.replace(/_/g, ' ')}</Text>
-          <Text style={styles.moonIllum}>{Math.round(moon.illumination * 100)}% illuminated</Text>
+          <Text style={styles.moonIllum}>{moon.illumination}% illuminated</Text>
           {(moon as any).rise && <Text style={styles.moonTime}>Rise {(moon as any).rise}</Text>}
           {(moon as any).set && <Text style={styles.moonTime}>Set {(moon as any).set}</Text>}
         </View>
