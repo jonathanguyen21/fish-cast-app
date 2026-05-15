@@ -96,7 +96,7 @@ function buildNwsDataForPeriods(periods: any[]): NwsData {
     sky: { condition: iconToCondition(icon), rainChance, icon },
     wind: {
       speed: windSpeed,
-      gusts: currentPeriod.windGust ? parseWindSpeed(currentPeriod.windGust) : windSpeed + 5,
+      gusts: parseWindSpeed(currentPeriod.windGust ?? '') || windSpeed + 5,
       direction: directionToDegrees(currentPeriod.windDirection),
       directionLabel: currentPeriod.windDirection,
       unit: 'mph',
@@ -104,8 +104,16 @@ function buildNwsDataForPeriods(periods: any[]): NwsData {
     hourlyForecast: periods.map((p: any) => ({
       hour: new Date(p.startTime).getHours(),
       windSpeed: parseWindSpeed(p.windSpeed),
-      windGust: p.windGust ? parseWindSpeed(p.windGust) : parseWindSpeed(p.windSpeed) + 5,
-      cloudCover: p.shortForecast.toLowerCase().includes('cloud') ? 70 : 20,
+      windGust: parseWindSpeed(p.windGust ?? '') || parseWindSpeed(p.windSpeed) + 5,
+      cloudCover: (() => {
+        const f = p.shortForecast.toLowerCase()
+        return f.includes('overcast') ? 90
+          : f.includes('mostly cloudy') ? 75
+          : f.includes('partly') ? 40
+          : f.includes('mostly clear') ? 20
+          : f.includes('cloud') ? 60
+          : 10
+      })(),
       rainChance: p.probabilityOfPrecipitation?.value ?? 0,
       windDirection: (p.windDirection || 'N') as string,
       directionDeg: directionToDegrees(p.windDirection || 'N'),
@@ -144,7 +152,8 @@ export async function fetchNwsData(spot: Spot): Promise<NwsMultiDay> {
   const periods: any[] = hourly.properties.periods ?? []
   if (periods.length === 0) throw new Error('NWS returned no forecast periods')
 
-  const todayKey = new Date().toISOString().slice(0, 10)
+  const n = new Date()
+  const todayKey = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`
   const todayPeriods = periods.filter((p: any) => p.startTime.slice(0, 10) === todayKey)
   const byDay = groupByDay(periods)
   return {
