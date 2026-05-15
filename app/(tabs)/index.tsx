@@ -18,6 +18,7 @@ import { SpeciesCard } from '../../features/species/SpeciesCard'
 import { ForecastStrip } from '../../features/forecast/ForecastStrip'
 import { DayCalendar } from '../../features/calendar/DayCalendar'
 import { scoreSpecies } from '../../features/species/speciesScoring'
+import { scoreSpeciesHourly, type SpeciesHourlyScore } from '../../features/species/speciesHourlyScoring'
 import { detectPhase } from '../../features/tide/tideUtils'
 import { getSpeciesForRegion } from '../../data/species'
 import { Colors } from '../../theme/colors'
@@ -79,6 +80,19 @@ export default function ForecastScreen() {
         return b.score - a.score
       })
   }, [activeSpot, conditions, currentHour, isPro])
+
+  const scoredHourlyByMap = useMemo(() => {
+    const map: Record<string, SpeciesHourlyScore[]> = {}
+    if (!activeSpot || !conditions) return map
+    for (const ss of scoredSpecies) {
+      map[ss.species.id] = scoreSpeciesHourly(ss.species, {
+        month: now.getMonth() + 1,
+        waterTemp: conditions.water.temp,
+        tidePhasesByHour: conditions.tidePhasesByHour,
+      })
+    }
+    return map
+  }, [scoredSpecies, activeSpot, conditions])
 
   if (!activeSpot) {
     return (
@@ -222,7 +236,7 @@ export default function ForecastScreen() {
                     isPro={isPro}
                     onPress={() => {
                       if (ss.species.tier === 'pro' && !isPro) return
-                      router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss) } })
+                      router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss), hourlyData: JSON.stringify(scoredHourlyByMap[ss.species.id] ?? []) } })
                     }}
                   />
                 ))

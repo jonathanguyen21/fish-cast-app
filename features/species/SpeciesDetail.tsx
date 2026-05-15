@@ -3,10 +3,20 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from '../score/scoringEngine'
+import { bestWindowSummary, type SpeciesHourlyScore } from './speciesHourlyScoring'
+import { SpeciesHourlyChart } from './SpeciesHourlyChart'
 import type { SpeciesScore } from '../../types/species'
 
 interface Props {
   speciesScore: SpeciesScore
+  hourly?: SpeciesHourlyScore[]
+  onUpgrade?: () => void
+}
+
+function formatHour(h: number): string {
+  const period = h < 12 ? 'AM' : 'PM'
+  const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h
+  return `${displayH}${period}`
 }
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -18,7 +28,7 @@ const statusColor: Record<SpeciesScore['status'], string> = {
   'Inactive': Colors.textTertiary,
 }
 
-export function SpeciesDetail({ speciesScore }: Props) {
+export function SpeciesDetail({ speciesScore, hourly, onUpgrade }: Props) {
   const { species, score, status, waterTempMatch, tideMatch, timeMatch } = speciesScore
   const badgeColor = scoreColor(score)
 
@@ -59,6 +69,22 @@ export function SpeciesDetail({ speciesScore }: Props) {
       <View style={styles.matchRow}><Text style={styles.matchLabel}>Tide</Text><Text style={styles.matchValue}>{tideMatch}</Text></View>
       <View style={styles.matchRow}><Text style={styles.matchLabel}>Time of Day</Text><Text style={styles.matchValue}>{timeMatch}</Text></View>
 
+      {hourly && hourly.some(e => e.score > 0) && (
+        <>
+          <Text style={styles.sectionTitle}>Hourly Bite Window</Text>
+          {(() => {
+            const summary = bestWindowSummary(hourly)
+            if (!summary) return null
+            return (
+              <Text style={styles.summary}>
+                Best window: {formatHour(summary.start)}–{formatHour(summary.end + 1)} · avg {summary.avgScore}
+              </Text>
+            )
+          })()}
+          <SpeciesHourlyChart hourly={hourly} onUpgrade={onUpgrade} />
+        </>
+      )}
+
       <Text style={styles.sectionTitle}>Fishing Tips</Text>
       <Text style={styles.tips}>{species.tips}</Text>
 
@@ -96,4 +122,5 @@ const styles = StyleSheet.create({
   matchLabel: { fontSize: 13, color: Colors.textSecondary, flex: 1 },
   matchValue: { fontSize: 13, color: Colors.textPrimary, flex: 2, textAlign: 'right' },
   tips: { fontSize: 14, color: Colors.textPrimary, lineHeight: 22 },
+  summary: { fontSize: 14, color: Colors.textPrimary, marginBottom: Spacing.sm },
 })
