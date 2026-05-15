@@ -3,6 +3,7 @@ import {
   ScrollView, View, Text, StyleSheet, RefreshControl,
   ActivityIndicator, TouchableOpacity,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNetInfo } from '@react-native-community/netinfo'
 import { useSpots } from '../../hooks/useSpots'
 import { useConditions } from '../../hooks/useConditions'
@@ -21,6 +22,7 @@ import { detectPhase } from '../../features/tide/tideUtils'
 import { getSpeciesForRegion } from '../../data/species'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
+import { Typography } from '../../theme/typography'
 import { useRouter } from 'expo-router'
 
 function localDateKey(d: Date): string {
@@ -40,6 +42,7 @@ function formatDateChip(dateStr: string): string {
 
 export default function ForecastScreen() {
   const router = useRouter()
+  const insets = useSafeAreaInsets()
   const netInfo = useNetInfo()
   const { activeSpot, spots } = useSpots()
   const [selectedDate, setSelectedDate] = useState<string>(() => localDateKey(new Date()))
@@ -80,8 +83,12 @@ export default function ForecastScreen() {
   if (!activeSpot) {
     return (
       <View style={styles.empty}>
+        <Text style={styles.emptyIcon}>🎣</Text>
         <Text style={styles.emptyText}>No spot selected</Text>
-        <Text style={styles.emptyHint}>Go to Spots tab to add your first fishing spot</Text>
+        <Text style={styles.emptyHint}>Add a fishing spot to get your first forecast</Text>
+        <TouchableOpacity style={styles.emptyCta} onPress={() => router.push('/(tabs)/spots')}>
+          <Text style={styles.emptyCtaText}>Add Your First Spot →</Text>
+        </TouchableOpacity>
       </View>
     )
   }
@@ -89,8 +96,11 @@ export default function ForecastScreen() {
   if (isError && !conditions) {
     return (
       <View style={styles.empty}>
+        <Text style={styles.emptyIcon}>⚠️</Text>
         <Text style={styles.emptyText}>Could not load conditions</Text>
-        <Text style={styles.emptyHint} onPress={refetch}>Tap to retry</Text>
+        <TouchableOpacity style={styles.emptyCta} onPress={refetch}>
+          <Text style={styles.emptyCtaText}>Tap to Retry</Text>
+        </TouchableOpacity>
       </View>
     )
   }
@@ -109,7 +119,7 @@ export default function ForecastScreen() {
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={isLoading && !!conditions} onRefresh={refetch} tintColor={Colors.accent} />}
       >
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top }]}>
           <Text style={styles.spotName}>{activeSpot.name}</Text>
           {spots.length > 1 && (
             <Text style={styles.switchHint} onPress={() => router.push('/spots')}>Switch ›</Text>
@@ -117,14 +127,10 @@ export default function ForecastScreen() {
         </View>
 
         <TouchableOpacity
-          style={styles.dateChip}
+          style={[styles.dateChip, showCalendar && styles.dateChipActive]}
           onPress={() => setShowCalendar(v => !v)}
         >
-          <Text style={styles.dateChipText}>
-            {formatDateChip(selectedDate) === 'Today'
-              ? `Today — ${formatDateChip(selectedDate)}`
-              : formatDateChip(selectedDate)}
-          </Text>
+          <Text style={styles.dateChipText}>{formatDateChip(selectedDate)}</Text>
           <Text style={styles.dateChipArrow}>{showCalendar ? ' ▴' : ' ▾'}</Text>
         </TouchableOpacity>
 
@@ -144,7 +150,7 @@ export default function ForecastScreen() {
               label={conditions.scoreLabel}
               bestWindow={conditions.bestWindow}
             />
-            <ScoreTimeline hourlyScores={conditions.hourlyScores} />
+            <ScoreTimeline hourlyScores={conditions.hourlyScores} onUpgrade={() => router.push('/settings')} />
             <View style={styles.quickStats}>
               <WindDisplay
                 wind={conditions.wind}
@@ -156,6 +162,7 @@ export default function ForecastScreen() {
               />
               {conditions.tide && (
                 <View style={styles.quickCard}>
+                  <Text style={styles.quickIcon}>🌊</Text>
                   <Text style={styles.quickLabel}>Tide</Text>
                   <Text style={styles.quickValue}>{conditions.tide.current.height} ft</Text>
                   <Text style={styles.quickSub}>{conditions.tide.current.rising ? '▲ Rising' : '▼ Falling'}</Text>
@@ -165,6 +172,7 @@ export default function ForecastScreen() {
                 </View>
               )}
               <View style={styles.quickCard}>
+                <Text style={styles.quickIcon}>🌡️</Text>
                 <Text style={styles.quickLabel}>Water</Text>
                 <Text style={styles.quickValue}>
                   {tempUnit === 'C'
@@ -203,18 +211,22 @@ export default function ForecastScreen() {
               })}
             />
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>What's Biting</Text>
-              {scoredSpecies.map(ss => (
-                <SpeciesCard
-                  key={ss.species.id}
-                  speciesScore={ss}
-                  isPro={isPro}
-                  onPress={() => {
-                    if (ss.species.tier === 'pro' && !isPro) return
-                    router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss) } })
-                  }}
-                />
-              ))}
+              <Text style={Typography.sectionTitle}>What's Biting</Text>
+              {scoredSpecies.every(ss => ss.score === 0) ? (
+                <Text style={styles.emptySpecies}>Nothing active right now</Text>
+              ) : (
+                scoredSpecies.map(ss => (
+                  <SpeciesCard
+                    key={ss.species.id}
+                    speciesScore={ss}
+                    isPro={isPro}
+                    onPress={() => {
+                      if (ss.species.tier === 'pro' && !isPro) return
+                      router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss) } })
+                    }}
+                  />
+                ))
+              )}
             </View>
             <ForecastStrip forecast={forecast} isPro={isPro} onUpgrade={() => router.push('/settings')} />
           </>
@@ -248,12 +260,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl },
-  emptyText: { fontSize: 20, fontWeight: '600', color: Colors.textPrimary },
-  emptyHint: { fontSize: 14, color: Colors.textSecondary, marginTop: Spacing.sm, textAlign: 'center' },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.sm },
+  emptyIcon: { fontSize: 56, marginBottom: Spacing.sm },
+  emptyText: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center' },
+  emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20 },
+  emptyCta: {
+    marginTop: Spacing.sm,
+    backgroundColor: Colors.accent,
+    borderRadius: 24,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 12,
+  },
+  emptyCtaText: { fontSize: 15, fontWeight: '700', color: Colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: Spacing.screenPad, paddingTop: 56, paddingBottom: Spacing.sm,
+    paddingHorizontal: Spacing.screenPad, paddingBottom: Spacing.sm,
   },
   spotName: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
   switchHint: { fontSize: 14, color: Colors.accent },
@@ -265,20 +286,32 @@ const styles = StyleSheet.create({
     flex: 1, backgroundColor: Colors.card, borderRadius: Spacing.cardRadius,
     padding: Spacing.md, alignItems: 'center',
   },
+  quickIcon: { fontSize: 18, marginBottom: 2 },
   quickLabel: { fontSize: 11, color: Colors.textTertiary },
   quickValue: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary },
   quickSub: { fontSize: 11, color: Colors.textSecondary },
   quickPeak: { fontSize: 10, color: Colors.textTertiary, marginTop: 2 },
   section: { marginHorizontal: Spacing.screenPad, marginBottom: Spacing.md },
-  sectionTitle: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm },
   dateChip: {
     flexDirection: 'row',
     alignSelf: 'center',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
-    paddingVertical: 4,
+    paddingVertical: 6,
     marginBottom: Spacing.sm,
+    backgroundColor: Colors.surface,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.card,
+  },
+  dateChipActive: {
+    borderColor: Colors.accent,
+    backgroundColor: Colors.accent + '1A',
   },
   dateChipText: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   dateChipArrow: { fontSize: 12, color: Colors.textSecondary },
+  emptySpecies: {
+    fontSize: 14, color: Colors.textSecondary,
+    textAlign: 'center', paddingVertical: Spacing.md,
+  },
 })
