@@ -12,6 +12,7 @@ export function MoonCard({ moon, onPress }: Props) {
   const nextMajor = moon.majorPeriods[0]
   return (
     <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.75}>
+      <Text style={cardStyles.icon}>🌙</Text>
       <Text style={cardStyles.label}>Moon</Text>
       <Text style={cardStyles.value}>{moon.illumination}%</Text>
       <Text style={cardStyles.sub}>{moon.phase}</Text>

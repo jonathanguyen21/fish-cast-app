@@ -1,5 +1,6 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react-native'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 import WindDetailScreen from '../app/detail/wind'
 
 jest.mock('expo-router', () => ({
@@ -19,12 +20,30 @@ jest.mock('../store/settingsStore', () => ({
 
 describe('WindDetailScreen', () => {
   it('renders without crashing', () => {
-    render(<WindDetailScreen />)
+    render(
+      <SafeAreaProvider
+        initialMetrics={{
+          frame: { x: 0, y: 0, width: 375, height: 812 },
+          insets: { top: 44, left: 0, right: 0, bottom: 34 },
+        }}
+      >
+        <WindDetailScreen />
+      </SafeAreaProvider>
+    )
     expect(screen.getByText('Wind')).toBeTruthy()
   })
 
   it('shows peak wind info', () => {
-    render(<WindDetailScreen />)
+    render(
+      <SafeAreaProvider
+        initialMetrics={{
+          frame: { x: 0, y: 0, width: 375, height: 812 },
+          insets: { top: 44, left: 0, right: 0, bottom: 34 },
+        }}
+      >
+        <WindDetailScreen />
+      </SafeAreaProvider>
+    )
     expect(screen.getByText(/Peak/)).toBeTruthy()
   })
 })

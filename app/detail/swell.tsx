@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   PanResponder, PanResponderInstance, useWindowDimensions,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   Svg, Rect, Path, Circle, Line, Text as SvgText, Defs, LinearGradient, Stop, G,
 } from 'react-native-svg'
@@ -27,6 +28,7 @@ export default function SwellDetailScreen() {
   const { data } = useLocalSearchParams<{ data: string }>()
   const router = useRouter()
   const { width } = useWindowDimensions()
+  const insets = useSafeAreaInsets()
 
   const swellHourly = useMemo<SwellHour[]>(() => {
     if (!data) return []
@@ -81,7 +83,7 @@ export default function SwellDetailScreen() {
   const periodGrid = [0, Math.round(maxPeriod / 2), maxPeriod]
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xl }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Swell</Text>
         <TouchableOpacity onPress={() => router.back()}>
@@ -199,7 +201,7 @@ export default function SwellDetailScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: Spacing.screenPad, paddingBottom: Spacing.xl },
+  content: { padding: Spacing.screenPad },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     marginBottom: Spacing.md,

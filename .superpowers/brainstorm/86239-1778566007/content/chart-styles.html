@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FishCast — Chart Style Picker</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0A0E1A;
+    color: #E8EDF5;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    padding: 24px 20px 100px;
+    max-width: 980px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 22px; font-weight: 700; color: #E8EDF5; margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: #556677; margin-bottom: 28px; line-height: 1.5; }
+
+  .section { margin-bottom: 32px; }
+  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .section-icon {
+    width: 34px; height: 34px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .section-title { font-size: 15px; font-weight: 700; color: #E8EDF5; }
+  .section-hint { font-size: 11px; color: #556677; margin-top: 2px; }
+
+  .options-row { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); }
+
+  .option-card {
+    background: #0F1623; border-radius: 16px; border: 2px solid #1A2235;
+    overflow: hidden; cursor: pointer; transition: all 0.15s ease; position: relative;
+  }
+  .option-card:hover { border-color: #00B4D840; transform: translateY(-2px); box-shadow: 0 8px 24px #00000060; }
+  .option-card.selected { border-color: #00B4D8; box-shadow: 0 0 0 1px #00B4D840; }
+
+  .badge-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px 0; position: absolute; top: 0; left: 0; right: 0; z-index: 5; }
+  .option-badge {
+    background: #0A0E1A99; backdrop-filter: blur(4px);
+    color: #8899AA; font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px;
+  }
+  .option-card.selected .option-badge { background: #00B4D8; color: #0A0E1A; }
+  .selected-check {
+    display: none; width: 20px; height: 20px; border-radius: 50%;
+    background: #00B4D8; color: #0A0E1A;
+    align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
+  }
+  .option-card.selected .selected-check { display: flex; }
+
+  .chart-area { background: #131C2E; }
+
+  .option-info { padding: 12px 14px 14px; }
+  .option-name { font-size: 13px; font-weight: 600; color: #E8EDF5; margin-bottom: 5px; }
+  .option-desc { font-size: 11px; color: #8899AA; line-height: 1.5; }
+  .pro-label { font-size: 10px; color: #00B4D8; font-weight: 600; margin-top: 4px; }
+
+  .divider { height: 1px; background: #1A2235; margin: 4px 0 28px; }
+
+  .sticky-footer {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, #0A0E1A 70%, transparent);
+    padding: 20px 24px 28px;
+  }
+  .submit-btn {
+    display: block; width: 100%; max-width: 940px; margin: 0 auto;
+    background: #00B4D8; color: #0A0E1A; border: none; border-radius: 14px;
+    padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+  .submit-btn:hover { opacity: 0.88; }
+
+  .summary-bar {
+    font-size: 11px; color: #8899AA; text-align: center;
+    margin-bottom: 8px; max-width: 940px; margin: 0 auto 8px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Chart Style Options</h1>
+<p class="page-sub">Pick your preferred visualization for each condition. Click a card to select it, then let me know your choices in the terminal.</p>
+
+<!-- ===== WIND ===== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#0077B625">💨</div>
+    <div>
+      <div class="section-title">Wind Detail</div>
+      <div class="section-hint">16 hrs · speed + gusts + direction</div>
+    </div>
+  </div>
+  <div class="options-row">
+    <div class="option-card" data-section="wind" data-choice="A" onclick="pick(this)">
+      <div class="badge-row"><span class="option-badge">A</span><span class="selected-check">✓</span></div>
+      <div class="chart-area"><svg id="wind-a" width="100%" viewBox="0 0 320 120" style="display:block"></svg></div>
+      <div class="option-info">
+        <div class="option-name">Gradient Area + Direction Arrows</div>
+        <div class="option-desc">Smooth filled curve with gust band. Wind direction arrows at every 4 hrs. Y-axis in mph. Most modern — used by Apple Weather &amp; Windy.</div>
+      </div>
+    </div>
+    <div class="option-card" data-section="wind" data-choice="B" onclick="pick(this)">
+      <div class="badge-row"><span class="option-badge">B</span><span class="selected-check">✓</span></div>
+      <div class="chart-area"><svg id="wind-b" width="100%" viewBox="0 0 320 120" style="display:block"></svg></div>
+      <div class="option-info">
+        <div class="option-name">Bars + Gust Overlay + Y-Axis</div>
+        <div class="option-desc">Current style but improved: labeled y-axis, gust as dashed line, direction abbreviation above each bar group. Used by WindFinder &amp; SailFlow.</div>
+      </div>
+    </div>
+    <div class="option-card" data-section="wind" data-choice="C" onclick="pick(this)">
+      <div class="badge-row"><span class="option-badge">C</span><span class="selected-check">✓</span></div>
+      <div class="chart-area"><svg id="wind-c" width="100%" viewBox="0 0 320 120" style="display:block"></svg></div>
+      <div class="option-info">
+        <div class="option-name">Dual Lines: Speed + Gusts</div>
+        <div class="option-desc">Speed as solid teal line, gusts as lighter dashed line. Y-axis + grid. Annotated peak gust. Used by Dark Sky / Forecast.io.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ===== SWELL ===== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#0077B625">🌊</div>
+    <div>
+      <div class="section-title">Swell Detail</div>
+      <div class="section-hint">16 hrs · wave height (ft) + period (s)</div>
+    </div>
+  </div>
+  <div class="options-row">
+    <div class="option-card" data-section="swell" data-choice="A" onclick="pick(this)">
+      <div class="badge-row"><span class="option-badge">A</span><span class="selected-check">✓</span></div>
+      <div class="chart-area"><svg id="swell-a" width="100%" viewBox="0 0 320 130" style="display:block"></svg></div>
+      <div class="option-info">
+        <div class="option-name">Height Bars + Period Dots Overlay</div>
+        <div class="option-desc">Wave height as teal bars (left axis), period as orange dot-connected line (right axis). Industry standard — used by Surfline &amp; Magicseaweed.</div>
+        <div class="pro-label">Most information dense</div>
+      </div>
+    </div>
+    <div class="option-card" data-section="swell" data-choice="B" onclick="pick(this)">
+      <div class="badge-row"><span class="option-badge">B</span><span class="selected-check">✓</span></div>
+      <div class="chart-area"><svg id="swell-b" width="100%" viewBox="0 0 320 130" style="display:block"></svg></div>
+      <div class="option-info">
+        <div class="option-name">Height Area + Period Line (Stacked)</div>
+        <div class="option-desc">Wave height as filled area on top, period as line chart below. Two separate labeled panels. Clean and easy to read separately.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ===== AIR TEMP ===== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#B8621825">🌡️</div>
+    <div>
+      <div class="section-title">Air Temperature Detail</div>
+      <div class="section-hint">16 hrs · °F · high/low band</div>
+    </div>
+  </div>
+  <div class="options-row">
+    <div class="option-card" data-section="airtemp" data-choice="A" onclick="pick(this)">
+      <div class="badge-row"><span class="option-badge">A</span><span class="selected-check">✓</span></div>
+      <div class="chart-area"><svg id="temp-a" width="100%" viewBox="0 0 320 120" style="display:block"></svg></div>
+      <div class="option-info">
+        <div class="option-name">Gradient Fill Curve</div>
+        <div class="option-desc">Warm-to-cool gradient fill below the temperature line. Y-axis with °F range. Temperature labels at peak and trough. iOS Weather / Dark Sky style.</div>
+        <div class="pro-label">Most visually striking</div>
+      </div>
+    </div>
+    <div class="option-card" data-section="airtemp" data-choice="B" onclick="pick(this)">
+      <div class="badge-row"><span class="option-badge">B</span><span class="selected-check">✓</span></div>
+      <div class="chart-area"><svg id="temp-b" width="100%" viewBox="0 0 320 120" style="display:block"></svg></div>
+      <div class="option-info">
+        <div class="option-name">Line + Hour Labels</div>
+        <div class="option-desc">Clean teal line chart with temperature values labeled directly above key hours (6AM, 12PM, 3PM, 8PM). Minimalist, maximally readable.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ===== RAIN / SKY ===== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#1A4E7825">🌧️</div>
+    <div>
+      <div class="section-title">Rain &amp; Sky Detail</div>
+      <div class="section-hint">16 hrs · rain % + cloud cover %</div>
+    </div>
+  </div>
+  <div class="options-row">
+    <div class="option-card" data-section="rain" data-choice="A" onclick="pick(this)">
+      <div class="badge-row"><span class="option-badge">A</span><span class="selected-check">✓</span></div>
+      <div class="chart-area"><svg id="rain-a" width="100%" viewBox="0 0 320 120" style="display:block"></svg></div>
+      <div class="option-info">
+        <div class="option-name">Rain % Bars + Cloud Cover Line</div>
+        <div class="option-desc">Rain chance as blue bars (intensity = probability). Cloud cover as dashed grey line overlay. Y-axis 0–100%. Used by Weather Underground &amp; Carrot.</div>
+      </div>
+    </div>
+    <div class="option-card" data-section="rain" data-choice="B" onclick="pick(this)">
+      <div class="badge-row"><span class="option-badge">B</span><span class="selected-check">✓</span></div>
+      <div class="chart-area"><svg id="rain-b" width="100%" viewBox="0 0 320 120" style="display:block"></svg></div>
+      <div class="option-info">
+        <div class="option-name">Smooth Area Gradient (Rain %)</div>
+        <div class="option-desc">Rain chance as smooth filled area with deep blue gradient. Labels at peaks. Cloud cover shown as subtle grey overlay band. Cleaner feel.</div>
+        <div class="pro-label">Most visually calm</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ===== PRESSURE (fixed — no choice needed) ===== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-icon" style="background:#4A1E7825">📊</div>
+    <div>
+      <div class="section-title">Pressure Detail — Fixed</div>
+      <div class="section-hint">No style choice needed · showing the improved version</div>
+    </div>
+  </div>
+  <div class="options-row" style="grid-template-columns: 1fr">
+    <div class="option-card selected" style="max-width: 500px; cursor: default; border-color: #00B4D860">
+      <div class="badge-row"><span class="option-badge" style="background:#00B4D8;color:#0A0E1A">Fixed</span></div>
+      <div class="chart-area"><svg id="pressure-fixed" width="100%" viewBox="0 0 320 120" style="display:block"></svg></div>
+      <div class="option-info">
+        <div class="option-name">Line Chart + Y-Axis + Hour Tooltip</div>
+        <div class="option-desc">Same line chart as now, but with y-axis labels (inHg values), x-axis hour labels, and the drag tooltip now shows both the value AND the hour (e.g. "29.98 inHg · 2 PM").</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sticky-footer">
+  <div class="summary-bar" id="summary">No selections yet — click cards above to choose</div>
+  <button class="submit-btn" onclick="logSelections()">Confirm Selections → Tell me in terminal</button>
+</div>
+
+<script>
+// ─── Selection logic ───────────────────────────────────────────────────────
+const selections = {}
+function pick(card) {
+  const sec = card.dataset.section
+  const choice = card.dataset.choice
+  // deselect others in same section
+  document.querySelectorAll(`[data-section="${sec}"]`).forEach(c => c.classList.remove('selected'))
+  card.classList.add('selected')
+  selections[sec] = choice
+  updateSummary()
+}
+function updateSummary() {
+  const keys = Object.keys(selections)
+  if (!keys.length) { document.getElementById('summary').textContent = 'No selections yet — click cards above to choose'; return }
+  const parts = keys.map(k => `${k.charAt(0).toUpperCase()+k.slice(1)}: ${selections[k]}`)
+  document.getElementById('summary').textContent = 'Selected: ' + parts.join(' · ')
+}
+function logSelections() {
+  const msg = Object.entries(selections).map(([k,v]) => `${k}: ${v}`).join(', ')
+  alert('Your choices:\n' + (msg || 'Nothing selected yet') + '\n\nJust type these in the terminal and I\'ll proceed.')
+}
+
+// ─── Chart helpers ─────────────────────────────────────────────────────────
+const COLORS = {
+  bg: '#131C2E', grid: '#1F2E45', accent: '#00B4D8', ocean: '#0077B6',
+  gust: '#FF6B35', warm: '#FF6B35', cool: '#0077B6', grey: '#556677',
+  text: '#E8EDF5', sub: '#8899AA', dim: '#556677',
+}
+
+function svgEl(tag, attrs) {
+  const ns = 'http://www.w3.org/2000/svg'
+  const el = document.createElementNS(ns, tag)
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v)
+  return el
+}
+function svgText(content, attrs) {
+  const el = svgEl('text', attrs)
+  el.textContent = content
+  return el
+}
+function smoothPath(pts) {
+  if (!pts.length) return ''
+  let d = `M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`
+  for (let i = 1; i < pts.length; i++) {
+    const [px, py] = pts[i-1], [cx, cy] = pts[i]
+    const dx = (cx - px) / 3
+    d += ` C ${(px+dx).toFixed(1)} ${py.toFixed(1)},${(cx-dx).toFixed(1)} ${cy.toFixed(1)},${cx.toFixed(1)} ${cy.toFixed(1)}`
+  }
+  return d
+}
+function hourLabel(h) {
+  if (h === 0 || h === 24) return '12a'
+  if (h === 12) return '12p'
+  return h < 12 ? `${h}a` : `${h-12}p`
+}
+
+// ─── Sample data ─────────────────────────────────────────────────────────
+const HOURS = [5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+const WIND_SPEED  = [4,5,6,9,12,15,17,16,14,12,10, 9, 8, 7, 6, 5]
+const WIND_GUSTS  = [6,7,9,13,17,21,24,22,19,16,14,13,11,10, 9, 7]
+const WIND_DIR    = ['SSW','SW','SW','W','WNW','NW','NW','W','W','WNW','NW','NW','NW','W','SW','S']
+const DIR_DEG     = [202,225,225,270,292,315,315,270,270,292,315,315,315,270,225,180]
+const SWELL_H     = [3.2,3.5,3.8,4.1,4.0,3.7,3.4,3.0,2.7,2.5,2.3,2.1,2.0,1.9,1.9,2.0]
+const SWELL_P     = [13,13,14,14,13,12,11,10,10, 9, 9, 8, 8, 8, 9, 9]
+const AIR_TEMP    = [55,54,54,55,57,60,63,65,67,68,68,67,65,63,61,59]
+const RAIN        = [5, 5,10,10,15,20,25,30,35,30,25,20,15,10, 5, 5]
+const CLOUD       = [20,25,30,35,45,55,65,70,65,55,45,40,35,30,25,20]
+const PRESSURE_R  = [30.14,30.12,30.10,30.08,30.06,30.04,30.02,29.99,29.97,29.95,29.94,29.93]
+
+// ─── Wind A: Gradient Area + Arrows ───────────────────────────────────────
+function drawWindA() {
+  const svg = document.getElementById('wind-a')
+  const W = 320, H = 120
+  const P = { t: 14, b: 24, l: 30, r: 10 }
+  const cW = W - P.l - P.r, cH = H - P.t - P.b
+  const N = WIND_SPEED.length
+  const maxV = 25, minV = 0
+
+  const toX = i => P.l + (i / (N-1)) * cW
+  const toY = v => P.t + cH - ((v - minV) / (maxV - minV)) * cH
+
+  const pts = WIND_SPEED.map((v,i) => [toX(i), toY(v)])
+  const gpts = WIND_GUSTS.map((v,i) => [toX(i), toY(v)])
+
+  // defs
+  const defs = svgEl('defs', {})
+  const grad = svgEl('linearGradient', { id: 'wag', x1:'0', y1:'0', x2:'0', y2:'1' })
+  const s1 = svgEl('stop', { offset:'0', 'stop-color': COLORS.accent, 'stop-opacity':'0.5' })
+  const s2 = svgEl('stop', { offset:'1', 'stop-color': COLORS.accent, 'stop-opacity':'0.02' })
+  grad.append(s1, s2); defs.append(grad); svg.append(defs)
+
+  // y-axis grid
+  for (const v of [0, 5, 10, 15, 20]) {
+    const y = toY(v)
+    svg.append(svgEl('line', { x1: P.l, y1: y, x2: W-P.r, y2: y, stroke: COLORS.grid, 'stroke-width': 0.5 }))
+    svg.append(svgText(v, { x: P.l - 4, y: y + 3.5, fill: COLORS.dim, 'font-size': 8, 'text-anchor': 'end' }))
+  }
+
+  // gust band between speed and gust lines
+  const fillGust = smoothPath(gpts) +
+    ' L ' + gpts.slice().reverse().map((p,i) => `${WIND_SPEED.slice().reverse().map((v,j)=>[toX(N-1-j),toY(v)])[i].join(' ')}`).join(' L ')
+  // simpler: fill area between speed and gust
+  const gustArea = `M ${pts[0][0]} ${pts[0][1]} ` +
+    pts.slice(1).map(p => `L ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ') +
+    ' ' + gpts.slice().reverse().map(p => `L ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ') + ' Z'
+  svg.append(svgEl('path', { d: gustArea, fill: COLORS.gust, 'fill-opacity': '0.12' }))
+
+  // filled area under speed
+  const speedArea = smoothPath(pts) + ` L ${pts[pts.length-1][0]} ${H-P.b} L ${P.l} ${H-P.b} Z`
+  svg.append(svgEl('path', { d: speedArea, fill: 'url(#wag)' }))
+
+  // gust line
+  svg.append(svgEl('path', { d: smoothPath(gpts), fill:'none', stroke: COLORS.gust, 'stroke-width':'1.2', 'stroke-dasharray':'3 2', 'stroke-opacity':'0.7' }))
+
+  // speed line
+  svg.append(svgEl('path', { d: smoothPath(pts), fill:'none', stroke: COLORS.accent, 'stroke-width':'2.5' }))
+
+  // direction arrows every 4 hours
+  for (let i = 0; i < N; i += 4) {
+    const x = toX(i), y = toY(WIND_SPEED[i]) - 10
+    const deg = DIR_DEG[i]
+    const g = svgEl('g', { transform: `translate(${x},${y}) rotate(${deg})` })
+    g.append(svgEl('polygon', { points: '0,-5 3,3 0,1 -3,3', fill: COLORS.accent, opacity:'0.9' }))
+    svg.append(g)
+    svg.append(svgText(WIND_DIR[i], { x, y: y - 8, fill: COLORS.sub, 'font-size': 7, 'text-anchor':'middle' }))
+  }
+
+  // x-axis labels (every 4 hrs)
+  for (let i = 0; i < N; i += 4) {
+    svg.append(svgText(hourLabel(HOURS[i]), { x: toX(i), y: H - 6, fill: COLORS.dim, 'font-size': 8, 'text-anchor':'middle' }))
+  }
+
+  // title label
+  svg.append(svgText('mph', { x: P.l - 4, y: P.t - 4, fill: COLORS.dim, 'font-size': 8, 'text-anchor':'end' }))
+  // legend
+  const leg = [['─ Speed', COLORS.accent], ['- - Gusts', COLORS.gust]]
+  leg.forEach(([label, color], i) => {
+    svg.append(svgText(label, { x: P.l + i*70, y: H - 7, fill: color, 'font-size': 7.5, opacity: 0.85 }))
+  })
+}
+
+// ─── Wind B: Improved Bars + Gust + Direction ──────────────────────────────
+function drawWindB() {
+  const svg = document.getElementById('wind-b')
+  const W = 320, H = 120
+  const P = { t: 14, b: 24, l: 30, r: 10 }
+  const cW = W - P.l - P.r, cH = H - P.t - P.b
+  const N = WIND_SPEED.length
+  const maxV = 25, barW = (cW / N) - 2
+  const toX = i => P.l + (i / N) * cW + 1
+  const toY = v => P.t + cH - (v / maxV) * cH
+
+  for (const v of [0, 5, 10, 15, 20]) {
+    const y = toY(v)
+    svg.append(svgEl('line', { x1: P.l, y1: y, x2: W-P.r, y2: y, stroke: COLORS.grid, 'stroke-width': 0.5 }))
+    svg.append(svgText(v, { x: P.l - 4, y: y + 3.5, fill: COLORS.dim, 'font-size': 8, 'text-anchor': 'end' }))
+  }
+
+  // bars
+  WIND_SPEED.forEach((v, i) => {
+    const bh = (v / maxV) * cH
+    svg.append(svgEl('rect', { x: toX(i), y: toY(v), width: barW, height: bh, rx: 2, fill: COLORS.ocean, opacity: 0.85 }))
+  })
+
+  // gust dashed line
+  const gpts = WIND_GUSTS.map((v,i) => [toX(i) + barW/2, toY(v)])
+  svg.append(svgEl('polyline', { points: gpts.map(p=>p.join(',')).join(' '), fill:'none', stroke:COLORS.gust, 'stroke-width':'1.5', 'stroke-dasharray':'3 2' }))
+  WIND_GUSTS.forEach((v,i) => {
+    if (i % 4 === 0) svg.append(svgEl('circle', { cx: toX(i)+barW/2, cy: toY(v), r:2.5, fill: COLORS.gust }))
+  })
+
+  // direction labels every 4hrs
+  for (let i = 0; i < N; i += 4) {
+    svg.append(svgText(WIND_DIR[i], { x: toX(i)+barW/2, y: P.t - 3, fill: COLORS.sub, 'font-size': 7, 'text-anchor':'middle' }))
+    svg.append(svgText(hourLabel(HOURS[i]), { x: toX(i)+barW/2, y: H-6, fill: COLORS.dim, 'font-size': 8, 'text-anchor':'middle' }))
+  }
+
+  svg.append(svgText('mph', { x: P.l - 4, y: P.t - 4, fill: COLORS.dim, 'font-size': 8, 'text-anchor':'end' }))
+  const leg2 = [['▮ Speed', COLORS.ocean], ['- - Gusts', COLORS.gust]]
+  leg2.forEach(([label, color], i) => {
+    svg.append(svgText(label, { x: P.l + i*72, y: H - 7, fill: color, 'font-size': 7.5, opacity: 0.85 }))
+  })
+}
+
+// ─── Wind C: Dual lines speed + gusts ─────────────────────────────────────
+function drawWindC() {
+  const svg = document.getElementById('wind-c')
+  const W = 320, H = 120
+  const P = { t: 14, b: 24, l: 30, r: 10 }
+  const cW = W - P.l - P.r, cH = H - P.t - P.b
+  const N = WIND_SPEED.length
+  const maxV = 27, minV = 0
+  const toX = i => P.l + (i / (N-1)) * cW
+  const toY = v => P.t + cH - ((v - minV) / (maxV - minV)) * cH
+
+  for (const v of [0, 5, 10, 15, 20]) {
+    const y = toY(v)
+    svg.append(svgEl('line', { x1: P.l, y1: y, x2: W-P.r, y2: y, stroke: COLORS.grid, 'stroke-width': 0.5 }))
+    svg.append(svgText(v, { x: P.l - 4, y: y + 3.5, fill: COLORS.dim, 'font-size': 8, 'text-anchor': 'end' }))
+  }
+
+  const spts = WIND_SPEED.map((v,i) => [toX(i), toY(v)])
+  const gpts = WIND_GUSTS.map((v,i) => [toX(i), toY(v)])
+
+  // gust line
+  svg.append(svgEl('path', { d: smoothPath(gpts), fill:'none', stroke: COLORS.gust, 'stroke-width':'1.8', 'stroke-dasharray':'4 2' }))
+  // speed fill
+  const defs = svgEl('defs', {})
+  const grad = svgEl('linearGradient', { id: 'wcg', x1:'0', y1:'0', x2:'0', y2:'1' })
+  grad.append(svgEl('stop', { offset:'0', 'stop-color': COLORS.accent, 'stop-opacity':'0.35' }))
+  grad.append(svgEl('stop', { offset:'1', 'stop-color': COLORS.accent, 'stop-opacity':'0.0' }))
+  defs.append(grad); svg.append(defs)
+
+  const area = smoothPath(spts) + ` L ${spts[spts.length-1][0]} ${H-P.b} L ${P.l} ${H-P.b} Z`
+  svg.append(svgEl('path', { d: area, fill:'url(#wcg)' }))
+  svg.append(svgEl('path', { d: smoothPath(spts), fill:'none', stroke: COLORS.accent, 'stroke-width':'2.5' }))
+
+  // peak gust annotation
+  const maxGi = WIND_GUSTS.indexOf(Math.max(...WIND_GUSTS))
+  svg.append(svgEl('circle', { cx: toX(maxGi), cy: toY(WIND_GUSTS[maxGi]), r:4, fill: COLORS.gust }))
+  svg.append(svgText(`${WIND_GUSTS[maxGi]} mph`, { x: toX(maxGi)+6, y: toY(WIND_GUSTS[maxGi])-4, fill: COLORS.gust, 'font-size':9, 'font-weight':'700' }))
+
+  for (let i = 0; i < N; i += 4) {
+    svg.append(svgText(hourLabel(HOURS[i]), { x: toX(i), y: H-6, fill: COLORS.dim, 'font-size':8, 'text-anchor':'middle' }))
+  }
+  svg.append(svgText('mph', { x: P.l - 4, y: P.t - 4, fill: COLORS.dim, 'font-size': 8, 'text-anchor':'end' }))
+  const leg3 = [['─ Speed', COLORS.accent], ['- - Gusts', COLORS.gust]]
+  leg3.forEach(([label, color], i) => {
+    svg.append(svgText(label, { x: P.l + i*72, y: H - 7, fill: color, 'font-size': 7.5, opacity: 0.85 }))
+  })
+}
+
+// ─── Swell A: Bars (height) + Period dots ─────────────────────────────────
+function drawSwellA() {
+  const svg = document.getElementById('swell-a')
+  const W = 320, H = 130
+  const P = { t: 16, b: 24, l: 30, r: 30 }
+  const cW = W - P.l - P.r, cH = H - P.t - P.b
+  const N = SWELL_H.length
+  const maxH = 5, minH = 0, maxP = 16, minP = 6
+  const barW = (cW / N) - 2
+  const toX = i => P.l + (i / N) * cW + 1
+  const toYH = v => P.t + cH - ((v - minH) / (maxH - minH)) * cH
+  const toYP = v => P.t + cH - ((v - minP) / (maxP - minP)) * cH
+
+  // left axis (height)
+  for (const v of [0, 2, 4]) {
+    const y = toYH(v)
+    svg.append(svgEl('line', { x1: P.l, y1: y, x2: W-P.r, y2: y, stroke: COLORS.grid, 'stroke-width': 0.5 }))
+    svg.append(svgText(v, { x: P.l - 4, y: y + 3.5, fill: COLORS.dim, 'font-size': 8, 'text-anchor': 'end' }))
+  }
+
+  const defs = svgEl('defs', {})
+  const grad = svgEl('linearGradient', { id: 'shg', x1:'0', y1:'0', x2:'0', y2:'1' })
+  grad.append(svgEl('stop', { offset:'0', 'stop-color': COLORS.ocean, 'stop-opacity':'0.9' }))
+  grad.append(svgEl('stop', { offset:'1', 'stop-color': COLORS.ocean, 'stop-opacity':'0.4' }))
+  defs.append(grad); svg.append(defs)
+
+  // bars
+  SWELL_H.forEach((v, i) => {
+    const bh = ((v - minH) / (maxH - minH)) * cH
+    svg.append(svgEl('rect', { x: toX(i), y: toYH(v), width: barW, height: bh, rx:2, fill:'url(#shg)' }))
+  })
+
+  // period dots + line (right axis)
+  const ppts = SWELL_P.map((v,i) => [toX(i)+barW/2, toYP(v)])
+  svg.append(svgEl('polyline', { points: ppts.map(p=>p.join(',')).join(' '), fill:'none', stroke: '#FF9F43', 'stroke-width':'1.8' }))
+  ppts.forEach(([x,y]) => svg.append(svgEl('circle', { cx:x, cy:y, r:3, fill:'#FF9F43', stroke:'#131C2E','stroke-width':1.5 })))
+
+  // right axis (period)
+  for (const v of [8, 12, 16]) {
+    const y = toYP(v)
+    svg.append(svgText(`${v}s`, { x: W-P.r+4, y: y+3.5, fill:'#FF9F43', 'font-size':8, opacity:0.8 }))
+  }
+
+  for (let i = 0; i < N; i += 4) {
+    svg.append(svgText(hourLabel(HOURS[i]), { x: toX(i)+barW/2, y: H-6, fill: COLORS.dim, 'font-size':8, 'text-anchor':'middle' }))
+  }
+  svg.append(svgText('ft', { x: P.l-4, y: P.t-4, fill: COLORS.dim, 'font-size':8, 'text-anchor':'end' }))
+  const legs = [['▮ Height (ft)', COLORS.ocean], ['● Period (s)', '#FF9F43']]
+  legs.forEach(([label, color], i) => {
+    svg.append(svgText(label, { x: P.l + i*90, y: H-7, fill: color, 'font-size':7.5, opacity:0.85 }))
+  })
+}
+
+// ─── Swell B: Stacked panels ───────────────────────────────────────────────
+function drawSwellB() {
+  const svg = document.getElementById('swell-b')
+  const W = 320, H = 130
+  const P = { t: 8, b: 8, l: 30, r: 8 }
+  const panH = (H - P.t - P.b - 8) / 2
+  const cW = W - P.l - P.r
+  const N = SWELL_H.length
+
+  // Top panel: Height
+  const minH = 1, maxH = 5
+  const toXh = i => P.l + (i / (N-1)) * cW
+  const toYh = v => P.t + panH - ((v-minH)/(maxH-minH)) * panH
+
+  const defs = svgEl('defs', {})
+  const g1 = svgEl('linearGradient', { id:'sbh', x1:'0', y1:'0', x2:'0', y2:'1' })
+  g1.append(svgEl('stop', { offset:'0', 'stop-color':COLORS.ocean, 'stop-opacity':'0.5' }))
+  g1.append(svgEl('stop', { offset:'1', 'stop-color':COLORS.ocean, 'stop-opacity':'0.0' }))
+  defs.append(g1)
+  const g2 = svgEl('linearGradient', { id:'sbp', x1:'0', y1:'0', x2:'0', y2:'1' })
+  g2.append(svgEl('stop', { offset:'0', 'stop-color':'#FF9F43', 'stop-opacity':'0.4' }))
+  g2.append(svgEl('stop', { offset:'1', 'stop-color':'#FF9F43', 'stop-opacity':'0.0' }))
+  defs.append(g2)
+  svg.append(defs)
+
+  const hpts = SWELL_H.map((v,i) => [toXh(i), toYh(v)])
+  const hFill = smoothPath(hpts) + ` L ${hpts[hpts.length-1][0]} ${P.t+panH} L ${P.l} ${P.t+panH} Z`
+  svg.append(svgEl('path', { d: hFill, fill:'url(#sbh)' }))
+  svg.append(svgEl('path', { d: smoothPath(hpts), fill:'none', stroke:COLORS.ocean, 'stroke-width':'2' }))
+  svg.append(svgText('Swell Height', { x: P.l, y: P.t+9, fill: COLORS.sub, 'font-size':8 }))
+  svg.append(svgText('ft', { x: P.l-4, y: P.t+9, fill: COLORS.dim, 'font-size':7, 'text-anchor':'end' }))
+  for (const v of [2,4]) {
+    svg.append(svgText(v, { x: P.l-4, y: toYh(v)+3, fill: COLORS.dim, 'font-size':7, 'text-anchor':'end' }))
+  }
+
+  // separator
+  const sepY = P.t + panH + 4
+  svg.append(svgEl('line', { x1:P.l, y1:sepY, x2:W-P.r, y2:sepY, stroke:COLORS.grid, 'stroke-width':0.5 }))
+
+  // Bottom panel: Period
+  const topP = sepY + 4
+  const minP = 6, maxP = 16
+  const toYp = v => topP + panH - ((v-minP)/(maxP-minP)) * panH
+
+  const ppts = SWELL_P.map((v,i) => [toXh(i), toYp(v)])
+  const pFill = smoothPath(ppts) + ` L ${ppts[ppts.length-1][0]} ${topP+panH} L ${P.l} ${topP+panH} Z`
+  svg.append(svgEl('path', { d: pFill, fill:'url(#sbp)' }))
+  svg.append(svgEl('path', { d: smoothPath(ppts), fill:'none', stroke:'#FF9F43', 'stroke-width':'2' }))
+  svg.append(svgText('Period', { x: P.l, y: topP+9, fill: COLORS.sub, 'font-size':8 }))
+  svg.append(svgText('s', { x: P.l-4, y: topP+9, fill: COLORS.dim, 'font-size':7, 'text-anchor':'end' }))
+  for (const v of [8,12]) {
+    svg.append(svgText(v, { x: P.l-4, y: toYp(v)+3, fill: COLORS.dim, 'font-size':7, 'text-anchor':'end' }))
+  }
+
+  for (let i = 0; i < N; i += 4) {
+    svg.append(svgText(hourLabel(HOURS[i]), { x: toXh(i), y: H-1, fill: COLORS.dim, 'font-size':8, 'text-anchor':'middle' }))
+  }
+}
+
+// ─── Air Temp A: Gradient Fill ─────────────────────────────────────────────
+function drawTempA() {
+  const svg = document.getElementById('temp-a')
+  const W = 320, H = 120
+  const P = { t: 16, b: 22, l: 30, r: 8 }
+  const cW = W - P.l - P.r, cH = H - P.t - P.b
+  const N = AIR_TEMP.length
+  const minV = 50, maxV = 72
+  const toX = i => P.l + (i / (N-1)) * cW
+  const toY = v => P.t + cH - ((v-minV)/(maxV-minV)) * cH
+
+  const defs = svgEl('defs', {})
+  const grad = svgEl('linearGradient', { id:'tag', x1:'0', y1:'0', x2:'0', y2:'1' })
+  // warm orange-red at top → cool blue at bottom
+  grad.append(svgEl('stop', { offset:'0', 'stop-color':'#FF6B35', 'stop-opacity':'0.5' }))
+  grad.append(svgEl('stop', { offset:'0.5', 'stop-color':'#00B4D8', 'stop-opacity':'0.25' }))
+  grad.append(svgEl('stop', { offset:'1', 'stop-color':'#0077B6', 'stop-opacity':'0.05' }))
+  defs.append(grad); svg.append(defs)
+
+  for (const v of [54,60,66]) {
+    const y = toY(v)
+    svg.append(svgEl('line', { x1:P.l, y1:y, x2:W-P.r, y2:y, stroke:COLORS.grid, 'stroke-width':0.5 }))
+    svg.append(svgText(`${v}°`, { x:P.l-4, y:y+3.5, fill:COLORS.dim, 'font-size':8, 'text-anchor':'end' }))
+  }
+
+  const pts = AIR_TEMP.map((v,i) => [toX(i), toY(v)])
+  const fill = smoothPath(pts) + ` L ${pts[pts.length-1][0]} ${H-P.b} L ${P.l} ${H-P.b} Z`
+  svg.append(svgEl('path', { d: fill, fill:'url(#tag)' }))
+  svg.append(svgEl('path', { d: smoothPath(pts), fill:'none', stroke:'#FF7F50', 'stroke-width':'2.5' }))
+
+  // annotate peak and trough
+  const peakI = AIR_TEMP.indexOf(Math.max(...AIR_TEMP))
+  const troughI = AIR_TEMP.indexOf(Math.min(...AIR_TEMP))
+  svg.append(svgEl('circle', { cx:toX(peakI), cy:toY(AIR_TEMP[peakI]), r:4, fill:'#FF6B35' }))
+  svg.append(svgText(`${AIR_TEMP[peakI]}°`, { x:toX(peakI), y:toY(AIR_TEMP[peakI])-7, fill:'#FF6B35', 'font-size':9, 'font-weight':'700', 'text-anchor':'middle' }))
+  svg.append(svgEl('circle', { cx:toX(troughI), cy:toY(AIR_TEMP[troughI]), r:4, fill:COLORS.ocean }))
+  svg.append(svgText(`${AIR_TEMP[troughI]}°`, { x:toX(troughI)+8, y:toY(AIR_TEMP[troughI])+4, fill:COLORS.ocean, 'font-size':9, 'font-weight':'700' }))
+
+  for (let i = 0; i < N; i += 4) {
+    svg.append(svgText(hourLabel(HOURS[i]), { x:toX(i), y:H-6, fill:COLORS.dim, 'font-size':8, 'text-anchor':'middle' }))
+  }
+  svg.append(svgText('°F', { x:P.l-4, y:P.t-4, fill:COLORS.dim, 'font-size':8, 'text-anchor':'end' }))
+}
+
+// ─── Air Temp B: Line + Value Labels ──────────────────────────────────────
+function drawTempB() {
+  const svg = document.getElementById('temp-b')
+  const W = 320, H = 120
+  const P = { t: 18, b: 22, l: 30, r: 8 }
+  const cW = W - P.l - P.r, cH = H - P.t - P.b
+  const N = AIR_TEMP.length
+  const minV = 50, maxV = 72
+  const toX = i => P.l + (i / (N-1)) * cW
+  const toY = v => P.t + cH - ((v-minV)/(maxV-minV)) * cH
+
+  for (const v of [54,60,66]) {
+    const y = toY(v)
+    svg.append(svgEl('line', { x1:P.l, y1:y, x2:W-P.r, y2:y, stroke:COLORS.grid, 'stroke-width':0.5 }))
+    svg.append(svgText(`${v}°`, { x:P.l-4, y:y+3.5, fill:COLORS.dim, 'font-size':8, 'text-anchor':'end' }))
+  }
+
+  const pts = AIR_TEMP.map((v,i) => [toX(i), toY(v)])
+
+  // dots at key hours
+  const keyIdxs = [0, 4, 7, 11, 15]
+  keyIdxs.forEach(i => {
+    const x = toX(i), y = toY(AIR_TEMP[i])
+    svg.append(svgEl('circle', { cx:x, cy:y, r:4, fill:COLORS.accent }))
+    svg.append(svgText(`${AIR_TEMP[i]}°`, { x:x, y:y-9, fill:COLORS.text, 'font-size':9, 'font-weight':'700', 'text-anchor':'middle' }))
+    svg.append(svgText(hourLabel(HOURS[i]), { x:x, y:H-6, fill:COLORS.dim, 'font-size':8, 'text-anchor':'middle' }))
+  })
+
+  svg.append(svgEl('path', { d: smoothPath(pts), fill:'none', stroke:COLORS.accent, 'stroke-width':'2.5' }))
+
+  // re-draw dots on top
+  keyIdxs.forEach(i => {
+    svg.append(svgEl('circle', { cx:toX(i), cy:toY(AIR_TEMP[i]), r:4, fill:COLORS.accent, stroke:'#131C2E', 'stroke-width':1.5 }))
+  })
+
+  svg.append(svgText('°F', { x:P.l-4, y:P.t-4, fill:COLORS.dim, 'font-size':8, 'text-anchor':'end' }))
+}
+
+// ─── Rain A: Bars + Cloud line ─────────────────────────────────────────────
+function drawRainA() {
+  const svg = document.getElementById('rain-a')
+  const W = 320, H = 120
+  const P = { t: 14, b: 22, l: 30, r: 8 }
+  const cW = W - P.l - P.r, cH = H - P.t - P.b
+  const N = RAIN.length
+  const barW = (cW / N) - 2
+  const toX = i => P.l + (i / N) * cW + 1
+  const toY = v => P.t + cH - (v / 100) * cH
+
+  for (const v of [0, 25, 50, 75, 100]) {
+    const y = toY(v)
+    svg.append(svgEl('line', { x1:P.l, y1:y, x2:W-P.r, y2:y, stroke:COLORS.grid, 'stroke-width':0.5 }))
+    if (v > 0) svg.append(svgText(`${v}%`, { x:P.l-4, y:y+3.5, fill:COLORS.dim, 'font-size':7.5, 'text-anchor':'end' }))
+  }
+
+  // bars — intensity based on value
+  RAIN.forEach((v, i) => {
+    const bh = (v / 100) * cH
+    const opacity = 0.3 + (v / 100) * 0.6
+    svg.append(svgEl('rect', { x:toX(i), y:toY(v), width:barW, height:bh, rx:2, fill:COLORS.ocean, opacity }))
+  })
+
+  // cloud cover line
+  const cpts = CLOUD.map((v,i) => [toX(i)+barW/2, toY(v)])
+  svg.append(svgEl('polyline', { points:cpts.map(p=>p.join(',')).join(' '), fill:'none', stroke:COLORS.grey, 'stroke-width':1.2, 'stroke-dasharray':'3 2', opacity:0.7 }))
+
+  for (let i = 0; i < N; i += 4) {
+    svg.append(svgText(hourLabel(HOURS[i]), { x:toX(i)+barW/2, y:H-6, fill:COLORS.dim, 'font-size':8, 'text-anchor':'middle' }))
+  }
+  const leg = [['▮ Rain %', COLORS.ocean], ['- - Clouds', COLORS.grey]]
+  leg.forEach(([label,color],i) => svg.append(svgText(label, { x:P.l+i*84, y:H-7, fill:color, 'font-size':7.5, opacity:0.85 })))
+}
+
+// ─── Rain B: Smooth area ───────────────────────────────────────────────────
+function drawRainB() {
+  const svg = document.getElementById('rain-b')
+  const W = 320, H = 120
+  const P = { t: 14, b: 22, l: 30, r: 8 }
+  const cW = W - P.l - P.r, cH = H - P.t - P.b
+  const N = RAIN.length
+  const toX = i => P.l + (i / (N-1)) * cW
+  const toY = v => P.t + cH - (v / 100) * cH
+
+  for (const v of [25, 50, 75]) {
+    const y = toY(v)
+    svg.append(svgEl('line', { x1:P.l, y1:y, x2:W-P.r, y2:y, stroke:COLORS.grid, 'stroke-width':0.5 }))
+    svg.append(svgText(`${v}%`, { x:P.l-4, y:y+3.5, fill:COLORS.dim, 'font-size':7.5, 'text-anchor':'end' }))
+  }
+
+  const defs = svgEl('defs', {})
+  const grad = svgEl('linearGradient', { id:'rbg', x1:'0', y1:'0', x2:'0', y2:'1' })
+  grad.append(svgEl('stop', { offset:'0', 'stop-color':'#0077B6', 'stop-opacity':'0.7' }))
+  grad.append(svgEl('stop', { offset:'1', 'stop-color':'#0077B6', 'stop-opacity':'0.05' }))
+  defs.append(grad); svg.append(defs)
+
+  // cloud band (subtle background)
+  const cpts = CLOUD.map((v,i) => [toX(i), toY(v)])
+  const cFill = smoothPath(cpts) + ` L ${cpts[cpts.length-1][0]} ${H-P.b} L ${P.l} ${H-P.b} Z`
+  svg.append(svgEl('path', { d:cFill, fill:'#334455', 'fill-opacity':'0.25' }))
+
+  // rain area
+  const rpts = RAIN.map((v,i) => [toX(i), toY(v)])
+  const rFill = smoothPath(rpts) + ` L ${rpts[rpts.length-1][0]} ${H-P.b} L ${P.l} ${H-P.b} Z`
+  svg.append(svgEl('path', { d:rFill, fill:'url(#rbg)' }))
+  svg.append(svgEl('path', { d:smoothPath(rpts), fill:'none', stroke:'#00A8E8', 'stroke-width':'2.5' }))
+
+  // peak label
+  const peakI = RAIN.indexOf(Math.max(...RAIN))
+  svg.append(svgEl('circle', { cx:toX(peakI), cy:toY(RAIN[peakI]), r:4, fill:'#00A8E8', stroke:'#131C2E','stroke-width':1.5 }))
+  svg.append(svgText(`${RAIN[peakI]}%`, { x:toX(peakI), y:toY(RAIN[peakI])-8, fill:COLORS.text, 'font-size':9,'font-weight':'700','text-anchor':'middle' }))
+
+  for (let i = 0; i < N; i += 4) {
+    svg.append(svgText(hourLabel(HOURS[i]), { x:toX(i), y:H-6, fill:COLORS.dim, 'font-size':8, 'text-anchor':'middle' }))
+  }
+  const leg = [['─ Rain %', '#00A8E8'], ['▓ Cloud cover', '#556677']]
+  leg.forEach(([label,color],i) => svg.append(svgText(label, { x:P.l+i*90, y:H-7, fill:color, 'font-size':7.5, opacity:0.85 })))
+}
+
+// ─── Pressure fixed ────────────────────────────────────────────────────────
+function drawPressureFixed() {
+  const svg = document.getElementById('pressure-fixed')
+  const W = 320, H = 120
+  const P = { t: 20, b: 28, l: 40, r: 12 }
+  const cW = W - P.l - P.r, cH = H - P.t - P.b
+  const R = PRESSURE_R
+  const N = R.length
+  const minV = Math.min(...R) - 0.03, maxV = Math.max(...R) + 0.03
+  const range = maxV - minV
+  const toX = i => P.l + (i / (N-1)) * cW
+  const toY = v => P.t + cH - ((v-minV)/range) * cH
+
+  // grid
+  const ticks = [29.94, 30.00, 30.06, 30.12]
+  ticks.forEach(v => {
+    if (v < minV || v > maxV) return
+    const y = toY(v)
+    svg.append(svgEl('line', { x1:P.l, y1:y, x2:W-P.r, y2:y, stroke:COLORS.grid, 'stroke-width':0.5 }))
+    svg.append(svgText(v.toFixed(2), { x:P.l-4, y:y+3.5, fill:COLORS.dim, 'font-size':7.5, 'text-anchor':'end' }))
+  })
+
+  const defs = svgEl('defs', {})
+  const grad = svgEl('linearGradient', { id:'pfg', x1:'0', y1:'0', x2:'0', y2:'1' })
+  grad.append(svgEl('stop', { offset:'0', 'stop-color':'#9B59B6', 'stop-opacity':'0.4' }))
+  grad.append(svgEl('stop', { offset:'1', 'stop-color':'#9B59B6', 'stop-opacity':'0.0' }))
+  defs.append(grad); svg.append(defs)
+
+  const pts = R.map((v,i) => [toX(i), toY(v)])
+  const fill = smoothPath(pts) + ` L ${pts[pts.length-1][0]} ${H-P.b} L ${P.l} ${H-P.b} Z`
+  svg.append(svgEl('path', { d:fill, fill:'url(#pfg)' }))
+  svg.append(svgEl('path', { d:smoothPath(pts), fill:'none', stroke:'#9B59B6', 'stroke-width':'2.2' }))
+  pts.forEach(([x,y]) => svg.append(svgEl('circle', { cx:x, cy:y, r:3, fill:'#9B59B6', stroke:'#131C2E','stroke-width':1.5 })))
+
+  // current highlighted point + tooltip example
+  const ci = N - 1
+  svg.append(svgEl('circle', { cx:toX(ci), cy:toY(R[ci]), r:5.5, fill:COLORS.accent }))
+  // tooltip mock
+  const tx = toX(ci) > W-P.r-70 ? toX(ci)-72 : toX(ci)+8
+  svg.append(svgEl('rect', { x:tx, y:toY(R[ci])-20, width:68, height:20, rx:5, fill:'#1A2235' }))
+  svg.append(svgText(`${R[ci].toFixed(2)} inHg`, { x:tx+34, y:toY(R[ci])-14, fill:COLORS.text, 'font-size':8,'font-weight':'700','text-anchor':'middle' }))
+  svg.append(svgText('3 PM ◄ drag', { x:tx+34, y:toY(R[ci])-5, fill:COLORS.sub, 'font-size':7, 'text-anchor':'middle' }))
+
+  // x-axis hours (readings going back ~11 hrs from now)
+  const nowHour = new Date().getHours()
+  for (let i = 0; i < N; i += 2) {
+    const h = nowHour - (N - 1 - i)
+    const label = h < 0 ? hourLabel(h + 24) : hourLabel(h)
+    svg.append(svgText(label, { x:toX(i), y:H-10, fill:COLORS.dim, 'font-size':7.5, 'text-anchor':'middle' }))
+  }
+  svg.append(svgText('Now', { x:toX(N-1), y:H-2, fill:COLORS.accent, 'font-size':7.5, 'text-anchor':'middle', 'font-weight':'700' }))
+  svg.append(svgText('inHg', { x:P.l-4, y:P.t-6, fill:COLORS.dim, 'font-size':7.5, 'text-anchor':'end' }))
+  svg.append(svgText('↘ Falling slowly', { x:P.l, y:P.t-6, fill:'#8BC34A', 'font-size':8 }))
+}
+
+// ─── Render all ────────────────────────────────────────────────────────────
+drawWindA(); drawWindB(); drawWindC()
+drawSwellA(); drawSwellB()
+drawTempA(); drawTempB()
+drawRainA(); drawRainB()
+drawPressureFixed()
+</script>
+</body>
+</html>

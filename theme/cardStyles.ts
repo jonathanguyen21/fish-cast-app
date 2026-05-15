@@ -10,6 +10,10 @@ export const cardStyles = StyleSheet.create({
     padding: Spacing.md,
     alignItems: 'center',
   },
+  icon: {
+    fontSize: 18,
+    marginBottom: 4,
+  },
   label: {
     fontSize: 11,
     color: Colors.textTertiary,

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendar with Score</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0A0E1A;
+    color: #E8EDF5;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    padding: 28px 20px 40px;
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .sub { font-size: 13px; color: #556677; margin-bottom: 28px; line-height: 1.5; }
+
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+
+  /* Phone shell */
+  .phone {
+    background: #0A0E1A;
+    border: 1.5px solid #1A2235;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 12px 40px #00000060;
+  }
+  .phone-notch {
+    height: 28px;
+    background: #050A12;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .notch-pill { width: 60px; height: 6px; background: #1A2235; border-radius: 4px; }
+
+  .app-header {
+    padding: 12px 16px 8px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .spot-name { font-size: 16px; font-weight: 700; color: #E8EDF5; }
+  .switch-hint { font-size: 11px; color: #00B4D8; }
+
+  /* Date chip */
+  .date-chip {
+    margin: 0 16px 10px;
+    background: #0F1623;
+    border-radius: 10px;
+    padding: 9px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    border: 1px solid #1A2235;
+  }
+  .chip-label { font-size: 13px; font-weight: 600; color: #E8EDF5; }
+  .chip-icon { font-size: 10px; color: #8899AA; }
+
+  /* Calendar popup */
+  .cal-popup {
+    margin: 0 12px 10px;
+    background: #0F1623;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #1A2235;
+  }
+  .cal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 14px;
+    border-bottom: 1px solid #1A2235;
+  }
+  .cal-month { font-size: 13px; font-weight: 700; color: #E8EDF5; }
+  .cal-nav { font-size: 12px; color: #8899AA; cursor: pointer; padding: 0 4px; }
+
+  .cal-weekdays {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    padding: 8px 8px 0;
+    border-bottom: 1px solid #1A2235;
+    padding-bottom: 4px;
+  }
+  .cal-wd { font-size: 8px; font-weight: 600; color: #445566; text-align: center; }
+
+  .cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    padding: 4px 6px 8px;
+    gap: 2px;
+  }
+
+  /* Day cells */
+  .day {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border-radius: 9px;
+    padding: 5px 2px 4px;
+    cursor: pointer;
+    min-height: 44px;
+    transition: background 0.12s;
+    position: relative;
+  }
+  .day:hover:not(.empty):not(.past) { background: #1A2235; }
+  .day.selected { background: #00B4D8 !important; }
+  .day.today { background: #0E2030; }
+  .day.locked { opacity: 0.3; cursor: default; }
+  .day.past { opacity: 0.38; cursor: default; }
+  .day.empty { cursor: default; }
+
+  .day-num {
+    font-size: 12px; font-weight: 700; color: #E8EDF5;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .day.empty .day-num { color: transparent; }
+  .day.past .day-num { color: #8899AA; }
+  .day.selected .day-num { color: #0A0E1A; }
+  .day.today .day-num { color: #00B4D8; }
+
+  /* Score dot */
+  .score-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .day.selected .score-dot { opacity: 0.7; }
+  .day.empty .score-dot { display: none; }
+
+  /* Score mini-bar (alternative) */
+  .score-bar {
+    width: 18px; height: 3px; border-radius: 2px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .day.selected .score-bar { opacity: 0.8; }
+  .day.empty .score-bar { display: none; }
+
+  /* today indicator */
+  .today-ring {
+    position: absolute;
+    top: 3px; right: 3px;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #00B4D8;
+  }
+
+  /* Score below */
+  .score-strip {
+    margin: 0 12px 10px;
+    background: #0F1623; border-radius: 12px;
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 12px;
+    border: 1px solid #1A2235;
+  }
+  .score-dial {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: conic-gradient(#00B4D8 0% 68%, #1A2235 68% 100%);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .dial-inner {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #0F1623;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #E8EDF5;
+  }
+  .score-info .score-label { font-size: 12px; font-weight: 600; color: #E8EDF5; }
+  .score-info .score-sub { font-size: 10px; color: #8899AA; margin-top: 2px; }
+
+  .more-stub {
+    margin: 0 12px 14px;
+    background: #0F1623; border-radius: 10px; padding: 10px 12px; opacity: 0.3;
+  }
+  .stub-row { height: 7px; background: #1A2235; border-radius: 4px; margin-bottom: 5px; }
+  .stub-row:last-child { width: 55%; margin: 0; }
+
+  /* Side panel */
+  .side-panel { display: flex; flex-direction: column; gap: 16px; }
+
+  .legend-card {
+    background: #0F1623; border-radius: 14px; border: 1px solid #1A2235; padding: 14px 16px;
+  }
+  .legend-title { font-size: 11px; font-weight: 600; color: #556677; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+  .legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+  .legend-row:last-child { margin: 0; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .leg-bar { width: 18px; height: 4px; border-radius: 2px; flex-shrink: 0; }
+  .leg-label { font-size: 11px; color: #8899AA; }
+  .leg-score { font-size: 11px; font-weight: 600; color: #E8EDF5; margin-left: auto; }
+
+  .note-card {
+    background: #0F1623; border-radius: 14px; border: 1px solid #1A2235; padding: 14px 16px;
+    font-size: 11px; color: #8899AA; line-height: 1.6;
+  }
+  .note-card strong { color: #E8EDF5; }
+
+  .confirm-card {
+    background: #0F2030; border-radius: 14px; border: 1px solid #00B4D840;
+    padding: 14px 16px; text-align: center;
+  }
+  .confirm-card p { font-size: 12px; color: #8899AA; margin-bottom: 12px; }
+  .confirm-btn {
+    background: #00B4D8; color: #0A0E1A; border: none; border-radius: 10px;
+    padding: 11px 22px; font-size: 13px; font-weight: 700; cursor: pointer; width: 100%;
+  }
+
+  .score-key { font-size: 10px; color: #556677; text-align: center; margin-top: 4px; padding: 0 8px 6px; }
+</style>
+</head>
+<body>
+
+<h1>Calendar with Day Scores</h1>
+<p class="sub">Option B layout — full month calendar — each day cell shows a small color-coded score indicator for the forecasted fishing conditions.</p>
+
+<div class="layout">
+
+  <!-- Phone mockup -->
+  <div class="phone">
+    <div class="phone-notch"><div class="notch-pill"></div></div>
+
+    <div class="app-header">
+      <span class="spot-name">Berkeley Marina</span>
+      <span class="switch-hint">Switch ›</span>
+    </div>
+
+    <!-- Date chip -->
+    <div class="date-chip">
+      <span class="chip-label">📅 Sun, May 11 — Today</span>
+      <span class="chip-icon">▾ tap to change</span>
+    </div>
+
+    <!-- Calendar -->
+    <div class="cal-popup">
+      <div class="cal-header">
+        <span class="cal-nav">‹</span>
+        <span class="cal-month">May 2026</span>
+        <span class="cal-nav">›</span>
+      </div>
+      <div class="cal-weekdays">
+        <div class="cal-wd">S</div><div class="cal-wd">M</div><div class="cal-wd">T</div>
+        <div class="cal-wd">W</div><div class="cal-wd">T</div><div class="cal-wd">F</div>
+        <div class="cal-wd">S</div>
+      </div>
+      <div class="cal-grid" id="cal"></div>
+      <div class="score-key">● score dot = forecasted fishing quality for that day</div>
+    </div>
+
+    <!-- Score for selected day -->
+    <div class="score-strip">
+      <div class="score-dial"><div class="dial-inner">72</div></div>
+      <div class="score-info">
+        <div class="score-label">Great day to fish</div>
+        <div class="score-sub">Best window 10 AM – 1 PM</div>
+      </div>
+    </div>
+
+    <div class="more-stub">
+      <div class="stub-row"></div><div class="stub-row"></div><div class="stub-row"></div>
+    </div>
+  </div>
+
+  <!-- Side panel -->
+  <div class="side-panel">
+
+    <div class="legend-card">
+      <div class="legend-title">Score Dot Legend</div>
+      <div class="legend-row">
+        <div class="leg-dot" style="background:#4CAF70"></div>
+        <div class="leg-label">Drop everything and go</div>
+        <div class="leg-score">85–100</div>
+      </div>
+      <div class="legend-row">
+        <div class="leg-dot" style="background:#8BC34A"></div>
+        <div class="leg-label">Great day to fish</div>
+        <div class="leg-score">70–84</div>
+      </div>
+      <div class="legend-row">
+        <div class="leg-dot" style="background:#FFC107"></div>
+        <div class="leg-label">Decent — pick your window</div>
+        <div class="leg-score">55–69</div>
+      </div>
+      <div class="legend-row">
+        <div class="leg-dot" style="background:#FF9800"></div>
+        <div class="leg-label">Tough but possible</div>
+        <div class="leg-score">40–54</div>
+      </div>
+      <div class="legend-row">
+        <div class="leg-dot" style="background:#F44336"></div>
+        <div class="leg-label">Stay home</div>
+        <div class="leg-score">0–39</div>
+      </div>
+      <div class="legend-row" style="margin-top:8px;padding-top:8px;border-top:1px solid #1A2235">
+        <div class="leg-dot" style="background:#334455"></div>
+        <div class="leg-label">Past day (no forecast)</div>
+        <div class="leg-score">—</div>
+      </div>
+      <div class="legend-row">
+        <div class="leg-dot" style="background:#1A2235;border:1px solid #334455"></div>
+        <div class="leg-label" style="color:#556677">🔒 Pro-locked future day</div>
+        <div class="leg-score" style="color:#556677">—</div>
+      </div>
+    </div>
+
+    <div class="note-card">
+      <strong>How scores are sourced:</strong> Past days have no dot (no forecast data). Today + the next 6 days use the same scoring engine as the dashboard. Days 8–14 require Pro — shown locked with a 🔒 overlay.<br><br>
+      <strong>Tap to dismiss:</strong> Tapping outside the calendar or on a date closes the picker and updates the selected date.
+    </div>
+
+    <div class="confirm-card">
+      <p>Does this layout look right? Let me know in the terminal.</p>
+      <button class="confirm-btn" onclick="alert('Tell me in the terminal: looks good, or any tweaks?')">Looks good →</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Score palette
+function scoreColor(s) {
+  if (s === null) return '#334455'
+  if (s >= 85) return '#4CAF70'
+  if (s >= 70) return '#8BC34A'
+  if (s >= 55) return '#FFC107'
+  if (s >= 40) return '#FF9800'
+  return '#F44336'
+}
+
+// Sample scores: null = past, -1 = locked (Pro), number = forecasted
+const SCORES = {
+  // May 2026 — 1st = Friday
+  1:null, 2:null, 3:null, 4:null, 5:null, 6:null,
+  7:null, 8:null, 9:null, 10:null,
+  11:72,  // today — selected
+  12:58, 13:45, 14:81, 15:67, 16:90, 17:38,
+  18:-1, 19:-1, 20:-1, 21:-1, 22:-1, 23:-1, 24:-1,
+  25:-1, 26:-1, 27:-1, 28:-1, 29:-1, 30:-1, 31:-1,
+}
+
+const TODAY = 11
+const cal = document.getElementById('cal')
+
+// May 1 2026 = Friday = index 5 (0=Sun)
+const startDow = 5
+let selectedDay = TODAY
+
+function renderCal() {
+  cal.innerHTML = ''
+
+  // Empty cells before start
+  for (let i = 0; i < startDow; i++) {
+    const e = document.createElement('div')
+    e.className = 'day empty'
+    e.innerHTML = '<div class="day-num"></div><div class="score-dot"></div>'
+    cal.appendChild(e)
+  }
+
+  for (let d = 1; d <= 31; d++) {
+    const score = SCORES[d]
+    const isPast = d < TODAY
+    const isToday = d === TODAY
+    const isSelected = d === selectedDay
+    const isLocked = score === -1
+    const hasScore = typeof score === 'number' && score >= 0
+
+    const el = document.createElement('div')
+    let cls = 'day'
+    if (isPast) cls += ' past'
+    else if (isToday) cls += ' today'
+    if (isSelected) cls += ' selected'
+    if (isLocked) cls += ' locked'
+    el.className = cls
+
+    const dotColor = isPast ? '#2A3C50' : isLocked ? '#1A2235' : hasScore ? scoreColor(score) : '#2A3C50'
+    const lockIcon = isLocked ? '<div style="position:absolute;top:2px;right:2px;font-size:7px;color:#445566">🔒</div>' : ''
+
+    el.innerHTML = `
+      ${lockIcon}
+      <div class="day-num">${d}</div>
+      <div class="score-dot" style="background:${dotColor}"></div>
+    `
+
+    if (!isPast && !isLocked) {
+      el.addEventListener('click', () => {
+        selectedDay = d
+        renderCal()
+      })
+    }
+
+    cal.appendChild(el)
+  }
+}
+
+renderCal()
+</script>
+</body>
+</html>

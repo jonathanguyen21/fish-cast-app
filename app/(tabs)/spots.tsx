@@ -25,16 +25,24 @@ function SpotRow({ spot, isActive, onPress, onDelete }: {
         { text: 'Delete', style: 'destructive', onPress: onDelete },
       ])}
     >
+      {isActive && <View style={styles.activeIndicator} />}
       <View style={styles.rowInfo}>
-        <Text style={styles.rowName}>{spot.name}</Text>
+        <View style={styles.rowNameRow}>
+          <Text style={styles.rowName}>{spot.name}</Text>
+          {isActive && (
+            <View style={styles.activeBadge}>
+              <Text style={styles.activeBadgeText}>Active</Text>
+            </View>
+          )}
+        </View>
         <Text style={styles.rowType}>{spot.type}</Text>
+        <Text style={styles.rowHint}>Hold to delete</Text>
       </View>
       {score !== null && (
-        <View style={[styles.scoreBadge, { borderColor: color }]}>
+        <View style={[styles.scoreBadge, { borderColor: color, backgroundColor: color + '18' }]}>
           <Text style={[styles.scoreText, { color }]}>{score}</Text>
         </View>
       )}
-      {isActive && <Text style={styles.activeLabel}>Active</Text>}
     </TouchableOpacity>
   )
 }
@@ -51,8 +59,12 @@ export default function SpotsScreen() {
         contentContainerStyle={spots.length === 0 ? styles.emptyContainer : styles.list}
         ListEmptyComponent={
           <View style={styles.empty}>
+            <Text style={styles.emptyIcon}>🗺️</Text>
             <Text style={styles.emptyTitle}>No spots yet</Text>
-            <Text style={styles.emptyHint}>Tap + to add your first fishing spot</Text>
+            <Text style={styles.emptyHint}>Save your favourite fishing locations to get personalised forecasts</Text>
+            <TouchableOpacity style={styles.emptyCta} onPress={() => router.push('/spot/new')}>
+              <Text style={styles.emptyCtaText}>Add a Spot →</Text>
+            </TouchableOpacity>
           </View>
         }
         renderItem={({ item }) => (
@@ -78,27 +90,58 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.background },
   list: { padding: Spacing.screenPad, gap: Spacing.sm },
   emptyContainer: { flex: 1 },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl },
-  emptyTitle: { fontSize: 20, fontWeight: '600', color: Colors.textPrimary },
-  emptyHint: { fontSize: 14, color: Colors.textSecondary, marginTop: Spacing.sm },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.sm },
+  emptyIcon: { fontSize: 52, marginBottom: Spacing.sm },
+  emptyTitle: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary },
+  emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20 },
+  emptyCta: {
+    marginTop: Spacing.sm,
+    backgroundColor: Colors.accent,
+    borderRadius: 24,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 12,
+  },
+  emptyCtaText: { fontSize: 15, fontWeight: '700', color: Colors.background },
   row: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.card,
-    borderRadius: Spacing.cardRadius, padding: Spacing.md,
+    borderRadius: Spacing.cardRadius, padding: Spacing.md, overflow: 'hidden',
   },
   activeRow: { borderWidth: 1.5, borderColor: Colors.accent },
-  rowInfo: { flex: 1 },
+  activeIndicator: {
+    width: 3,
+    height: '100%',
+    backgroundColor: Colors.accent,
+    borderRadius: 2,
+    marginRight: Spacing.sm,
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+  },
+  rowInfo: { flex: 1, paddingLeft: 6 },
+  rowNameRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   rowName: { fontSize: 16, fontWeight: '600', color: Colors.textPrimary },
-  rowType: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
+  activeBadge: {
+    backgroundColor: Colors.accent + '22',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: Colors.accent + '60',
+  },
+  activeBadgeText: { fontSize: 11, color: Colors.accent, fontWeight: '700' },
+  rowType: { fontSize: 12, color: Colors.textSecondary, marginTop: 2, textTransform: 'capitalize' },
+  rowHint: { fontSize: 10, color: Colors.textTertiary, marginTop: 3 },
   scoreBadge: {
-    width: 44, height: 44, borderRadius: 22, borderWidth: 1.5,
-    alignItems: 'center', justifyContent: 'center', marginRight: Spacing.sm,
+    width: 48, height: 48, borderRadius: 24, borderWidth: 1.5,
+    alignItems: 'center', justifyContent: 'center', marginLeft: Spacing.sm,
   },
   scoreText: { fontSize: 15, fontWeight: '700' },
-  activeLabel: { fontSize: 11, color: Colors.accent, fontWeight: '600' },
   fab: {
     position: 'absolute', right: Spacing.screenPad, bottom: 28,
     width: 56, height: 56, borderRadius: 28, backgroundColor: Colors.accent,
     alignItems: 'center', justifyContent: 'center', elevation: 4,
+    shadowColor: Colors.accent, shadowOpacity: 0.4, shadowRadius: 8, shadowOffset: { width: 0, height: 3 },
   },
   fabText: { fontSize: 28, color: Colors.background, lineHeight: 32 },
 })

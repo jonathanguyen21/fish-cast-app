@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   PanResponder, PanResponderInstance, useWindowDimensions,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Svg, Polyline, Circle, Text as SvgText, Line, G } from 'react-native-svg'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Colors } from '../../theme/colors'
@@ -34,6 +35,7 @@ export default function PressureDetailScreen() {
   const { data } = useLocalSearchParams<{ data: string }>()
   const router = useRouter()
   const { width } = useWindowDimensions()
+  const insets = useSafeAreaInsets()
 
   const pressure = useMemo<PressureData | null>(
     () => (data ? JSON.parse(data) : null),
@@ -90,7 +92,7 @@ export default function PressureDetailScreen() {
     : ''
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xl }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Pressure Detail</Text>
         <TouchableOpacity onPress={() => router.back()}>
@@ -168,7 +170,7 @@ export default function PressureDetailScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: Spacing.screenPad, paddingBottom: Spacing.xl },
+  content: { padding: Spacing.screenPad },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     marginBottom: Spacing.md,

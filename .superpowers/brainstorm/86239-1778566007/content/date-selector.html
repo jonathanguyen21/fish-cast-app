@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Date Selector Options</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0A0E1A;
+    color: #E8EDF5;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    padding: 24px 20px 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .sub { font-size: 13px; color: #556677; margin-bottom: 28px; line-height: 1.5; }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .option-card {
+    background: #0F1623;
+    border-radius: 16px;
+    border: 2px solid #1A2235;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .option-card:hover { border-color: #00B4D840; transform: translateY(-2px); }
+  .option-card.selected { border-color: #00B4D8; }
+
+  .badge-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px;
+    border-bottom: 1px solid #1A2235;
+  }
+  .badge {
+    font-size: 10px; font-weight: 700; color: #8899AA;
+    background: #1A2235; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px;
+  }
+  .option-card.selected .badge { background: #00B4D8; color: #0A0E1A; }
+  .check {
+    display: none; width: 20px; height: 20px; border-radius: 50%;
+    background: #00B4D8; color: #0A0E1A;
+    align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+  .option-card.selected .check { display: flex; }
+
+  .phone-mock {
+    background: #0A0E1A;
+    margin: 0;
+    padding: 0;
+    min-height: 420px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── Shared app chrome ── */
+  .app-header {
+    padding: 14px 16px 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .spot-name { font-size: 17px; font-weight: 700; color: #E8EDF5; }
+  .switch-hint { font-size: 12px; color: #00B4D8; }
+
+  /* Score card stub */
+  .score-stub {
+    margin: 10px 12px 8px;
+    background: #0F1623; border-radius: 14px;
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .score-dial {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: conic-gradient(#00B4D8 0% 72%, #1A2235 72% 100%);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .score-dial-inner {
+    width: 36px; height: 36px; border-radius: 50%; background: #0F1623;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #E8EDF5;
+  }
+  .score-info { flex: 1; }
+  .score-label { font-size: 13px; font-weight: 600; color: #E8EDF5; }
+  .score-sub { font-size: 10px; color: #8899AA; margin-top: 2px; }
+
+  .more-content {
+    margin: 0 12px;
+    background: #0F1623; border-radius: 12px;
+    padding: 10px 12px;
+    opacity: 0.35;
+  }
+  .more-row { height: 8px; background: #1A2235; border-radius: 4px; margin-bottom: 6px; }
+  .more-row:last-child { width: 60%; margin-bottom: 0; }
+
+  /* ── Option A: Week strip under header ── */
+  .week-strip {
+    padding: 6px 12px 10px;
+    display: flex; gap: 4px;
+    border-bottom: 1px solid #1A2235;
+  }
+  .day-pill {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 6px 4px; border-radius: 10px; cursor: pointer;
+    background: transparent;
+  }
+  .day-pill.selected { background: #00B4D8; }
+  .day-pill.locked { opacity: 0.3; }
+  .day-pill.today { background: #1A3040; }
+  .day-label { font-size: 9px; color: #8899AA; font-weight: 500; margin-bottom: 3px; }
+  .day-pill.selected .day-label,
+  .day-pill.selected .day-num { color: #0A0E1A; }
+  .day-num { font-size: 13px; font-weight: 700; color: #E8EDF5; }
+  .day-pill.today .day-label { color: #00B4D8; }
+  .week-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 2px 14px 0;
+    font-size: 11px; color: #8899AA;
+  }
+
+  /* ── Option B: Calendar grid in modal ── */
+  .date-chip-top {
+    margin: 0 16px 8px;
+    background: #0F1623; border-radius: 10px;
+    padding: 8px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .date-chip-label { font-size: 13px; font-weight: 600; color: #E8EDF5; }
+  .date-chip-arrow { font-size: 11px; color: #8899AA; }
+
+  .cal-popup {
+    margin: 0 12px 10px;
+    background: #0F1623; border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #1A2235;
+  }
+  .cal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid #1A2235;
+  }
+  .cal-month { font-size: 13px; font-weight: 700; color: #E8EDF5; }
+  .cal-nav { font-size: 11px; color: #8899AA; }
+  .cal-weekdays {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    padding: 6px 8px 2px;
+  }
+  .cal-wd { font-size: 8px; font-weight: 600; color: #556677; text-align: center; }
+  .cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    padding: 2px 8px 8px; gap: 2px;
+  }
+  .cal-day {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; font-size: 10px; color: #8899AA; cursor: pointer;
+  }
+  .cal-day.in-month { color: #E8EDF5; }
+  .cal-day.today { background: #1A3040; color: #00B4D8; font-weight: 700; }
+  .cal-day.selected { background: #00B4D8; color: #0A0E1A; font-weight: 700; }
+  .cal-day.locked { opacity: 0.3; }
+  .cal-day.past { opacity: 0.4; }
+  .cal-day.empty { }
+
+  /* ── Option C: Compact always-visible 2-row grid ── */
+  .biweek-strip {
+    margin: 0 12px 8px;
+    background: #0F1623; border-radius: 14px;
+    padding: 10px;
+  }
+  .biweek-header {
+    font-size: 10px; color: #556677; font-weight: 600; margin-bottom: 8px;
+    display: flex; justify-content: space-between;
+  }
+  .biweek-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+  }
+  .bw-day {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 5px 2px; border-radius: 8px;
+  }
+  .bw-day.selected { background: #00B4D8; }
+  .bw-day.today { background: #1A3040; }
+  .bw-day.locked { opacity: 0.28; }
+  .bw-label { font-size: 8px; color: #8899AA; margin-bottom: 2px; }
+  .bw-num { font-size: 11px; font-weight: 700; color: #E8EDF5; }
+  .bw-day.selected .bw-label,
+  .bw-day.selected .bw-num { color: #0A0E1A; }
+  .bw-day.today .bw-label { color: #00B4D8; }
+  .bw-more { font-size: 9px; color: #556677; text-align: center; margin-top: 6px; }
+
+  .info-block {
+    padding: 12px 14px 14px;
+    border-top: 1px solid #1A2235;
+  }
+  .opt-name { font-size: 13px; font-weight: 600; color: #E8EDF5; margin-bottom: 5px; }
+  .opt-desc { font-size: 11px; color: #8899AA; line-height: 1.6; }
+  .pro-tag { font-size: 10px; color: #00B4D8; font-weight: 600; margin-top: 5px; }
+</style>
+</head>
+<body>
+
+<h1>Date Selector — Layout Options</h1>
+<p class="sub">All three replace the current bottom sheet + horizontal scroll. Click a card to select.</p>
+
+<div class="options-grid">
+
+  <!-- ── Option A: Persistent week strip ── -->
+  <div class="option-card" data-choice="A" onclick="pick(this)">
+    <div class="badge-row">
+      <span class="badge">A</span>
+      <span class="check">✓</span>
+    </div>
+    <div class="phone-mock">
+      <div class="app-header">
+        <span class="spot-name">Berkeley Marina</span>
+        <span class="switch-hint">Switch ›</span>
+      </div>
+      <!-- Week strip always visible -->
+      <div style="padding:0 12px 0; margin-bottom:6px;">
+        <div class="week-nav">
+          <span>‹ Prev</span>
+          <span style="color:#E8EDF5;font-weight:600">May 2026</span>
+          <span>Next ›</span>
+        </div>
+      </div>
+      <div class="week-strip">
+        <div class="day-pill"><span class="day-label">Mon</span><span class="day-num" style="color:#8899AA">5</span></div>
+        <div class="day-pill"><span class="day-label">Tue</span><span class="day-num" style="color:#8899AA">6</span></div>
+        <div class="day-pill"><span class="day-label">Wed</span><span class="day-num" style="color:#8899AA">7</span></div>
+        <div class="day-pill"><span class="day-label">Thu</span><span class="day-num" style="color:#8899AA">8</span></div>
+        <div class="day-pill"><span class="day-label">Fri</span><span class="day-num" style="color:#8899AA">9</span></div>
+        <div class="day-pill"><span class="day-label">Sat</span><span class="day-num" style="color:#8899AA">10</span></div>
+        <div class="day-pill selected"><span class="day-label">Sun</span><span class="day-num">11</span></div>
+      </div>
+      <!-- Score below date strip -->
+      <div class="score-stub">
+        <div class="score-dial"><div class="score-dial-inner">72</div></div>
+        <div class="score-info">
+          <div class="score-label">Great day to fish</div>
+          <div class="score-sub">Best 10 AM – 1 PM</div>
+        </div>
+      </div>
+      <div class="more-content">
+        <div class="more-row"></div>
+        <div class="more-row"></div>
+        <div class="more-row"></div>
+      </div>
+    </div>
+    <div class="info-block">
+      <div class="opt-name">Persistent Week Strip</div>
+      <div class="opt-desc">7-day row always visible just under the header. Tap ‹ › to slide weeks. No modal — select a day instantly. Pro days beyond 7 are dimmed with a lock.</div>
+      <div class="pro-tag">Fastest to switch days · Lowest friction</div>
+    </div>
+  </div>
+
+  <!-- ── Option B: Calendar grid popup ── -->
+  <div class="option-card" data-choice="B" onclick="pick(this)">
+    <div class="badge-row">
+      <span class="badge">B</span>
+      <span class="check">✓</span>
+    </div>
+    <div class="phone-mock">
+      <div class="app-header">
+        <span class="spot-name">Berkeley Marina</span>
+        <span class="switch-hint">Switch ›</span>
+      </div>
+      <!-- Date chip at top -->
+      <div class="date-chip-top">
+        <span class="date-chip-label">📅 May 11, 2026 — Today</span>
+        <span class="date-chip-arrow">▾</span>
+      </div>
+      <!-- Calendar expands below chip -->
+      <div class="cal-popup">
+        <div class="cal-header">
+          <span class="cal-nav">‹</span>
+          <span class="cal-month">May 2026</span>
+          <span class="cal-nav">›</span>
+        </div>
+        <div class="cal-weekdays">
+          <div class="cal-wd">S</div><div class="cal-wd">M</div><div class="cal-wd">T</div>
+          <div class="cal-wd">W</div><div class="cal-wd">T</div><div class="cal-wd">F</div><div class="cal-wd">S</div>
+        </div>
+        <div class="cal-grid">
+          <!-- Week 1: May starts Fri -->
+          <div class="cal-day empty"></div><div class="cal-day empty"></div><div class="cal-day empty"></div>
+          <div class="cal-day empty"></div><div class="cal-day empty"></div>
+          <div class="cal-day in-month past">1</div><div class="cal-day in-month past">2</div>
+          <!-- Week 2 -->
+          <div class="cal-day in-month past">3</div><div class="cal-day in-month past">4</div>
+          <div class="cal-day in-month past">5</div><div class="cal-day in-month past">6</div>
+          <div class="cal-day in-month past">7</div><div class="cal-day in-month past">8</div>
+          <div class="cal-day in-month past">9</div>
+          <!-- Week 3 -->
+          <div class="cal-day in-month past">10</div>
+          <div class="cal-day in-month today">11</div>
+          <div class="cal-day in-month">12</div><div class="cal-day in-month">13</div>
+          <div class="cal-day in-month">14</div>
+          <div class="cal-day in-month">15</div><div class="cal-day in-month">16</div>
+          <!-- Week 4 -->
+          <div class="cal-day in-month">17</div><div class="cal-day in-month">18</div>
+          <div class="cal-day in-month">19</div><div class="cal-day in-month">20</div>
+          <div class="cal-day in-month">21</div>
+          <div class="cal-day in-month locked">22</div><div class="cal-day in-month locked">23</div>
+          <!-- Week 5 -->
+          <div class="cal-day in-month locked">24</div><div class="cal-day in-month locked">25</div>
+          <div class="cal-day in-month locked">26</div><div class="cal-day in-month locked">27</div>
+          <div class="cal-day in-month locked">28</div>
+          <div class="cal-day in-month locked">29</div><div class="cal-day in-month locked">30</div>
+        </div>
+      </div>
+    </div>
+    <div class="info-block">
+      <div class="opt-name">Date Chip → Calendar Popup</div>
+      <div class="opt-desc">Date chip sits under the header. Tap it to reveal a full month calendar inline (not a bottom sheet). Tap any date to select. Pro-locked dates are greyed out. Tap elsewhere to dismiss.</div>
+    </div>
+  </div>
+
+  <!-- ── Option C: Inline 2-week grid always visible ── -->
+  <div class="option-card" data-choice="C" onclick="pick(this)">
+    <div class="badge-row">
+      <span class="badge">C</span>
+      <span class="check">✓</span>
+    </div>
+    <div class="phone-mock">
+      <div class="app-header">
+        <span class="spot-name">Berkeley Marina</span>
+        <span class="switch-hint">Switch ›</span>
+      </div>
+      <!-- 2-week always-visible grid -->
+      <div class="biweek-strip">
+        <div class="biweek-header">
+          <span>May 2026</span>
+          <span style="color:#00B4D8">🔒 Pro unlocks 14 days</span>
+        </div>
+        <div class="biweek-grid">
+          <div class="bw-day"><span class="bw-label">Mon</span><span class="bw-num" style="color:#8899AA">5</span></div>
+          <div class="bw-day"><span class="bw-label">Tue</span><span class="bw-num" style="color:#8899AA">6</span></div>
+          <div class="bw-day"><span class="bw-label">Wed</span><span class="bw-num" style="color:#8899AA">7</span></div>
+          <div class="bw-day"><span class="bw-label">Thu</span><span class="bw-num" style="color:#8899AA">8</span></div>
+          <div class="bw-day"><span class="bw-label">Fri</span><span class="bw-num" style="color:#8899AA">9</span></div>
+          <div class="bw-day"><span class="bw-label">Sat</span><span class="bw-num" style="color:#8899AA">10</span></div>
+          <div class="bw-day today"><span class="bw-label" style="color:#00B4D8">Sun</span><span class="bw-num" style="color:#E8EDF5">11</span></div>
+          <!-- Week 2 -->
+          <div class="bw-day selected"><span class="bw-label">Mon</span><span class="bw-num">12</span></div>
+          <div class="bw-day"><span class="bw-label">Tue</span><span class="bw-num">13</span></div>
+          <div class="bw-day"><span class="bw-label">Wed</span><span class="bw-num">14</span></div>
+          <div class="bw-day"><span class="bw-label">Thu</span><span class="bw-num">15</span></div>
+          <div class="bw-day"><span class="bw-label">Fri</span><span class="bw-num">16</span></div>
+          <div class="bw-day locked"><span class="bw-label">Sat</span><span class="bw-num">17</span></div>
+          <div class="bw-day locked"><span class="bw-label">Sun</span><span class="bw-num">18</span></div>
+        </div>
+        <div class="bw-more">Swipe for more ›</div>
+      </div>
+      <!-- Score below -->
+      <div class="score-stub" style="margin-top:0">
+        <div class="score-dial"><div class="score-dial-inner">72</div></div>
+        <div class="score-info">
+          <div class="score-label">Great day to fish</div>
+          <div class="score-sub">Best 10 AM – 1 PM</div>
+        </div>
+      </div>
+    </div>
+    <div class="info-block">
+      <div class="opt-name">Persistent 2-Week Grid</div>
+      <div class="opt-desc">Two rows of 7 days always visible at the top. Swipe horizontally to see more weeks. More spatial context than a week strip. Score content always below it.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function pick(card) {
+  document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'))
+  card.classList.add('selected')
+}
+</script>
+</body>
+</html>

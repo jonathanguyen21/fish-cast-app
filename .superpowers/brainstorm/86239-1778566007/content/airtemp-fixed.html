@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Air Temp — Fixed</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0A0E1A;
+    color: #E8EDF5;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    padding: 28px 24px;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 19px; font-weight: 700; margin-bottom: 4px; }
+  .sub { font-size: 13px; color: #556677; margin-bottom: 24px; line-height: 1.5; }
+  .label { font-size: 11px; font-weight: 600; color: #556677; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+
+  .card {
+    background: #0F1623; border-radius: 16px; border: 2px solid #00B4D8;
+    overflow: hidden; margin-bottom: 20px;
+    box-shadow: 0 0 0 1px #00B4D840;
+  }
+  .chart-bg { background: #131C2E; }
+  .info { padding: 14px 16px; }
+  .name { font-size: 13px; font-weight: 600; color: #E8EDF5; margin-bottom: 5px; }
+  .desc { font-size: 11px; color: #8899AA; line-height: 1.6; }
+  .legend { display: flex; gap: 16px; margin-top: 10px; }
+  .leg-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #8899AA; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  .confirm { background: #0F1623; border-radius: 14px; border: 1px solid #1A2235; padding: 16px; text-align: center; }
+  .confirm p { font-size: 13px; color: #8899AA; margin-bottom: 12px; }
+  .confirm-btn {
+    background: #00B4D8; color: #0A0E1A; border: none; border-radius: 10px;
+    padding: 12px 24px; font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h1>Air Temp — Gradient Line Fixed</h1>
+<p class="sub">Cold hours → blue · Hot peak → orange-red. Both line stroke and dot colors are now temperature-driven.</p>
+
+<div class="label">Air Temperature · °F · 5 AM – 8 PM</div>
+
+<div class="card">
+  <div class="chart-bg">
+    <svg id="chart" width="100%" viewBox="0 0 460 150" style="display:block"></svg>
+  </div>
+  <div class="info">
+    <div class="name">Gradient Fill + Temperature-Mapped Line</div>
+    <div class="desc">
+      Line color reflects the actual temperature at each point —
+      <span style="color:#0077B6">cool blue</span> in the cold morning/evening,
+      <span style="color:#FF5722">warm orange-red</span> at the afternoon peak.
+      Fill uses the same warm→cool gradient behind the curve.
+    </div>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:#0077B6"></div> Cold ≈ 54–57°F</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#FF9800"></div> Warm ≈ 62–65°F</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#FF5722"></div> Peak ≈ 68°F</div>
+    </div>
+  </div>
+</div>
+
+<div class="confirm">
+  <p>Does this look right? If yes, let me know in the terminal and I'll lock in the design.</p>
+  <button class="confirm-btn" onclick="alert('Tell me in the terminal: \'Looks good\' or any changes needed')">Looks good →</button>
+</div>
+
+<script>
+const ns = 'http://www.w3.org/2000/svg'
+function el(tag, attrs, children) {
+  const e = document.createElementNS(ns, tag)
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v)
+  if (children) children.forEach(c => e.appendChild(c))
+  return e
+}
+function txt(s, attrs) { const e = el('text', attrs); e.textContent = s; return e }
+function curve(pts) {
+  let d = `M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`
+  for (let i = 1; i < pts.length; i++) {
+    const [px,py]=pts[i-1],[cx,cy]=pts[i], dx=(cx-px)/3
+    d+=` C ${(px+dx).toFixed(1)} ${py.toFixed(1)},${(cx-dx).toFixed(1)} ${cy.toFixed(1)},${cx.toFixed(1)} ${cy.toFixed(1)}`
+  }
+  return d
+}
+function lerpColor(cold, hot, t) {
+  const r = Math.round(cold[0] + (hot[0]-cold[0]) * t)
+  const g = Math.round(cold[1] + (hot[1]-cold[1]) * t)
+  const b = Math.round(cold[2] + (hot[2]-cold[2]) * t)
+  return `rgb(${r},${g},${b})`
+}
+function hourLabel(h) { return h===12?'12p':h<12?`${h}a`:`${h-12}p` }
+
+const HOURS = [5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+const TEMP  = [55,54,54,55,57,60,63,65,67,68,68,67,65,63,61,59]
+
+const W = 460, H = 150
+const P = { t: 22, b: 26, l: 36, r: 12 }
+const cW = W - P.l - P.r, cH = H - P.t - P.b
+const N = TEMP.length
+const minV = 50, maxV = 72
+
+const toX = i => P.l + (i / (N-1)) * cW
+const toY = v => P.t + cH - ((v-minV)/(maxV-minV)) * cH
+
+// Colors: cold=blue, hot=orange-red
+const COLD = [0, 119, 182]    // #0077B6
+const HOT  = [255, 87, 34]    // #FF5722
+
+const svg = document.getElementById('chart')
+const defs = el('defs', {})
+
+// ── Fill gradient (vertical, bounding-box space) ──────────────────────────
+// Warm orange-red at top (high temp), cool blue at bottom (low temp)
+const fillGrad = el('linearGradient', { id:'tfill', x1:'0', y1:'0', x2:'0', y2:'1' })
+fillGrad.appendChild(el('stop', { offset:'0',   'stop-color':'#FF5722', 'stop-opacity':'0.50' }))
+fillGrad.appendChild(el('stop', { offset:'0.3', 'stop-color':'#FF9800', 'stop-opacity':'0.35' }))
+fillGrad.appendChild(el('stop', { offset:'0.7', 'stop-color':'#29B6F6', 'stop-opacity':'0.15' }))
+fillGrad.appendChild(el('stop', { offset:'1',   'stop-color':'#0055AA', 'stop-opacity':'0.04' }))
+defs.appendChild(fillGrad)
+
+// ── Stroke gradient (user-space vertical, maps y-position to temp color) ──
+// Top of chart = highest temp = hot orange-red; bottom = coldest = blue
+const strokeGrad = el('linearGradient', {
+  id: 'tstroke',
+  gradientUnits: 'userSpaceOnUse',
+  x1: '0', x2: '0',
+  y1: String(P.t),              // chart top = hot
+  y2: String(P.t + cH),        // chart bottom = cold
+})
+strokeGrad.appendChild(el('stop', { offset:'0',    'stop-color':'#FF5722' }))  // hottest
+strokeGrad.appendChild(el('stop', { offset:'0.25', 'stop-color':'#FF9800' }))  // warm
+strokeGrad.appendChild(el('stop', { offset:'0.50', 'stop-color':'#FDD835' }))  // neutral warm-ish
+strokeGrad.appendChild(el('stop', { offset:'0.68', 'stop-color':'#29B6F6' }))  // cool — reached before line's coldest point
+strokeGrad.appendChild(el('stop', { offset:'1',    'stop-color':'#0055AA' }))  // coldest
+defs.appendChild(strokeGrad)
+
+svg.appendChild(defs)
+
+// ── Grid lines + y-axis labels ─────────────────────────────────────────────
+for (const v of [54, 58, 62, 66, 70]) {
+  const y = toY(v)
+  svg.appendChild(el('line', { x1:P.l, y1:y, x2:W-P.r, y2:y, stroke:'#1F2E45', 'stroke-width':0.5 }))
+  svg.appendChild(txt(`${v}°`, { x:P.l-5, y:y+3.5, fill:'#445566', 'font-size':9, 'text-anchor':'end' }))
+}
+svg.appendChild(txt('°F', { x:P.l-5, y:P.t-7, fill:'#445566', 'font-size':9, 'text-anchor':'end' }))
+
+const pts = TEMP.map((v,i) => [toX(i), toY(v)])
+
+// ── Filled area ────────────────────────────────────────────────────────────
+const fillD = curve(pts) + ` L ${pts[N-1][0]} ${H-P.b} L ${P.l} ${H-P.b} Z`
+svg.appendChild(el('path', { d:fillD, fill:'url(#tfill)' }))
+
+// ── Gradient stroke line ───────────────────────────────────────────────────
+svg.appendChild(el('path', { d:curve(pts), fill:'none', stroke:'url(#tstroke)', 'stroke-width':'3', 'stroke-linecap':'round', 'stroke-linejoin':'round' }))
+
+// ── Key hour dots + labels ─────────────────────────────────────────────────
+const keys = [0, 3, 7, 10, 13, 15]   // 5a, 8a, 12p, 3p, 6p, 8p
+keys.forEach(i => {
+  const x = toX(i), y = toY(TEMP[i])
+  const factor = (TEMP[i] - minV) / (maxV - minV)
+  const dotColor = lerpColor(COLD, HOT, factor)
+
+  // shadow ring for contrast
+  svg.appendChild(el('circle', { cx:x, cy:y, r:6.5, fill:'#131C2E' }))
+  svg.appendChild(el('circle', { cx:x, cy:y, r:5, fill:dotColor }))
+
+  // temp label above
+  svg.appendChild(txt(`${TEMP[i]}°`, {
+    x:x, y:y-10, fill:'#E8EDF5', 'font-size':9.5, 'font-weight':'700', 'text-anchor':'middle'
+  }))
+
+  // hour label below x-axis
+  svg.appendChild(txt(hourLabel(HOURS[i]), {
+    x:x, y:H-8, fill:'#445566', 'font-size':8.5, 'text-anchor':'middle'
+  }))
+})
+
+// ── Remaining x-axis ticks (no label) ─────────────────────────────────────
+for (let i = 0; i < N; i++) {
+  svg.appendChild(el('line', { x1:toX(i), y1:H-P.b, x2:toX(i), y2:H-P.b+3, stroke:'#2A3C55', 'stroke-width':0.8 }))
+}
+</script>
+</body>
+</html>

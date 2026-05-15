@@ -1,12 +1,24 @@
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 
-type TabLabel = 'Forecast' | 'Spots' | 'Settings';
+type TabName = 'Forecast' | 'Spots' | 'Settings';
 
-function TabIcon({ label, focused }: { label: TabLabel; focused: boolean }) {
-  const icons: Record<TabLabel, string> = { Forecast: '🧭', Spots: '📍', Settings: '⚙️' };
-  return <Text style={{ fontSize: focused ? 22 : 18, opacity: focused ? 1 : 0.5 }}>{icons[label] ?? '📌'}</Text>;
+const ICONS: Record<TabName, { focused: keyof typeof Ionicons.glyphMap; default: keyof typeof Ionicons.glyphMap }> = {
+  Forecast: { focused: 'partly-sunny', default: 'partly-sunny-outline' },
+  Spots: { focused: 'location', default: 'location-outline' },
+  Settings: { focused: 'settings', default: 'settings-outline' },
+};
+
+function TabIcon({ name, focused }: { name: TabName; focused: boolean }) {
+  const icon = focused ? ICONS[name].focused : ICONS[name].default;
+  return (
+    <Ionicons
+      name={icon}
+      size={24}
+      color={focused ? Colors.accent : Colors.textTertiary}
+    />
+  );
 }
 
 export default function TabLayout() {
@@ -25,21 +37,21 @@ export default function TabLayout() {
         options={{
           title: 'Forecast',
           headerShown: false,
-          tabBarIcon: ({ focused }) => <TabIcon label="Forecast" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="Forecast" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="spots"
         options={{
           title: 'Spots',
-          tabBarIcon: ({ focused }) => <TabIcon label="Spots" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="Spots" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ focused }) => <TabIcon label="Settings" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="Settings" focused={focused} />,
         }}
       />
     </Tabs>

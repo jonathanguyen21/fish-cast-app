@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   PanResponder, PanResponderInstance, useWindowDimensions,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   Svg, Path, Circle, Line, Text as SvgText,
   Defs, LinearGradient, Stop, G,
@@ -36,6 +37,7 @@ export default function AirTempDetailScreen() {
   const { data } = useLocalSearchParams<{ data: string }>()
   const router = useRouter()
   const { width } = useWindowDimensions()
+  const insets = useSafeAreaInsets()
 
   const airHourly = useMemo<AirHour[]>(() => {
     if (!data) return []
@@ -89,7 +91,7 @@ export default function AirTempDetailScreen() {
   const gridTemps = [minT, Math.round((minT + maxT) / 2), maxT]
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xl }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Air Temperature</Text>
         <TouchableOpacity onPress={() => router.back()}>
@@ -206,7 +208,7 @@ export default function AirTempDetailScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: Spacing.screenPad, paddingBottom: Spacing.xl },
+  content: { padding: Spacing.screenPad },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     marginBottom: Spacing.md,

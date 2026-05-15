@@ -25,4 +25,12 @@ export const Typography = StyleSheet.create({
     fontVariant: ['tabular-nums'] as any,
     color: Colors.textPrimary,
   },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase' as const,
+    marginBottom: 10,
+  },
 })

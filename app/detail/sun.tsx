@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
@@ -8,6 +9,7 @@ import type { SunData } from '../../types/conditions'
 export default function SunDetailScreen() {
   const { data } = useLocalSearchParams<{ data: string }>()
   const router = useRouter()
+  const insets = useSafeAreaInsets()
 
   const sun = useMemo<SunData | null>(
     () => (data ? JSON.parse(data) : null),
@@ -34,7 +36,7 @@ export default function SunDetailScreen() {
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xl }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Sun</Text>
         <TouchableOpacity onPress={() => router.back()}>
@@ -64,7 +66,7 @@ export default function SunDetailScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: Spacing.screenPad, paddingBottom: Spacing.xl },
+  content: { padding: Spacing.screenPad },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     marginBottom: Spacing.md,
