@@ -3,12 +3,20 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from '../score/scoringEngine'
+import { bestWindowSummary, type SpeciesHourlyScore } from './speciesHourlyScoring'
 import type { SpeciesScore } from '../../types/species'
 
 interface Props {
   speciesScore: SpeciesScore
+  hourly?: SpeciesHourlyScore[]
   isPro: boolean
   onPress: () => void
+}
+
+function formatHour(h: number): string {
+  const period = h < 12 ? 'AM' : 'PM'
+  const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h
+  return `${displayH}${period}`
 }
 
 const statusColor: Record<SpeciesScore['status'], string> = {
@@ -18,10 +26,11 @@ const statusColor: Record<SpeciesScore['status'], string> = {
   'Inactive': Colors.textTertiary,
 }
 
-export function SpeciesCard({ speciesScore, isPro, onPress }: Props) {
+export function SpeciesCard({ speciesScore, hourly, isPro, onPress }: Props) {
   const { species, score, status } = speciesScore
   const isLocked = species.tier === 'pro' && !isPro
   const color = scoreColor(score)
+  const window = hourly ? bestWindowSummary(hourly) : null
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} testID={`species-card-${species.id}`}>
@@ -33,6 +42,11 @@ export function SpeciesCard({ speciesScore, isPro, onPress }: Props) {
           <Text style={[styles.status, { color: statusColor[status] ?? Colors.textSecondary }]}>
             {status}
           </Text>
+          {window && !isLocked && (
+            <Text style={styles.bestWindow}>
+              Best {formatHour(window.start)}–{formatHour(window.end + 1)} · {window.avgScore}
+            </Text>
+          )}
         </View>
         {/* color is always a 6-digit hex from scoreColor(); '22' appends ~13% alpha */}
         <View style={[styles.badge, { backgroundColor: color + '22', borderColor: color }]}>
@@ -62,4 +76,5 @@ const styles = StyleSheet.create({
   },
   badgeScore: { fontSize: 15, fontWeight: '700' },
   upgradeHint: { fontSize: 12, color: Colors.accent, marginTop: Spacing.xs },
+  bestWindow: { fontSize: 11, color: Colors.textTertiary, marginTop: 1 },
 })

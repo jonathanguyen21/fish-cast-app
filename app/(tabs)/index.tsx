@@ -233,6 +233,7 @@ export default function ForecastScreen() {
                   <SpeciesCard
                     key={ss.species.id}
                     speciesScore={ss}
+                    hourly={scoredHourlyByMap[ss.species.id]}
                     isPro={isPro}
                     onPress={() => {
                       if (ss.species.tier === 'pro' && !isPro) return
