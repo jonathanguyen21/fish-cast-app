@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react'
-import { View, Text, StyleSheet, PanResponder, PanResponderInstance } from 'react-native'
+import { View, Text, StyleSheet, PanResponder, PanResponderInstance, useWindowDimensions } from 'react-native'
 import { Svg, Path, Defs, LinearGradient, Stop, Line, Circle, Text as SvgText, G } from 'react-native-svg'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
@@ -12,7 +12,6 @@ interface Props {
   currentHour: number
 }
 
-const CHART_WIDTH = 340
 const CHART_HEIGHT = 140
 const PADDING = { top: 20, bottom: 40, left: 8, right: 8 }
 
@@ -40,6 +39,9 @@ function parseEventHour(timeStr: string): number {
 }
 
 export function TideChart({ tide, currentHour }: Props) {
+  const { width } = useWindowDimensions()
+  const CHART_WIDTH = width - Spacing.screenPad * 2 - Spacing.md * 2
+
   const lengthUnit = useSettingsStore(s => s.lengthUnit)
   const fmtHeight = (h: number) =>
     lengthUnit === 'm' ? (h * 0.3048).toFixed(1) : h.toFixed(1)
@@ -114,7 +116,7 @@ export function TideChart({ tide, currentHour }: Props) {
             const tooClose = prevHours.some(ph => Math.abs(toX(ph) - ex) < 30)
 
             return (
-              <G key={ev.time} testID={`tide-tick-${ev.type}-${idx}`}>
+              <G key={`${ev.type}-${idx}`} testID={`tide-tick-${ev.type}-${idx}`}>
                 <Line
                   x1={ex} y1={baseline}
                   x2={ex} y2={baseline + 5}
