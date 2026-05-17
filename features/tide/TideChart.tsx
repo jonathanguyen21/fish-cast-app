@@ -13,7 +13,7 @@ interface Props {
 }
 
 const CHART_HEIGHT = 140
-const PADDING = { top: 20, bottom: 40, left: 8, right: 8 }
+const PADDING = { top: 20, bottom: 40, left: 28, right: 8 }
 
 function curvePath(points: { x: number; y: number }[]): string {
   if (points.length < 2) return ''
@@ -88,9 +88,14 @@ export function TideChart({ tide, currentHour }: Props) {
 
   const baseline = CHART_HEIGHT - PADDING.bottom
 
+  const phaseLabel = tide.phase === 'incoming' ? 'Incoming ↑' : tide.phase === 'outgoing' ? 'Outgoing ↓' : 'Slack →'
+
   return (
     <View style={styles.container} testID="tide-chart">
-      <Text style={styles.sectionTitle}>Tides</Text>
+      <View style={styles.sectionTitleRow}>
+        <Text style={styles.sectionTitle}>Tides</Text>
+        <Text style={styles.sectionTitleMeta}> · {phaseLabel} · {fmtHeight(tide.current.height)} {heightUnit}</Text>
+      </View>
       <View {...panResponder.panHandlers}>
         <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
           <Defs>
@@ -99,6 +104,13 @@ export function TideChart({ tide, currentHour }: Props) {
               <Stop offset="1" stopColor={Colors.ocean} stopOpacity={0.0} />
             </LinearGradient>
           </Defs>
+          {/* Y-axis height labels */}
+          {[minH, (minH + maxH) / 2, maxH].map((h, i) => (
+            <SvgText key={`yax-${i}`} x={PADDING.left - 4} y={toY(h) + 4}
+              fill={Colors.textTertiary} fontSize={8} textAnchor="end">
+              {fmtHeight(h)}
+            </SvgText>
+          ))}
           <Path d={fillD} fill="url(#tideGrad)" />
           <Path d={pathD} stroke={Colors.ocean} strokeWidth={2} fill="none" />
           <Line x1={nowX} y1={PADDING.top} x2={nowX} y2={baseline}
@@ -185,5 +197,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     padding: Spacing.md,
   },
-  sectionTitle: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.sm },
+  sectionTitle: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary },
+  sectionTitleMeta: { fontSize: 13, fontWeight: '600', color: Colors.accent },
 })

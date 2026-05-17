@@ -1,3 +1,10 @@
+import type { ScoreBreakdown } from '../../types/conditions'
+
+export interface ScoreResult {
+  score: number
+  breakdown: ScoreBreakdown
+}
+
 export interface ScoringInputs {
   pressure: { value: number; trend: 'rising' | 'falling' | 'stable'; rate: 'slow' | 'fast' | 'normal' }
   solunar: { inMajorPeriod: boolean; inMinorPeriod: boolean; withinHourOfPeriod: boolean; isMajorMoonDay: boolean }
@@ -84,6 +91,24 @@ export function calculateScore(inputs: ScoringInputs): number {
   if (inputs.sky.condition === 'heavy-rain') score = Math.min(score, 45)
 
   return Math.min(100, Math.max(0, score))
+}
+
+export function calculateScoreWithBreakdown(inputs: ScoringInputs): ScoreResult {
+  const pressure = pressurePoints(inputs.pressure)
+  const solunar = solunarPoints(inputs.solunar)
+  const wind = windPoints(inputs.wind.speed)
+  const waterTemp = waterTempPoints(inputs.waterTemp)
+  const sky = skyPoints(inputs.sky.condition)
+  const hasTide = inputs.tide !== null && inputs.spotType === 'saltwater'
+  const tide = hasTide ? tidePoints(inputs.tide!) : 0
+  const base = pressure + solunar + tide + wind + waterTemp + sky
+  let score = hasTide ? base : Math.round(base * (100 / 80))
+  if (inputs.wind.speed > 25) score = Math.min(score, 35)
+  if (inputs.sky.condition === 'heavy-rain') score = Math.min(score, 45)
+  return {
+    score: Math.min(100, Math.max(0, score)),
+    breakdown: { pressure, solunar, tide, wind, waterTemp, sky },
+  }
 }
 
 export function scoreLabel(score: number): string {

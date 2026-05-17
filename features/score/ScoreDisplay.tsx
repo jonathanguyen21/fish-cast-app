@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import React, { useEffect, useRef, useState } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, LayoutAnimation } from 'react-native'
 import Animated, { useSharedValue, useAnimatedProps, withTiming, Easing } from 'react-native-reanimated'
 import { Svg, Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
 import { Colors } from '../../theme/colors'
@@ -19,11 +19,29 @@ interface Props {
   score: number
   label: string
   bestWindow: { start: string; end: string; score: number }
+  breakdown?: {
+    pressure: number
+    solunar: number
+    tide: number
+    wind: number
+    waterTemp: number
+    sky: number
+  }
 }
 
-export function ScoreDisplay({ score, label, bestWindow }: Props) {
+const FACTORS: { key: keyof NonNullable<Props['breakdown']>; icon: string; label: string; max: number }[] = [
+  { key: 'pressure',  icon: '🌡️', label: 'Pressure',   max: 25 },
+  { key: 'solunar',   icon: '🌙', label: 'Solunar',    max: 20 },
+  { key: 'tide',      icon: '🌊', label: 'Tide',        max: 20 },
+  { key: 'wind',      icon: '💨', label: 'Wind',        max: 15 },
+  { key: 'waterTemp', icon: '🐟', label: 'Water Temp', max: 10 },
+  { key: 'sky',       icon: '☁️', label: 'Sky',         max: 10 },
+]
+
+export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
   const gradientId = useRef(`scoreGrad-${Math.random().toString(36).slice(2)}`).current
   const animatedOffset = useSharedValue(CIRCUMFERENCE)
+  const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
     animatedOffset.value = withTiming(
@@ -36,8 +54,18 @@ export function ScoreDisplay({ score, label, bestWindow }: Props) {
     strokeDashoffset: animatedOffset.value,
   }))
 
+  function handlePress() {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+    setExpanded(v => !v)
+  }
+
   return (
-    <View style={styles.container} testID="score-display">
+    <TouchableOpacity
+      style={styles.container}
+      testID="score-display"
+      onPress={handlePress}
+      activeOpacity={0.9}
+    >
       <View style={styles.circleWrapper}>
         {/* SVG rotated so arc starts at top */}
         <Svg width={SIZE} height={SIZE} style={styles.svg}>
@@ -79,7 +107,27 @@ export function ScoreDisplay({ score, label, bestWindow }: Props) {
           <Text style={styles.bestWindowScore}> · {bestWindow.score}</Text>
         </View>
       </View>
-    </View>
+
+      {expanded && breakdown && (
+        <View style={styles.breakdownPanel}>
+          {FACTORS.map(({ key, icon, label: factorLabel, max }) => {
+            const pts = breakdown[key]
+            const ratio = Math.min(pts / max, 1)
+            const fillColor = scoreColor(ratio * 100)
+            return (
+              <View key={key} style={styles.breakdownRow}>
+                <Text style={styles.breakdownIcon}>{icon}</Text>
+                <Text style={styles.breakdownLabel}>{factorLabel}</Text>
+                <View style={styles.breakdownBarTrack}>
+                  <View style={[styles.breakdownBarFill, { width: `${ratio * 100}%` as any, backgroundColor: fillColor }]} />
+                </View>
+                <Text style={styles.breakdownPts}>{pts} / {max}</Text>
+              </View>
+            )
+          })}
+        </View>
+      )}
+    </TouchableOpacity>
   )
 }
 
@@ -151,5 +199,46 @@ const styles = StyleSheet.create({
   bestWindowScore: {
     fontSize: 12,
     color: Colors.textSecondary,
+  },
+  breakdownPanel: {
+    alignSelf: 'stretch',
+    marginTop: Spacing.md,
+    paddingTop: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.card,
+    gap: 8,
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  breakdownIcon: {
+    fontSize: 14,
+    width: 20,
+    textAlign: 'center',
+  },
+  breakdownLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    width: 72,
+  },
+  breakdownBarTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: Colors.card,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  breakdownBarFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  breakdownPts: {
+    fontSize: 11,
+    color: Colors.textTertiary,
+    width: 42,
+    textAlign: 'right',
   },
 })

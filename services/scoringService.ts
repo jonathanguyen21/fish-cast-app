@@ -1,7 +1,7 @@
-import { calculateScore, scoreLabel } from '../features/score/scoringEngine'
+import { calculateScore, calculateScoreWithBreakdown, scoreLabel } from '../features/score/scoringEngine'
 import { findBestThreeHourWindow } from '../features/score/bestWindow'
 import { detectPhase, hoursFromLastTurn } from '../features/tide/tideUtils'
-import type { ConditionsData, SkyData, WindData, PressureData, HourlyScore } from '../types/conditions'
+import type { ConditionsData, SkyData, WindData, PressureData, HourlyScore, ScoreBreakdown } from '../types/conditions'
 import type { Spot } from '../types/spot'
 import type { NoaaData } from './noaaService'
 import type { NwsData } from './nwsService'
@@ -127,7 +127,7 @@ export function buildConditionsData(
     spotType: spot.type,
   }
 
-  const currentScore = calculateScore({
+  const { score: currentScore, breakdown: scoreBreakdown } = calculateScoreWithBreakdown({
     ...baseInputs,
     solunar: solunar,
     wind: { speed: wind.speed },
@@ -206,6 +206,7 @@ export function buildConditionsData(
     moon: solunar.moon,
     hourlyScores,
     tidePhasesByHour,
+    scoreBreakdown,
   }
 }
 

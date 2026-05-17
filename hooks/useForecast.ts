@@ -1,15 +1,20 @@
-import { MOCK_FORECAST } from '../data/mockData'
+import { useQuery } from '@tanstack/react-query'
+import { fetchForecast } from '../services/forecastService'
 import type { DayForecast } from '../types/conditions'
 import type { Spot } from '../types/spot'
 
 interface UseForecastResult {
-  data: DayForecast[]
-  isLoading: boolean
+  data: DayForecast[] | undefined
 }
 
-export function useForecast(_spot: Spot | null): UseForecastResult {
-  return {
-    data: _spot ? MOCK_FORECAST : [],
-    isLoading: false,
-  }
+export function useForecast(spot: Spot | null): UseForecastResult {
+  const query = useQuery({
+    queryKey: ['forecast', spot?.id],
+    queryFn: () => fetchForecast(spot!),
+    enabled: !!spot,
+    staleTime: 2 * 60 * 60 * 1000,  // 2 hours
+    gcTime: 6 * 60 * 60 * 1000,     // 6 hours
+  })
+
+  return { data: query.data }
 }

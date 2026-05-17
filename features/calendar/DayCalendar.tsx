@@ -18,7 +18,7 @@ function localDateKey(d: Date): string {
 }
 
 function scoreColor(score: number | null): string {
-  if (score === null) return '#334455'
+  if (score === null) return Colors.card
   if (score >= 85) return '#4CAF70'
   if (score >= 70) return '#8BC34A'
   if (score >= 55) return '#FFC107'
@@ -72,10 +72,10 @@ export function DayCalendar({ selectedDate, onSelect, todayScore, isPro }: Props
     const isLocked = !isPro && dayIndex >= 7
 
     let dotColor: string
-    if (isPast) dotColor = '#2A3C50'
-    else if (isLocked) dotColor = '#1A2235'
+    if (isPast) dotColor = Colors.card
+    else if (isLocked) dotColor = Colors.background
     else if (isToday && todayScore !== null) dotColor = scoreColor(todayScore)
-    else dotColor = '#2A3C50'
+    else dotColor = Colors.card
 
     cells.push(
       <TouchableOpacity
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     width: '14.28%', alignItems: 'center', paddingVertical: 5,
     borderRadius: 8, minHeight: 44,
   },
-  cellToday: { backgroundColor: '#0E2030' },
+  cellToday: { backgroundColor: Colors.card },
   cellSelected: { backgroundColor: Colors.accent },
   cellDim: { opacity: 0.4 },
   dayNum: { fontSize: 13, fontWeight: '700', color: Colors.textPrimary, lineHeight: 16 },
