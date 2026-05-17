@@ -196,7 +196,10 @@ export default function ForecastScreen() {
                 peakSpeed={windPeak}
                 onPress={() => router.push({
                   pathname: '/detail/wind',
-                  params: { data: JSON.stringify(conditions.windHourly) },
+                  params: {
+                    data: JSON.stringify(conditions.windHourly),
+                    current: JSON.stringify(conditions.wind),
+                  },
                 })}
               />
               {conditions.tide && (

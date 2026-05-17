@@ -110,8 +110,9 @@ describe('buildConditionsData', () => {
     const originalDate = global.Date
     global.Date = class extends originalDate {
       constructor(...args: any[]) {
+        super()
         if (args.length === 0) return new originalDate('2026-05-06T14:00:00')
-        return new originalDate(...args)
+        return new originalDate(...(args as []))
       }
     } as any
 
