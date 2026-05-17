@@ -7,7 +7,7 @@ import { scoreColor } from '../score/scoringEngine'
 import type { DayForecast } from '../../types/conditions'
 
 interface Props {
-  forecast: DayForecast[]
+  forecast: DayForecast[] | undefined
   isPro: boolean
   onUpgrade: () => void
 }
@@ -29,7 +29,7 @@ export function ForecastStrip({ forecast, isPro, onUpgrade }: Props) {
     <View style={styles.container}>
       <Text style={Typography.sectionTitle}>7-Day Forecast</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        {forecast.map((day) => {
+        {(forecast ?? []).map((day) => {
           const color = scoreColor(day.peakScore)
           return (
             <View key={day.date} style={styles.dayCard}>

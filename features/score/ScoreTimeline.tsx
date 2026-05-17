@@ -13,7 +13,8 @@ interface Props {
 }
 
 const BAR_MAX_HEIGHT = 80
-const BAR_WIDTH = 28
+const BAR_WIDTH = 32
+const THRESHOLD_Y = BAR_MAX_HEIGHT - (70 / 100) * BAR_MAX_HEIGHT
 
 export function ScoreTimeline({ hourlyScores, onUpgrade }: Props) {
   const isPro = useSettingsStore(s => s.isPro)
@@ -35,10 +36,14 @@ export function ScoreTimeline({ hourlyScores, onUpgrade }: Props) {
           return (
             <View key={item.hour} style={styles.barWrapper}>
               <Text style={[styles.scoreLabel, isPeak && { color }]}>{item.score}</Text>
+              {isNow
+                ? <View style={styles.nowChip}><Text style={styles.nowChipText}>NOW</Text></View>
+                : <View style={styles.nowChipPlaceholder} />}
               <View style={styles.barTrack}>
+                <View style={styles.thresholdLine} />
                 <View style={[
                   styles.bar,
-                  { height: barHeight, backgroundColor: color, opacity: isPeak ? 1 : 0.65 },
+                  { height: barHeight, backgroundColor: color, opacity: isPeak || isNow ? 1 : 0.6 },
                   isNow && { borderWidth: 2, borderColor: Colors.accent },
                 ]} />
               </View>
@@ -68,8 +73,12 @@ const styles = StyleSheet.create({
   },
   scroll: { paddingBottom: Spacing.xs, gap: Spacing.xs },
   barWrapper: { alignItems: 'center', width: BAR_WIDTH + 8 },
-  barTrack: { height: BAR_MAX_HEIGHT, justifyContent: 'flex-end' },
+  barTrack: { height: BAR_MAX_HEIGHT, justifyContent: 'flex-end', overflow: 'visible' },
   bar: { width: BAR_WIDTH, borderRadius: 4 },
+  nowChip: { backgroundColor: Colors.accent, borderRadius: 6, paddingHorizontal: 4, paddingVertical: 1, marginBottom: 2 },
+  nowChipText: { fontSize: 8, color: '#0B1622', fontWeight: '700' },
+  nowChipPlaceholder: { height: 14, marginBottom: 2 },
+  thresholdLine: { position: 'absolute', bottom: THRESHOLD_Y, left: 0, right: 0, height: 1, backgroundColor: '#10B98150', width: 2000 },
   hourLabel: { fontSize: 10, color: Colors.textTertiary, marginTop: 4 },
   hourLabelPeak: { color: Colors.textSecondary, fontWeight: '600' },
   scoreLabel: { fontSize: 10, color: Colors.textTertiary, fontWeight: '600', height: 14 },

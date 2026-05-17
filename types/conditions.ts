@@ -85,6 +85,15 @@ export interface DayForecast {
   peakWindow: { start: string; end: string }
 }
 
+export interface ScoreBreakdown {
+  pressure: number
+  solunar: number
+  tide: number
+  wind: number
+  waterTemp: number
+  sky: number
+}
+
 export interface ConditionsData {
   fishingScore: number
   scoreLabel: string
@@ -103,4 +112,5 @@ export interface ConditionsData {
   moon: MoonData
   hourlyScores: HourlyScore[]
   tidePhasesByHour: Record<number, TidePhase>
+  scoreBreakdown: ScoreBreakdown
 }

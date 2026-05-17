@@ -26,6 +26,30 @@ import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
 import { useRouter } from 'expo-router'
 
+function tidePhaseLabel(phase: string): string {
+  if (phase === 'incoming') return '↑ Incoming'
+  if (phase === 'outgoing') return '↓ Outgoing'
+  return '→ Slack'
+}
+
+function tideTurnCountdown(tide: { next: { type: string; time: string } }): string {
+  const m = tide.next.time.match(/(\d+):(\d+)\s*(AM|PM)/i)
+  if (!m) return ''
+  let h = parseInt(m[1])
+  const min = parseInt(m[2])
+  if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12
+  if (m[3].toUpperCase() === 'AM' && h === 12) h = 0
+  const nextTime = new Date()
+  nextTime.setHours(h, min, 0, 0)
+  if (nextTime.getTime() < Date.now()) nextTime.setDate(nextTime.getDate() + 1)
+  const diffMs = nextTime.getTime() - Date.now()
+  const diffH = Math.floor(diffMs / 3600000)
+  const diffM = Math.floor((diffMs % 3600000) / 60000)
+  const type = tide.next.type === 'high' ? 'High' : 'Low'
+  if (diffH === 0) return `${type} in ${diffM}m`
+  return `${type} in ${diffH}h ${diffM}m`
+}
+
 function localDateKey(d: Date): string {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -163,6 +187,7 @@ export default function ForecastScreen() {
               score={conditions.fishingScore}
               label={conditions.scoreLabel}
               bestWindow={conditions.bestWindow}
+              breakdown={(conditions as any).scoreBreakdown}
             />
             <ScoreTimeline hourlyScores={conditions.hourlyScores} onUpgrade={() => router.push('/settings')} />
             <View style={styles.quickStats}>
@@ -178,11 +203,9 @@ export default function ForecastScreen() {
                 <View style={styles.quickCard}>
                   <Text style={styles.quickIcon}>🌊</Text>
                   <Text style={styles.quickLabel}>Tide</Text>
-                  <Text style={styles.quickValue}>{conditions.tide.current.height} ft</Text>
-                  <Text style={styles.quickSub}>{conditions.tide.current.rising ? '▲ Rising' : '▼ Falling'}</Text>
-                  {tideNextHigh && (
-                    <Text style={styles.quickPeak}>▲ {tideNextHigh.height.toFixed(1)} ft {tideNextHigh.time}</Text>
-                  )}
+                  <Text style={styles.quickValue}>{conditions.tide.current.height.toFixed(1)} <Text style={styles.quickUnit}>{conditions.tide.current.unit}</Text></Text>
+                  <Text style={styles.quickSub}>{tidePhaseLabel(conditions.tide.phase)}</Text>
+                  <Text style={styles.quickPeak}>{tideTurnCountdown(conditions.tide)}</Text>
                 </View>
               )}
               <View style={styles.quickCard}>
@@ -304,6 +327,7 @@ const styles = StyleSheet.create({
   quickValue: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary },
   quickSub: { fontSize: 11, color: Colors.textSecondary },
   quickPeak: { fontSize: 10, color: Colors.textTertiary, marginTop: 2 },
+  quickUnit: { fontSize: 11, color: Colors.textSecondary },
   section: { marginHorizontal: Spacing.screenPad, marginBottom: Spacing.md },
   dateChip: {
     flexDirection: 'row',

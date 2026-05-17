@@ -34,26 +34,27 @@ export function ConditionsGrid({
   const toDisplayTemp = (f: number) => tempUnit === 'C' ? Math.round((f - 32) * 5 / 9) : f
   const tempSuffix = tempUnit === 'C' ? '°C' : '°F'
 
-  const swellContent = (
+  const swellContent = swell ? (
     <>
       <Text style={cardStyles.icon}>🌊</Text>
       <Text style={cardStyles.label}>Swell</Text>
-      {swell ? (
-        <>
-          <Text style={cardStyles.value}>
-            {swell.height} {swell.unit}
-          </Text>
-          <Text style={cardStyles.sub}>
-            {swell.period}s {swell.directionLabel}
-          </Text>
-        </>
-      ) : (
-        <Text style={cardStyles.sub}>Unavailable</Text>
-      )}
+      <Text style={cardStyles.value}>
+        {swell.height} {swell.unit}
+      </Text>
+      <Text style={cardStyles.sub}>
+        {swell.period}s {swell.directionLabel}
+      </Text>
+    </>
+  ) : (
+    <>
+      <Text style={cardStyles.icon}>🏞️</Text>
+      <Text style={cardStyles.label}>Swell</Text>
+      <Text style={cardStyles.sub}>Freshwater</Text>
+      <Text style={cardStyles.sub}>N/A</Text>
     </>
   )
 
-  const SwellCard = onPressSwell ? (
+  const SwellCard = (onPressSwell && swell) ? (
     <TouchableOpacity style={cardStyles.card} onPress={onPressSwell} activeOpacity={0.75}>
       {swellContent}
     </TouchableOpacity>
@@ -66,16 +67,11 @@ export function ConditionsGrid({
   return (
     <View style={styles.container}>
       <Text style={Typography.sectionTitle}>Conditions</Text>
+      <Text style={styles.subtitle}>Tap any card for details</Text>
       <View style={styles.row}>
         <PressureCard pressure={pressure} onPress={onPressPressure} />
+        <MoonCard moon={moon} onPress={onPressMoon} />
         {SwellCard}
-        <TouchableOpacity style={cardStyles.card} onPress={onPressAir} activeOpacity={0.75}>
-          <Text style={cardStyles.icon}>🌤️</Text>
-          <Text style={cardStyles.label}>Air Temp</Text>
-          <Text style={cardStyles.value}>{toDisplayTemp(air.temp)}°</Text>
-          <Text style={cardStyles.sub}>{tempSuffix}</Text>
-          <Text style={cardStyles.sub}>H:{toDisplayTemp(air.high)}° L:{toDisplayTemp(air.low)}°</Text>
-        </TouchableOpacity>
       </View>
       <View style={[styles.row, { marginTop: Spacing.sm }]}>
         <TouchableOpacity style={cardStyles.card} onPress={onPressSky} activeOpacity={0.75}>
@@ -84,7 +80,13 @@ export function ConditionsGrid({
           <Text style={cardStyles.value}>{sky.rainChance}%</Text>
           <Text style={cardStyles.sub}>{sky.condition}</Text>
         </TouchableOpacity>
-        <MoonCard moon={moon} onPress={onPressMoon} />
+        <TouchableOpacity style={cardStyles.card} onPress={onPressAir} activeOpacity={0.75}>
+          <Text style={cardStyles.icon}>🌤️</Text>
+          <Text style={cardStyles.label}>Air Temp</Text>
+          <Text style={cardStyles.value}>{toDisplayTemp(air.temp)}°</Text>
+          <Text style={cardStyles.sub}>{tempSuffix}</Text>
+          <Text style={cardStyles.sub}>H:{toDisplayTemp(air.high)}° L:{toDisplayTemp(air.low)}°</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={cardStyles.card} onPress={onPressSun} activeOpacity={0.75}>
           <Text style={cardStyles.icon}>☀️</Text>
           <Text style={cardStyles.label}>Sun</Text>
@@ -107,5 +109,11 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: Spacing.sm,
+  },
+  subtitle: {
+    fontSize: 11,
+    color: Colors.textTertiary,
+    marginBottom: Spacing.sm,
+    marginTop: 2,
   },
 })

@@ -1,3 +1,5 @@
+import React from 'react'
+import { View, Text } from 'react-native'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
@@ -15,6 +17,23 @@ import { resolveNearestStation } from '../services/noaaStationService'
 import { detectRegion } from '../data/species'
 
 export { ErrorBoundary } from 'expo-router'
+
+class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  state = { hasError: false }
+  static getDerivedStateFromError() { return { hasError: true } }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={{ flex: 1, backgroundColor: '#0B1622', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Text style={{ fontSize: 48, marginBottom: 16 }}>🎣</Text>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: '#F1F5F9', textAlign: 'center' }}>Something went wrong</Text>
+          <Text style={{ fontSize: 14, color: '#94A3B8', marginTop: 8, textAlign: 'center' }}>Pull to refresh or restart the app</Text>
+        </View>
+      )
+    }
+    return this.props.children
+  }
+}
 
 export const unstable_settings = { initialRouteName: '(tabs)' }
 
@@ -61,6 +80,7 @@ export default function RootLayout() {
   if (!loaded) return null
 
   return (
+    <AppErrorBoundary>
     <PersistQueryClientProvider
       client={queryClient}
       persistOptions={{ persister: asyncStoragePersister, maxAge: 24 * 60 * 60 * 1000 }}
@@ -106,5 +126,6 @@ export default function RootLayout() {
         />
       </Stack>
     </PersistQueryClientProvider>
+    </AppErrorBoundary>
   )
 }

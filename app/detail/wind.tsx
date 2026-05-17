@@ -24,6 +24,12 @@ function directionArrow(deg: number): string {
   return DIRECTION_ARROWS[idx]
 }
 
+function speedColor(mph: number): string {
+  if (mph <= 12) return '#10B981'
+  if (mph <= 18) return '#F59E0B'
+  return '#EF4444'
+}
+
 function hourLabel(h: number) {
   const period = h < 12 ? 'AM' : 'PM'
   const display = h === 0 ? 12 : h > 12 ? h - 12 : h
@@ -101,6 +107,7 @@ export default function WindDetailScreen() {
   const peakEntry = windHourly.reduce<HourlyWind | null>(
     (best, h) => (!best || h.speed > best.speed ? h : best), null
   )
+  const peakIdx = peakEntry ? windHourly.indexOf(peakEntry) : -1
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xl }]}>
@@ -113,8 +120,11 @@ export default function WindDetailScreen() {
 
       {cursor ? (
         <View style={styles.cursorInfo}>
-          <Text style={styles.cursorText}>
-            {hourLabel(cursor.hour)}  ·  {convert(cursor.speed)} {unitLabel}  ·  gusts {convert(cursor.gusts ?? cursor.speed)} {unitLabel}  ·  {directionArrow(cursor.direction ?? 0)} {cursor.directionLabel}
+          <Text style={[styles.cursorSpeed, { color: speedColor(cursor.speed) }]}>
+            {hourLabel(cursor.hour)}  ·  {convert(cursor.speed)} {unitLabel}
+          </Text>
+          <Text style={styles.cursorSub}>
+            Gusts {convert(cursor.gusts ?? cursor.speed)} {unitLabel}  ·  {directionArrow(cursor.direction ?? 0)} {cursor.directionLabel}
           </Text>
         </View>
       ) : peakEntry ? (
@@ -157,6 +167,18 @@ export default function WindDetailScreen() {
                 </G>
               ))}
 
+              {/* Danger threshold at 25 mph */}
+              {maxVal > 15 && (
+                <G>
+                  <Line x1={PADDING.left} y1={toY(25)} x2={PADDING.left + innerW} y2={toY(25)}
+                    stroke="#EF4444" strokeOpacity={0.5} strokeWidth={1} strokeDasharray="4 3" />
+                  <SvgText x={PADDING.left + innerW} y={toY(25) - 4}
+                    fill="#EF4444" fontSize={8} textAnchor="end" fillOpacity={0.8}>
+                    25 mph · dangerous
+                  </SvgText>
+                </G>
+              )}
+
               {/* Gust band */}
               {gustBandPath ? (
                 <Path d={gustBandPath} fill={Colors.ocean} fillOpacity={0.12} />
@@ -171,6 +193,20 @@ export default function WindDetailScreen() {
               {speedPath ? (
                 <Path d={speedPath} stroke={Colors.ocean} strokeWidth={2} fill="none" />
               ) : null}
+
+              {/* Colored speed dots */}
+              {windHourly.length <= 24 && windHourly.map((h, i) => (
+                <Circle key={`dot-${i}`} cx={toX(i)} cy={toY(h.speed)} r={3} fill={speedColor(h.speed)} />
+              ))}
+
+              {/* Peak gust callout */}
+              {peakEntry && peakIdx !== -1 && (
+                <G>
+                  <Circle cx={toX(peakIdx)} cy={toY(peakEntry.speed)} r={7} fill="#EF4444" fillOpacity={0.8} />
+                  <SvgText x={toX(peakIdx)} y={toY(peakEntry.speed) - 12}
+                    fill="#EF4444" fontSize={9} textAnchor="middle" fontWeight="600">Peak</SvgText>
+                </G>
+              )}
 
               {/* Direction arrows every 4 hrs */}
               {windHourly.filter((_, i) => i % 4 === 0).map((item, idx) => {
@@ -255,8 +291,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card, borderRadius: 8, padding: Spacing.sm,
     marginBottom: Spacing.sm,
   },
-  cursorText: { fontSize: 13, color: Colors.textPrimary, textAlign: 'center', fontWeight: '600' },
-  cursorSub: { fontSize: 12, color: Colors.textSecondary, textAlign: 'center' },
+  cursorSpeed: { fontSize: 14, fontWeight: '700', textAlign: 'center' },
+  cursorSub: { fontSize: 12, color: Colors.textSecondary, textAlign: 'center', marginTop: 2 },
   chartCard: {
     backgroundColor: Colors.card, borderRadius: Spacing.cardRadius,
     padding: Spacing.md, marginBottom: Spacing.md,
