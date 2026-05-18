@@ -63,6 +63,30 @@ function localDateKey(d: Date): string {
   return `${y}-${m}-${day}`
 }
 
+function parseTimeToMinutes(t: string): number {
+  const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i)
+  if (!m) return -1
+  let h = parseInt(m[1])
+  const min = parseInt(m[2])
+  if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12
+  if (m[3].toUpperCase() === 'AM' && h === 12) h = 0
+  return h * 60 + min
+}
+
+function checkSolunarActive(
+  periods: { start: string; end: string }[],
+  nowMinutes: number
+): { active: boolean; endTime?: string } {
+  for (const p of periods) {
+    const start = parseTimeToMinutes(p.start)
+    const end = parseTimeToMinutes(p.end)
+    if (start >= 0 && end >= 0 && nowMinutes >= start && nowMinutes <= end) {
+      return { active: true, endTime: p.end }
+    }
+  }
+  return { active: false }
+}
+
 function formatDateChip(dateStr: string): string {
   const todayStr = localDateKey(new Date())
   if (dateStr === todayStr) return 'Today'
@@ -130,6 +154,16 @@ export default function ForecastScreen() {
     }
     return result
   }, [activeSpot?.id])
+
+  const solunarNow = useMemo(() => {
+    if (!conditions) return null
+    const nowMins = currentHour * 60 + now.getMinutes()
+    const major = checkSolunarActive(conditions.moon.majorPeriods, nowMins)
+    if (major.active) return { type: 'major' as const, endTime: major.endTime }
+    const minor = checkSolunarActive(conditions.moon.minorPeriods, nowMins)
+    if (minor.active) return { type: 'minor' as const, endTime: minor.endTime }
+    return null
+  }, [conditions, currentHour])
 
   const scoredHourlyByMap = useMemo(() => {
     const map: Record<string, SpeciesHourlyScore[]> = {}
@@ -255,6 +289,19 @@ export default function ForecastScreen() {
               bestWindow={conditions.bestWindow}
               breakdown={(conditions as any).scoreBreakdown}
             />
+            {solunarNow && (
+              <View style={[styles.solunarBanner, solunarNow.type === 'major' && styles.solunarBannerMajor]}>
+                <Ionicons
+                  name="moon"
+                  size={14}
+                  color={solunarNow.type === 'major' ? Colors.accent : Colors.textSecondary}
+                />
+                <Text style={[styles.solunarBannerText, solunarNow.type === 'major' && { color: Colors.accent }]}>
+                  {solunarNow.type === 'major' ? 'Major' : 'Minor'} solunar period active
+                  {solunarNow.endTime ? ` · Until ${solunarNow.endTime}` : ''}
+                </Text>
+              </View>
+            )}
             <View style={[styles.summaryCard, { borderLeftColor: scoreColor(conditions.fishingScore) }]}>
               <Text style={styles.summaryText}>{buildConditionsSummary(conditions)}</Text>
             </View>
@@ -381,6 +428,18 @@ const styles = StyleSheet.create({
   },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.sm },
   emptyIcon: { marginBottom: Spacing.sm },
+  solunarBanner: {
+    marginHorizontal: Spacing.screenPad, marginBottom: Spacing.sm,
+    backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
+    paddingHorizontal: Spacing.md, paddingVertical: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    borderWidth: 1, borderColor: Colors.textTertiary + '40',
+  },
+  solunarBannerMajor: {
+    backgroundColor: Colors.accent + '12',
+    borderColor: Colors.accent + '40',
+  },
+  solunarBannerText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500' },
   summaryCard: {
     marginHorizontal: Spacing.screenPad, marginBottom: Spacing.sm,
     backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
