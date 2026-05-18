@@ -275,7 +275,7 @@ export default function ForecastScreen() {
           onPress={() => setShowCalendar(v => !v)}
         >
           <Text style={styles.dateChipText}>{formatDateChip(selectedDate)}</Text>
-          <Text style={styles.dateChipArrow}>{showCalendar ? ' ▴' : ' ▾'}</Text>
+          <Ionicons name={showCalendar ? 'chevron-up' : 'chevron-down'} size={12} color={Colors.textTertiary} />
         </TouchableOpacity>
 
         {showCalendar && (
@@ -544,5 +544,4 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accent + '1A',
   },
   dateChipText: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
-  dateChipArrow: { fontSize: 12, color: Colors.textSecondary },
 })
