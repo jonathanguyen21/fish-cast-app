@@ -30,8 +30,8 @@ function CatchCard({ entry, onDelete }: { entry: CatchEntry; onDelete: () => voi
         <TouchableOpacity onPress={() => Alert.alert('Delete', 'Remove this catch?', [
           { text: 'Cancel', style: 'cancel' },
           { text: 'Delete', style: 'destructive', onPress: onDelete },
-        ])}>
-          <Text style={styles.deleteBtn}>✕</Text>
+        ])} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Ionicons name="trash-outline" size={16} color={Colors.textTertiary} />
         </TouchableOpacity>
       </View>
       <Text style={styles.catchSpot}>{entry.spotName} · {formatDate(entry.date)} at {entry.time}</Text>
@@ -63,6 +63,7 @@ interface FormState {
   weight: string
   length: string
   note: string
+  score: string
 }
 
 export default function CatchLogScreen() {
@@ -70,7 +71,7 @@ export default function CatchLogScreen() {
   const { entries, addEntry, deleteEntry } = useCatchLogStore()
   const { activeSpot } = useSpots()
   const [showModal, setShowModal] = useState(false)
-  const [form, setForm] = useState<FormState>({ species: '', weight: '', length: '', note: '' })
+  const [form, setForm] = useState<FormState>({ species: '', weight: '', length: '', note: '', score: '' })
   const [showSpeciesPicker, setShowSpeciesPicker] = useState(false)
 
   const today = useMemo(() => {
@@ -100,8 +101,9 @@ export default function CatchLogScreen() {
       weight: form.weight ? parseFloat(form.weight) : undefined,
       length: form.length ? parseFloat(form.length) : undefined,
       note: form.note.trim() || undefined,
+      fishingScore: form.score ? parseInt(form.score, 10) : undefined,
     })
-    setForm({ species: '', weight: '', length: '', note: '' })
+    setForm({ species: '', weight: '', length: '', note: '', score: '' })
     setShowModal(false)
   }
 
@@ -147,8 +149,9 @@ export default function CatchLogScreen() {
           <ScrollView style={styles.modal} contentContainerStyle={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Log a Catch</Text>
-              <TouchableOpacity onPress={() => setShowModal(false)}>
-                <Text style={styles.modalClose}>✕ Cancel</Text>
+              <TouchableOpacity onPress={() => setShowModal(false)} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Ionicons name="close" size={18} color={Colors.textSecondary} />
+                <Text style={styles.modalClose}>Cancel</Text>
               </TouchableOpacity>
             </View>
 
@@ -208,6 +211,20 @@ export default function CatchLogScreen() {
               </View>
             </View>
 
+            <View style={styles.row}>
+              <View style={styles.halfField}>
+                <Text style={styles.fieldLabel}>Fishing Score (0–100)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. 72"
+                  placeholderTextColor={Colors.textTertiary}
+                  keyboardType="number-pad"
+                  value={form.score}
+                  onChangeText={v => setForm(f => ({ ...f, score: v }))}
+                />
+              </View>
+            </View>
+
             <Text style={styles.fieldLabel}>Notes</Text>
             <TextInput
               style={[styles.input, styles.noteInput]}
@@ -248,7 +265,6 @@ const styles = StyleSheet.create({
   addButtonText: { fontSize: 14, fontWeight: '700', color: Colors.background },
   content: { paddingHorizontal: Spacing.screenPad, paddingBottom: Spacing.xl },
   empty: { alignItems: 'center', marginTop: 80, gap: Spacing.sm },
-  emptyIconPlaceholder: {},
   emptyText: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20, maxWidth: 280 },
   dayLabel: { fontSize: 13, fontWeight: '600', color: Colors.textTertiary, marginTop: Spacing.md, marginBottom: Spacing.xs },
@@ -258,7 +274,6 @@ const styles = StyleSheet.create({
   },
   catchHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   catchSpecies: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary },
-  deleteBtn: { fontSize: 14, color: Colors.textTertiary, padding: 4 },
   catchSpot: { fontSize: 12, color: Colors.textTertiary, marginBottom: 8 },
   catchStats: { flexDirection: 'row', gap: Spacing.md, marginBottom: 4 },
   catchStat: { flexDirection: 'row', alignItems: 'baseline' },

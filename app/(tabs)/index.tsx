@@ -23,6 +23,7 @@ import { scoreColor } from '../../features/score/scoringEngine'
 import { scoreSpeciesHourly, type SpeciesHourlyScore } from '../../features/species/speciesHourlyScoring'
 import { detectPhase } from '../../features/tide/tideUtils'
 import { getSpeciesForRegion } from '../../data/species'
+import { calculateSolunar } from '../../services/solunarService'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
@@ -117,6 +118,19 @@ export default function ForecastScreen() {
       })
   }, [activeSpot, conditions, currentHour, isPro])
 
+  const majorMoonDays = useMemo(() => {
+    if (!activeSpot) return {}
+    const result: Record<string, boolean> = {}
+    for (let i = -2; i <= 30; i++) {
+      const d = new Date()
+      d.setDate(d.getDate() + i)
+      const key = localDateKey(d)
+      const sol = calculateSolunar(activeSpot.lat, activeSpot.lng, d)
+      result[key] = sol.isMajorMoonDay
+    }
+    return result
+  }, [activeSpot?.id])
+
   const scoredHourlyByMap = useMemo(() => {
     const map: Record<string, SpeciesHourlyScore[]> = {}
     if (!activeSpot || !conditions) return map
@@ -207,6 +221,7 @@ export default function ForecastScreen() {
             onSelect={(d) => { setSelectedDate(d); setShowCalendar(false) }}
             todayScore={conditions?.fishingScore ?? null}
             isPro={isPro}
+            majorMoonDays={majorMoonDays}
           />
         )}
 

@@ -10,6 +10,7 @@ interface Props {
   onSelect: (dateStr: string) => void
   todayScore: number | null
   isPro: boolean
+  majorMoonDays?: Record<string, boolean>
 }
 
 function localDateKey(d: Date): string {
@@ -30,7 +31,7 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ]
 
-export function DayCalendar({ selectedDate, onSelect, todayScore, isPro }: Props) {
+export function DayCalendar({ selectedDate, onSelect, todayScore, isPro, majorMoonDays }: Props) {
   const today = new Date()
   const todayKey = localDateKey(today)
 
@@ -68,6 +69,7 @@ export function DayCalendar({ selectedDate, onSelect, todayScore, isPro }: Props
     const isSelected = dateStr === selectedDate
     const dayIndex = Math.round((cellDate.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) / 86400000)
     const isLocked = !isPro && dayIndex >= 7
+    const isMajorMoon = !isPast && majorMoonDays?.[dateStr] === true
 
     let dotColor: string
     if (isPast) dotColor = Colors.card
@@ -97,7 +99,10 @@ export function DayCalendar({ selectedDate, onSelect, todayScore, isPro }: Props
         ]}>
           {d}
         </Text>
-        <View style={[styles.dot, { backgroundColor: dotColor }]} />
+        <View style={styles.dotRow}>
+          <View style={[styles.dot, { backgroundColor: dotColor }]} />
+          {isMajorMoon && <View style={styles.moonDot} />}
+        </View>
         {isLocked && <Ionicons name="lock-closed" size={7} color={Colors.textTertiary} style={styles.lockIcon} />}
       </TouchableOpacity>
     )
@@ -129,10 +134,13 @@ export function DayCalendar({ selectedDate, onSelect, todayScore, isPro }: Props
       </View>
       <View style={styles.legend}>
         <View style={styles.legendDot} />
-        <Text style={styles.legendText}>Today's score</Text>
+        <Text style={styles.legendText}>Score</Text>
+        <Text style={styles.legendSep}>·</Text>
+        <View style={styles.moonDot} />
+        <Text style={styles.legendText}>Major moon</Text>
         <Text style={styles.legendSep}>·</Text>
         <Ionicons name="lock-closed" size={11} color={Colors.textTertiary} />
-        <Text style={styles.legendText}>Pro only</Text>
+        <Text style={styles.legendText}>Pro</Text>
       </View>
     </View>
   )
@@ -177,7 +185,9 @@ const styles = StyleSheet.create({
   dayNumToday: { color: Colors.accent },
   dayNumSelected: { color: Colors.background },
   dayNumPast: { color: Colors.textSecondary },
-  dot: { width: 5, height: 5, borderRadius: 2.5, marginTop: 3 },
+  dotRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 3 },
+  dot: { width: 5, height: 5, borderRadius: 2.5 },
+  moonDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: Colors.warning },
   lockIcon: { position: 'absolute', top: 2, right: 4 },
   legend: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
