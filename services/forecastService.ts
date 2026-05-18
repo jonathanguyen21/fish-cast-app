@@ -134,6 +134,9 @@ export async function fetchForecast(spot: Spot): Promise<DayForecast[]> {
         peakScore,
         scoreLabel: scoreLabel(peakScore),
         peakWindow,
+        skyIcon,
+        highTemp: period.temperature ?? undefined,
+        rainChance,
       }
     })
 
