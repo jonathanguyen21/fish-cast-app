@@ -1,4 +1,5 @@
 import type { ScoreBreakdown } from '../../types/conditions'
+import { Colors } from '../../theme/colors'
 
 export interface ScoreResult {
   score: number
@@ -121,7 +122,7 @@ export function scoreLabel(score: number): string {
 }
 
 export function scoreColor(score: number): string {
-  if (score >= 70) return '#10B981'
-  if (score >= 40) return '#F59E0B'
-  return '#EF4444'
+  if (score >= 70) return Colors.success
+  if (score >= 40) return Colors.warning
+  return Colors.danger
 }

@@ -26,9 +26,9 @@ function directionArrow(deg: number): string {
 }
 
 function speedColor(mph: number): string {
-  if (mph <= 12) return '#10B981'
-  if (mph <= 18) return '#F59E0B'
-  return '#EF4444'
+  if (mph <= 12) return Colors.success
+  if (mph <= 18) return Colors.warning
+  return Colors.danger
 }
 
 function hourLabel(h: number) {
@@ -294,7 +294,7 @@ export default function WindDetailScreen() {
           <Text style={styles.legendLabel}>Gust band</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDash, { borderColor: '#EF4444' }]} />
+          <View style={[styles.legendDash, { borderColor: Colors.danger }]} />
           <Text style={styles.legendLabel}>25 mph limit</Text>
         </View>
       </View>

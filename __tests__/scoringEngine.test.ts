@@ -1,5 +1,6 @@
 import { calculateScore, calculateScoreWithBreakdown, scoreLabel, scoreColor } from '../features/score/scoringEngine'
 import type { ScoringInputs } from '../features/score/scoringEngine'
+import { Colors } from '../theme/colors'
 
 const ideal: ScoringInputs = {
   pressure: { value: 30.05, trend: 'falling', rate: 'slow' },
@@ -62,9 +63,9 @@ describe('scoreLabel', () => {
 })
 
 describe('scoreColor', () => {
-  it('returns green for high scores', () => expect(scoreColor(80)).toBe('#10B981'))
-  it('returns amber for mid scores', () => expect(scoreColor(55)).toBe('#F59E0B'))
-  it('returns red for low scores', () => expect(scoreColor(30)).toBe('#EF4444'))
+  it('returns green for high scores', () => expect(scoreColor(80)).toBe(Colors.success))
+  it('returns amber for mid scores', () => expect(scoreColor(55)).toBe(Colors.warning))
+  it('returns red for low scores', () => expect(scoreColor(30)).toBe(Colors.danger))
 })
 
 describe('calculateScoreWithBreakdown', () => {
