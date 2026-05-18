@@ -41,7 +41,7 @@ export function ForecastStrip({ forecast, isPro, isLoading, isError, onUpgrade }
         <TouchableOpacity style={styles.upgradeCard} onPress={onUpgrade}>
           <Ionicons name="calendar-outline" size={20} color={Colors.accent} style={{ marginBottom: 4 }} />
           <Text style={styles.upgradeTitle}>Unlock 7-Day Fishing Forecast</Text>
-          <Text style={styles.upgradeSub}>See peak scores for the next 7 days → Pro</Text>
+          <Text style={styles.upgradeSub}>See peak scores for the next 7 days — Pro</Text>
         </TouchableOpacity>
       </View>
     )

@@ -111,8 +111,14 @@ export function ConditionsGrid({
         <TouchableOpacity style={cardStyles.card} onPress={onPressSun} activeOpacity={0.75}>
           <Ionicons name="sunny-outline" size={18} color={Colors.warning} style={{ marginBottom: 4 }} />
           <Text style={cardStyles.label}>Sun</Text>
-          <Text style={cardStyles.sub} numberOfLines={1}>↑ {sun.sunrise}</Text>
-          <Text style={cardStyles.sub} numberOfLines={1}>↓ {sun.sunset}</Text>
+          <View style={styles.sunRow}>
+            <Ionicons name="arrow-up-outline" size={10} color={Colors.warning} />
+            <Text style={cardStyles.sub} numberOfLines={1}>{sun.sunrise}</Text>
+          </View>
+          <View style={styles.sunRow}>
+            <Ionicons name="arrow-down-outline" size={10} color={Colors.textTertiary} />
+            <Text style={cardStyles.sub} numberOfLines={1}>{sun.sunset}</Text>
+          </View>
         </TouchableOpacity>
       </View>
     </View>
@@ -120,6 +126,7 @@ export function ConditionsGrid({
 }
 
 const styles = StyleSheet.create({
+  sunRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   container: {
     backgroundColor: Colors.surface,
     borderRadius: Spacing.cardRadius,

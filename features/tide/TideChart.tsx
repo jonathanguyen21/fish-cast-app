@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react'
 import { View, Text, StyleSheet, PanResponder, PanResponderInstance, useWindowDimensions } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { Svg, Path, Defs, LinearGradient, Stop, Line, Circle, Text as SvgText, G } from 'react-native-svg'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
@@ -88,13 +89,16 @@ export function TideChart({ tide, currentHour }: Props) {
 
   const baseline = CHART_HEIGHT - PADDING.bottom
 
-  const phaseLabel = tide.phase === 'incoming' ? 'Incoming ↑' : tide.phase === 'outgoing' ? 'Outgoing ↓' : 'Slack →'
+  const phaseText = tide.phase === 'incoming' ? 'Incoming' : tide.phase === 'outgoing' ? 'Outgoing' : 'Slack'
+  const phaseIconName = tide.phase === 'incoming' ? 'arrow-up-outline' : tide.phase === 'outgoing' ? 'arrow-down-outline' : 'remove-outline'
 
   return (
     <View style={styles.container} testID="tide-chart">
       <View style={styles.sectionTitleRow}>
         <Text style={styles.sectionTitle}>Tides</Text>
-        <Text style={styles.sectionTitleMeta}> · {phaseLabel} · {fmtHeight(tide.current.height)} {heightUnit}</Text>
+        <Text style={styles.sectionTitleMeta}> · </Text>
+        <Ionicons name={phaseIconName} size={12} color={Colors.accent} />
+        <Text style={styles.sectionTitleMeta}> {phaseText} · {fmtHeight(tide.current.height)} {heightUnit}</Text>
       </View>
       <View {...panResponder.panHandlers}>
         <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>

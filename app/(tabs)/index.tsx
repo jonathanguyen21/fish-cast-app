@@ -33,10 +33,16 @@ import { buildConditionsSummary } from '../../features/conditions/conditionsSumm
 import { maybeScheduleFishingAlert } from '../../services/notificationService'
 import { useCatchLogStore } from '../../store/catchLogStore'
 
-function tidePhaseLabel(phase: string): string {
-  if (phase === 'incoming') return '↑ Incoming'
-  if (phase === 'outgoing') return '↓ Outgoing'
-  return '→ Slack'
+function tidePhaseIcon(phase: string): keyof typeof Ionicons.glyphMap {
+  if (phase === 'incoming') return 'arrow-up-outline'
+  if (phase === 'outgoing') return 'arrow-down-outline'
+  return 'remove-outline'
+}
+
+function tidePhaseText(phase: string): string {
+  if (phase === 'incoming') return 'Incoming'
+  if (phase === 'outgoing') return 'Outgoing'
+  return 'Slack'
 }
 
 function tideTurnCountdown(tide: { next: { type: string; time: string } }): string {
@@ -209,8 +215,9 @@ export default function ForecastScreen() {
             <Text style={styles.featurePillText}>Wind</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.emptyCta} onPress={() => router.push('/(tabs)/spots')}>
-          <Text style={styles.emptyCtaText}>Add Your First Spot →</Text>
+        <TouchableOpacity style={[styles.emptyCta, styles.emptyCtaRow]} onPress={() => router.push('/(tabs)/spots')}>
+          <Text style={styles.emptyCtaText}>Add Your First Spot</Text>
+          <Ionicons name="chevron-forward" size={14} color={Colors.accent} />
         </TouchableOpacity>
       </View>
     )
@@ -337,7 +344,10 @@ export default function ForecastScreen() {
                   <Text style={styles.quickValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                     {conditions.tide.current.height.toFixed(1)} <Text style={styles.quickUnit}>{conditions.tide.current.unit}</Text>
                   </Text>
-                  <Text style={styles.quickSub} numberOfLines={1}>{tidePhaseLabel(conditions.tide.phase)}</Text>
+                  <View style={styles.quickSubRow}>
+                    <Ionicons name={tidePhaseIcon(conditions.tide.phase)} size={10} color={conditions.tide.phase === 'incoming' ? Colors.ocean : Colors.textSecondary} />
+                    <Text style={styles.quickSub} numberOfLines={1}>{tidePhaseText(conditions.tide.phase)}</Text>
+                  </View>
                   <Text style={styles.quickPeak} numberOfLines={1}>{tideTurnCountdown(conditions.tide)}</Text>
                 </View>
               )}
@@ -499,6 +509,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   emptyCtaText: { fontSize: 15, fontWeight: '700', color: Colors.background },
+  emptyCtaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.screenPad, paddingBottom: Spacing.sm,
@@ -524,6 +535,7 @@ const styles = StyleSheet.create({
   quickLabel: { fontSize: 11, color: Colors.textTertiary, marginTop: 2 },
   quickValue: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary },
   quickSub: { fontSize: 11, color: Colors.textSecondary },
+  quickSubRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   quickPeak: { fontSize: 10, color: Colors.textTertiary, marginTop: 2 },
   quickUnit: { fontSize: 11, color: Colors.textSecondary },
   section: { marginHorizontal: Spacing.screenPad, marginBottom: Spacing.md },

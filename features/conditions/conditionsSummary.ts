@@ -38,9 +38,9 @@ export function buildConditionsSummary(conditions: ConditionsData): string {
     const { phase } = conditions.tide
     const nextTurn = conditions.tide.next
     if (phase === 'incoming') {
-      parts.push(`Incoming tide → ${nextTurn.type === 'high' ? 'High' : 'Low'} at ${nextTurn.time}`)
+      parts.push(`Incoming tide, ${nextTurn.type === 'high' ? 'high' : 'low'} at ${nextTurn.time}`)
     } else if (phase === 'outgoing') {
-      parts.push(`Outgoing tide → ${nextTurn.type === 'high' ? 'High' : 'Low'} at ${nextTurn.time}`)
+      parts.push(`Outgoing tide, ${nextTurn.type === 'high' ? 'high' : 'low'} at ${nextTurn.time}`)
     } else {
       parts.push(`Slack water — turns ${nextTurn.type === 'high' ? 'high' : 'low'} at ${nextTurn.time}`)
     }

@@ -71,8 +71,9 @@ export default function SpotsScreen() {
             <Ionicons name="map-outline" size={56} color={Colors.textTertiary} style={{ marginBottom: Spacing.sm }} />
             <Text style={styles.emptyTitle}>No spots yet</Text>
             <Text style={styles.emptyHint}>Save your favourite fishing locations to get personalised forecasts</Text>
-            <TouchableOpacity style={styles.emptyCta} onPress={() => router.push('/spot/new')}>
-              <Text style={styles.emptyCtaText}>Add a Spot →</Text>
+            <TouchableOpacity style={[styles.emptyCta, styles.emptyCtaRow]} onPress={() => router.push('/spot/new')}>
+              <Text style={styles.emptyCtaText}>Add a Spot</Text>
+              <Ionicons name="chevron-forward" size={14} color={Colors.background} />
             </TouchableOpacity>
           </View>
         }
@@ -110,6 +111,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   emptyCtaText: { fontSize: 15, fontWeight: '700', color: Colors.background },
+  emptyCtaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   row: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.card,
     borderRadius: Spacing.cardRadius, padding: Spacing.md, overflow: 'hidden',

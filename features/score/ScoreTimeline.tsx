@@ -35,9 +35,9 @@ const TIDE_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
 }
 
 const TIDE_LABELS: Record<string, string> = {
-  incoming: '↑ In',
-  outgoing: '↓ Out',
-  slack: '— Slack',
+  incoming: 'In',
+  outgoing: 'Out',
+  slack: 'Slack',
 }
 
 export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUpgrade }: Props) {
@@ -129,9 +129,18 @@ export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUp
                     </View>
                   </View>
                   {tidePhasesByHour && (
-                    <Text style={[styles.tableCell, styles.tableTide, styles.tableCellText, { color: tidePhase === 'incoming' ? Colors.ocean : Colors.textTertiary }]}>
-                      {tidePhase ? (TIDE_LABELS[tidePhase] ?? tidePhase) : '—'}
-                    </Text>
+                    <View style={[styles.tableCell, styles.tableTide, styles.tableTideCell]}>
+                      {tidePhase ? (
+                        <>
+                          <Ionicons name={TIDE_ICONS[tidePhase] ?? 'remove-outline'} size={10} color={tidePhase === 'incoming' ? Colors.ocean : Colors.textTertiary} />
+                          <Text style={[styles.tableCellText, { color: tidePhase === 'incoming' ? Colors.ocean : Colors.textTertiary }]}>
+                            {TIDE_LABELS[tidePhase] ?? tidePhase}
+                          </Text>
+                        </>
+                      ) : (
+                        <Text style={styles.tableCellText}>—</Text>
+                      )}
+                    </View>
                   )}
                   {windHourly && windHourly.length > 0 && (
                     <Text style={[styles.tableCell, styles.tableWind, styles.tableCellText]}>
@@ -151,7 +160,10 @@ export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUp
             <Ionicons name="lock-closed" size={12} color={Colors.textSecondary} />
             <Text style={styles.proBannerText}> Unlock detailed hourly breakdown</Text>
           </View>
-          <Text style={styles.proBannerCta}>Go Pro →</Text>
+          <View style={styles.proBannerCtaRow}>
+            <Text style={styles.proBannerCta}>Go Pro</Text>
+            <Ionicons name="chevron-forward" size={12} color={Colors.accent} />
+          </View>
         </TouchableOpacity>
       )}
     </View>
@@ -197,6 +209,7 @@ const styles = StyleSheet.create({
   tableHour: { width: 52, flexDirection: 'row', alignItems: 'center', gap: 4 },
   tableScore: { width: 56 },
   tableTide: { flex: 1 },
+  tableTideCell: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   tableWind: { width: 72, alignItems: 'flex-end' },
   tableHourText: { fontSize: 12, color: Colors.textSecondary },
   nowDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: Colors.accent },
@@ -222,4 +235,5 @@ const styles = StyleSheet.create({
   proBannerLeft: { flexDirection: 'row', alignItems: 'center' },
   proBannerText: { fontSize: 12, color: Colors.textSecondary },
   proBannerCta: { fontSize: 12, fontWeight: '700', color: Colors.accent },
+  proBannerCtaRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
 })

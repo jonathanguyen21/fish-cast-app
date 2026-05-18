@@ -62,7 +62,10 @@ export function SpeciesHourlyChart({ hourly, onUpgrade }: Props) {
             <Ionicons name="lock-closed" size={12} color={Colors.textSecondary} />
             <Text style={styles.proBannerText}> Unlock per-species bite windows</Text>
           </View>
-          <Text style={styles.proBannerCta}>Go Pro →</Text>
+          <View style={styles.proBannerCtaRow}>
+            <Text style={styles.proBannerCta}>Go Pro</Text>
+            <Ionicons name="chevron-forward" size={12} color={Colors.accent} />
+          </View>
         </TouchableOpacity>
       )}
     </View>
@@ -101,4 +104,5 @@ const styles = StyleSheet.create({
   proBannerLeft: { flexDirection: 'row', alignItems: 'center' },
   proBannerText: { fontSize: 12, color: Colors.textSecondary },
   proBannerCta: { fontSize: 12, fontWeight: '700', color: Colors.accent },
+  proBannerCtaRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
 })
