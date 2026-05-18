@@ -1,5 +1,6 @@
 import React from 'react'
-import { View, Text } from 'react-native'
+import { View, Text, TouchableOpacity } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
@@ -24,10 +25,16 @@ class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
   render() {
     if (this.state.hasError) {
       return (
-        <View style={{ flex: 1, backgroundColor: '#0B1622', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <Text style={{ fontSize: 64, marginBottom: 16, color: '#F59E0B' }}>⚠</Text>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: '#F1F5F9', textAlign: 'center' }}>Something went wrong</Text>
-          <Text style={{ fontSize: 14, color: '#94A3B8', marginTop: 8, textAlign: 'center' }}>Pull to refresh or restart the app</Text>
+        <View style={{ flex: 1, backgroundColor: Colors.background, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Ionicons name="warning-outline" size={56} color={Colors.warning} style={{ marginBottom: 16 }} />
+          <Text style={{ fontSize: 20, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center' }}>Something went wrong</Text>
+          <Text style={{ fontSize: 14, color: Colors.textSecondary, marginTop: 8, textAlign: 'center' }}>Restart the app to continue</Text>
+          <TouchableOpacity
+            style={{ marginTop: 24, backgroundColor: Colors.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 }}
+            onPress={() => this.setState({ hasError: false })}
+          >
+            <Text style={{ color: Colors.background, fontWeight: '700', fontSize: 15 }}>Try Again</Text>
+          </TouchableOpacity>
         </View>
       )
     }

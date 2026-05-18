@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import Svg, { Circle, Path } from 'react-native-svg'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
@@ -52,7 +53,7 @@ export default function MoonDetailScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Moon & Solunar</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.close}>✕ Close</Text>
+          <Ionicons name="close" size={24} color={Colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -111,7 +112,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   title: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
-  close: { fontSize: 14, color: Colors.accent },
   moonCard: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.md,
     backgroundColor: Colors.card, borderRadius: Spacing.cardRadius,

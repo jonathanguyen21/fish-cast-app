@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   PanResponder, PanResponderInstance, useWindowDimensions,
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   Svg, Path, Line, Text as SvgText, Defs, LinearGradient, Stop, G,
@@ -86,7 +87,7 @@ export default function SkyDetailScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Sky & Rain</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.close}>✕ Close</Text>
+          <Ionicons name="close" size={24} color={Colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -185,7 +186,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   title: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
-  close: { fontSize: 14, color: Colors.accent },
   cursorInfo: {
     backgroundColor: Colors.card, borderRadius: 8, padding: Spacing.sm,
     marginBottom: Spacing.sm, alignItems: 'center',

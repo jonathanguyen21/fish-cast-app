@@ -10,6 +10,8 @@ import type { DayForecast } from '../../types/conditions'
 interface Props {
   forecast: DayForecast[] | undefined
   isPro: boolean
+  isLoading?: boolean
+  isError?: boolean
   onUpgrade: () => void
 }
 
@@ -31,7 +33,7 @@ const SKY_COLOR: Record<string, string> = {
   'heavy-rain': Colors.danger,
 }
 
-export function ForecastStrip({ forecast, isPro, onUpgrade }: Props) {
+export function ForecastStrip({ forecast, isPro, isLoading, isError, onUpgrade }: Props) {
   if (!isPro) {
     return (
       <View style={styles.container}>
@@ -45,12 +47,37 @@ export function ForecastStrip({ forecast, isPro, onUpgrade }: Props) {
     )
   }
 
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <Text style={Typography.sectionTitle}>7-Day Forecast</Text>
+        <View style={styles.skeletonRow}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <View key={i} style={styles.skeletonCard} />
+          ))}
+        </View>
+      </View>
+    )
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.container}>
+        <Text style={Typography.sectionTitle}>7-Day Forecast</Text>
+        <View style={styles.upgradeCard}>
+          <Ionicons name="cloud-offline-outline" size={20} color={Colors.textTertiary} style={{ marginBottom: 4 }} />
+          <Text style={styles.upgradeSub}>Forecast unavailable — tap to retry</Text>
+        </View>
+      </View>
+    )
+  }
+
   if (!forecast || forecast.length === 0) {
     return (
       <View style={styles.container}>
         <Text style={Typography.sectionTitle}>7-Day Forecast</Text>
         <View style={styles.upgradeCard}>
-          <Text style={styles.upgradeSub}>Forecast loading…</Text>
+          <Text style={styles.upgradeSub}>No forecast data available</Text>
         </View>
       </View>
     )
@@ -103,4 +130,9 @@ const styles = StyleSheet.create({
   upgradeCard: { backgroundColor: Colors.card, borderRadius: Spacing.cardRadius, padding: Spacing.md, alignItems: 'center' },
   upgradeTitle: { fontSize: 15, fontWeight: '600', color: Colors.accent },
   upgradeSub: { fontSize: 12, color: Colors.textSecondary, marginTop: 4 },
+  skeletonRow: { flexDirection: 'row', gap: Spacing.sm },
+  skeletonCard: {
+    width: 72, height: 110, borderRadius: Spacing.cardRadius,
+    backgroundColor: Colors.card, opacity: 0.5,
+  },
 })

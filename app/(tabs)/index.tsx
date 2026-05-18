@@ -79,7 +79,7 @@ export default function ForecastScreen() {
   const [selectedDate, setSelectedDate] = useState<string>(() => localDateKey(new Date()))
   const [showCalendar, setShowCalendar] = useState(false)
   const { data: conditions, isLoading, isError, refetch } = useConditions(activeSpot, selectedDate)
-  const { data: forecast } = useForecast(activeSpot)
+  const { data: forecast, isLoading: forecastLoading, isError: forecastError } = useForecast(activeSpot)
   const isPro = useSettingsStore(s => s.isPro)
   const tempUnit = useSettingsStore(s => s.tempUnit)
   const alertsEnabled = useSettingsStore(s => s.alertsEnabled)
@@ -339,7 +339,7 @@ export default function ForecastScreen() {
                 })
               }}
             />
-            <ForecastStrip forecast={forecast} isPro={isPro} onUpgrade={() => router.push('/settings')} />
+            <ForecastStrip forecast={forecast} isPro={isPro} isLoading={forecastLoading} isError={forecastError} onUpgrade={() => router.push('/settings')} />
           </>
         )}
       </ScrollView>
