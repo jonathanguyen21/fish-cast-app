@@ -82,7 +82,8 @@ export function SpeciesDetail({ speciesScore, hourly, onUpgrade }: Props) {
             if (!summary) return null
             return (
               <Text style={styles.summary}>
-                Best window: {formatHour(summary.start)}–{formatHour(summary.end + 1)} · avg {summary.avgScore}
+                Best window: {formatHour(summary.start)}–{formatHour(summary.end + 1)}
+                {' · avg '}<Text style={{ color: scoreColor(summary.avgScore), fontWeight: '700' }}>{summary.avgScore}</Text>
               </Text>
             )
           })()}

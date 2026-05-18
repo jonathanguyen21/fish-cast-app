@@ -46,7 +46,8 @@ export function SpeciesCard({ speciesScore, hourly, isPro, onPress }: Props) {
           </Text>
           {window && !isLocked && (
             <Text style={styles.bestWindow}>
-              Best {formatHour(window.start)}–{formatHour(window.end + 1)} · {window.avgScore}
+              Best {formatHour(window.start)}–{formatHour(window.end + 1)}
+              {' · '}<Text style={{ color: scoreColor(window.avgScore) }}>{window.avgScore}</Text>
             </Text>
           )}
         </View>

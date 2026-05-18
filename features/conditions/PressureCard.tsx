@@ -54,7 +54,8 @@ export function PressureCard({ pressure, onPress }: Props) {
       <Text style={cardStyles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         {pressure.value.toFixed(2)}
       </Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 }}>
+      <Text style={[cardStyles.sub, { marginBottom: 2 }]}>{pressure.unit}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 0 }}>
         <Ionicons name={TrendIcon} size={11} color={trendColor[pressure.trend]} />
         <Text style={[cardStyles.sub, { color: trendColor[pressure.trend], marginTop: 0 }]}>
           {pressure.trend}
