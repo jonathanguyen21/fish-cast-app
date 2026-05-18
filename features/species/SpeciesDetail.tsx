@@ -98,11 +98,21 @@ export function SpeciesDetail({ speciesScore, hourly, onUpgrade }: Props) {
       <Text style={styles.tips}>{species.migration_notes}</Text>
 
       <Text style={styles.sectionTitle}>Preferred Conditions</Text>
-      <Text style={styles.tips}>
-        Water temp: {species.water_temp_f.min}–{species.water_temp_f.max}°F (peak: {species.water_temp_f.peak_min}–{species.water_temp_f.peak_max}°F){'\n'}
-        Tide: {species.preferred_tide}{'\n'}
-        Time: {species.preferred_time_of_day.join(', ')}
-      </Text>
+      <View style={styles.matchRow}>
+        <Text style={styles.matchLabel}>Water Temp</Text>
+        <Text style={styles.matchValue}>
+          {species.water_temp_f.min}–{species.water_temp_f.max}°F
+          <Text style={styles.matchSub}>{' '}(peak {species.water_temp_f.peak_min}–{species.water_temp_f.peak_max}°F)</Text>
+        </Text>
+      </View>
+      <View style={styles.matchRow}>
+        <Text style={styles.matchLabel}>Tide</Text>
+        <Text style={[styles.matchValue, styles.capitalize]}>{species.preferred_tide}</Text>
+      </View>
+      <View style={styles.matchRow}>
+        <Text style={styles.matchLabel}>Time of Day</Text>
+        <Text style={styles.matchValue}>{species.preferred_time_of_day.join(', ')}</Text>
+      </View>
     </ScrollView>
   )
 }
@@ -132,6 +142,8 @@ const styles = StyleSheet.create({
   matchRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: Colors.surface },
   matchLabel: { fontSize: 13, color: Colors.textSecondary, flex: 1 },
   matchValue: { fontSize: 13, color: Colors.textPrimary, flex: 2, textAlign: 'right' },
+  matchSub: { fontSize: 11, color: Colors.textTertiary },
+  capitalize: { textTransform: 'capitalize' },
   tips: { fontSize: 14, color: Colors.textPrimary, lineHeight: 22 },
   summary: { fontSize: 14, color: Colors.textPrimary, marginBottom: Spacing.sm },
 })

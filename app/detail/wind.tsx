@@ -293,6 +293,10 @@ export default function WindDetailScreen() {
           <View style={[styles.legendLine, { backgroundColor: Colors.ocean, opacity: 0.3 }]} />
           <Text style={styles.legendLabel}>Gust band</Text>
         </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDash, { borderColor: '#EF4444' }]} />
+          <Text style={styles.legendLabel}>25 mph limit</Text>
+        </View>
       </View>
     </ScrollView>
   )
@@ -323,6 +327,7 @@ const styles = StyleSheet.create({
   legend: { flexDirection: 'row', gap: Spacing.lg, justifyContent: 'center', marginTop: 4 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendLine: { width: 16, height: 3, borderRadius: 2 },
+  legendDash: { width: 16, height: 0, borderBottomWidth: 1.5, borderStyle: 'dashed', borderRadius: 0 },
   legendLabel: { fontSize: 11, color: Colors.textSecondary },
   rangeNote: { fontSize: 11, color: Colors.textTertiary, textAlign: 'center', marginBottom: Spacing.sm },
   empty: { fontSize: 13, color: Colors.textTertiary, textAlign: 'center', marginTop: Spacing.sm },
