@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   scroll: { paddingBottom: Spacing.xs, gap: Spacing.xs },
   barWrapper: { alignItems: 'center', width: BAR_WIDTH + 8 },
   nowChip: { backgroundColor: Colors.accent, borderRadius: 6, paddingHorizontal: 4, paddingVertical: 1, marginBottom: 2 },
-  nowChipText: { fontSize: 8, color: '#0B1622', fontWeight: '700' },
+  nowChipText: { fontSize: 8, color: Colors.background, fontWeight: '700' },
   nowChipPlaceholder: { height: 14, marginBottom: 2 },
   barTrack: { height: BAR_MAX_HEIGHT, justifyContent: 'flex-end' },
   bar: { width: BAR_WIDTH, borderRadius: 4 },

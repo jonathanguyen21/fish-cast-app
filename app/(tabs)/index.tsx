@@ -294,7 +294,7 @@ export default function ForecastScreen() {
               score={conditions.fishingScore}
               label={conditions.scoreLabel}
               bestWindow={conditions.bestWindow}
-              breakdown={(conditions as any).scoreBreakdown}
+              breakdown={conditions.scoreBreakdown}
             />
             {solunarNow && (
               <View style={[styles.solunarBanner, solunarNow.type === 'major' && styles.solunarBannerMajor]}>
@@ -412,7 +412,7 @@ export default function ForecastScreen() {
                     {recentCatch.species}
                     {recentCatch.weight ? ` · ${recentCatch.weight} lbs` : ''}
                     {recentCatch.fishingScore != null ? ` · Score ${recentCatch.fishingScore}` : ''}
-                    {' · '}{recentCatch.date}
+                    {' · '}{formatDateChip(recentCatch.date)}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={14} color={Colors.textTertiary} />

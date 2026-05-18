@@ -27,7 +27,7 @@ describe('scoreSpecies boundary months', () => {
   it('returns Inactive in month just after season ends', () => {
     // bluefish present Apr–Nov
     const decResult = scoreSpecies(bluefish, {
-      month: 12, waterTemp: 65, tidePhase: 'any', currentHour: 7,
+      month: 12, waterTemp: 65, tidePhase: 'slack', currentHour: 7,
     })
     expect(decResult.status).toBe('Inactive')
   })
