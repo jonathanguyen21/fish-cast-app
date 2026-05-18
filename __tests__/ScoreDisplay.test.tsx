@@ -44,4 +44,32 @@ describe('ScoreDisplay', () => {
     fireEvent.press(screen.getByTestId('score-display'))
     expect(screen.getByText('Tap to collapse')).toBeTruthy()
   })
+
+  it('hides breakdown after second tap (collapse)', () => {
+    const breakdown = { pressure: 22, solunar: 18, tide: 16, wind: 14, waterTemp: 8, sky: 9 }
+    render(<ScoreDisplay {...props} breakdown={breakdown} />)
+    const dial = screen.getByTestId('score-display')
+    fireEvent.press(dial) // expand
+    expect(screen.getByText('Tap to collapse')).toBeTruthy()
+    fireEvent.press(dial) // collapse
+    expect(screen.getByText('Tap to see score breakdown')).toBeTruthy()
+  })
+
+  it('renders without breakdown prop (no crash)', () => {
+    render(<ScoreDisplay {...props} />)
+    expect(screen.getByText('82')).toBeTruthy()
+    expect(screen.getByText('Tap to see score breakdown')).toBeTruthy()
+  })
+
+  it('shows all 6 factor labels in breakdown', () => {
+    const breakdown = { pressure: 22, solunar: 18, tide: 16, wind: 14, waterTemp: 8, sky: 9 }
+    render(<ScoreDisplay {...props} breakdown={breakdown} />)
+    fireEvent.press(screen.getByTestId('score-display'))
+    expect(screen.getByText('Pressure')).toBeTruthy()
+    expect(screen.getByText('Solunar')).toBeTruthy()
+    expect(screen.getByText('Tide')).toBeTruthy()
+    expect(screen.getByText('Wind')).toBeTruthy()
+    expect(screen.getByText('Water Temp')).toBeTruthy()
+    expect(screen.getByText('Sky')).toBeTruthy()
+  })
 })
