@@ -1,5 +1,5 @@
 import React from 'react'
-import { render } from '@testing-library/react-native'
+import { render, fireEvent } from '@testing-library/react-native'
 import { ScoreTimeline } from '../features/score/ScoreTimeline'
 import { useSettingsStore } from '../store/settingsStore'
 import type { HourlyScore } from '../types/conditions'
@@ -94,5 +94,49 @@ describe('ScoreTimeline', () => {
       />
     )
     expect(getByText("Today's Forecast")).toBeTruthy()
+  })
+
+  it('switches to table view when table toggle is pressed', () => {
+    const { getByTestId, getByText } = render(
+      <ScoreTimeline hourlyScores={SCORES} onUpgrade={() => {}} />
+    )
+    fireEvent.press(getByTestId('timeline-table-toggle'))
+    // Table header columns
+    expect(getByText('Time')).toBeTruthy()
+    expect(getByText('Score')).toBeTruthy()
+  })
+
+  it('table view shows hour labels', () => {
+    const { getByTestId, getAllByText } = render(
+      <ScoreTimeline hourlyScores={SCORES} onUpgrade={() => {}} />
+    )
+    fireEvent.press(getByTestId('timeline-table-toggle'))
+    expect(getAllByText(/AM|PM/).length).toBeGreaterThanOrEqual(16)
+  })
+
+  it('table view shows Tide column when tidePhasesByHour provided', () => {
+    const { getByTestId, getByText } = render(
+      <ScoreTimeline hourlyScores={SCORES} tidePhasesByHour={TIDE_PHASES} onUpgrade={() => {}} />
+    )
+    fireEvent.press(getByTestId('timeline-table-toggle'))
+    expect(getByText('Tide')).toBeTruthy()
+  })
+
+  it('table view shows Wind column when windHourly provided', () => {
+    const { getByTestId, getByText } = render(
+      <ScoreTimeline hourlyScores={SCORES} windHourly={WIND_HOURLY} onUpgrade={() => {}} />
+    )
+    fireEvent.press(getByTestId('timeline-table-toggle'))
+    expect(getByText('Wind')).toBeTruthy()
+  })
+
+  it('chart toggle returns to chart view from table view', () => {
+    const { getByTestId, queryByText } = render(
+      <ScoreTimeline hourlyScores={SCORES} onUpgrade={() => {}} />
+    )
+    fireEvent.press(getByTestId('timeline-table-toggle'))
+    expect(queryByText('Time')).toBeTruthy()
+    fireEvent.press(getByTestId('timeline-chart-toggle'))
+    expect(queryByText('Time')).toBeNull()
   })
 })

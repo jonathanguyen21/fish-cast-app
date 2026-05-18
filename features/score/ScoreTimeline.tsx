@@ -59,12 +59,14 @@ export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUp
         <Text style={Typography.sectionTitle}>Today's Forecast</Text>
         <View style={styles.toggle}>
           <TouchableOpacity
+            testID="timeline-chart-toggle"
             style={[styles.toggleBtn, viewMode === 'chart' && styles.toggleActive]}
             onPress={() => setViewMode('chart')}
           >
             <Ionicons name="bar-chart-outline" size={14} color={viewMode === 'chart' ? Colors.accent : Colors.textTertiary} />
           </TouchableOpacity>
           <TouchableOpacity
+            testID="timeline-table-toggle"
             style={[styles.toggleBtn, viewMode === 'table' && styles.toggleActive]}
             onPress={() => setViewMode('table')}
           >
