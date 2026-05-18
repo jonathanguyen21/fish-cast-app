@@ -12,6 +12,7 @@ import { useSettingsStore } from '../../store/settingsStore'
 
 interface Props {
   conditions: Pick<ConditionsData, 'pressure' | 'swell' | 'air' | 'sky' | 'moon' | 'sun'>
+  spotType?: 'saltwater' | 'freshwater'
   onPressPressure?: () => void
   onPressSwell?: () => void
   onPressAir?: () => void
@@ -30,6 +31,7 @@ const SKY_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 
 export function ConditionsGrid({
   conditions,
+  spotType,
   onPressPressure,
   onPressSwell,
   onPressAir,
@@ -54,12 +56,18 @@ export function ConditionsGrid({
       </Text>
       <Text style={cardStyles.sub}>{swell.period}s {swell.directionLabel}</Text>
     </>
-  ) : (
+  ) : spotType === 'freshwater' ? (
     <>
       <Ionicons name="leaf-outline" size={18} color={Colors.textTertiary} style={{ marginBottom: 4 }} />
-      <Text style={cardStyles.label}>Swell</Text>
+      <Text style={cardStyles.label}>Water</Text>
       <Text style={cardStyles.sub}>Freshwater</Text>
-      <Text style={cardStyles.sub}>N/A</Text>
+      <Text style={cardStyles.sub}>No swell</Text>
+    </>
+  ) : (
+    <>
+      <Ionicons name="water-outline" size={18} color={Colors.textTertiary} style={{ marginBottom: 4 }} />
+      <Text style={cardStyles.label}>Swell</Text>
+      <Text style={cardStyles.sub}>No data</Text>
     </>
   )
 

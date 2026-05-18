@@ -296,6 +296,7 @@ export default function ForecastScreen() {
             {conditions.tide && <TideChart tide={conditions.tide} currentHour={currentHour} />}
             <ConditionsGrid
               conditions={conditions}
+              spotType={activeSpot.type}
               onPressPressure={() => router.push({
                 pathname: '/detail/pressure' as any,
                 params: { data: JSON.stringify(conditions.pressure) },
