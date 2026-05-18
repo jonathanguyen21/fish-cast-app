@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useCatchLogStore, type CatchEntry } from '../../store/catchLogStore'
 import { useSpots } from '../../hooks/useSpots'
+import { scoreColor } from '../../features/score/scoringEngine'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
@@ -83,7 +84,7 @@ function CatchCard({ entry, onDelete }: { entry: CatchEntry; onDelete: () => voi
         )}
         {entry.fishingScore != null && (
           <View style={styles.catchStat}>
-            <Text style={[styles.catchStatValue, { color: Colors.accent }]}>{entry.fishingScore}</Text>
+            <Text style={[styles.catchStatValue, { color: scoreColor(entry.fishingScore) }]}>{entry.fishingScore}</Text>
             <Text style={styles.catchStatUnit}> score</Text>
           </View>
         )}

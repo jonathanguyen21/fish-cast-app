@@ -107,7 +107,7 @@ export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
         <Text style={styles.bestWindowLabel}>Best window</Text>
         <View style={styles.bestWindowPill}>
           <Text style={styles.bestWindowTime}>{bestWindow.start}–{bestWindow.end}</Text>
-          <Text style={styles.bestWindowScore}> · {bestWindow.score}</Text>
+          <Text style={[styles.bestWindowScore, { color: scoreColor(bestWindow.score) }]}> · {bestWindow.score}</Text>
         </View>
       </View>
 
