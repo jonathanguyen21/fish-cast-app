@@ -28,6 +28,7 @@ import { Typography } from '../../theme/typography'
 import { useRouter } from 'expo-router'
 import { ScoreCardSkeleton, TimelineSkeleton, QuickStatsSkeleton, ConditionsGridSkeleton } from '../../features/common/SkeletonLoader'
 import { buildConditionsSummary } from '../../features/conditions/conditionsSummary'
+import { maybeScheduleFishingAlert } from '../../services/notificationService'
 
 function tidePhaseLabel(phase: string): string {
   if (phase === 'incoming') return '↑ Incoming'
@@ -79,9 +80,16 @@ export default function ForecastScreen() {
   const { data: forecast } = useForecast(activeSpot)
   const isPro = useSettingsStore(s => s.isPro)
   const tempUnit = useSettingsStore(s => s.tempUnit)
+  const alertsEnabled = useSettingsStore(s => s.alertsEnabled)
+  const alertThreshold = useSettingsStore(s => s.alertThreshold)
 
   const now = new Date()
   const currentHour = now.getHours()
+
+  React.useEffect(() => {
+    if (!conditions || !activeSpot || !alertsEnabled) return
+    maybeScheduleFishingAlert(conditions, activeSpot.name, activeSpot.id, alertThreshold)
+  }, [conditions?.fishingScore, activeSpot?.id, alertsEnabled, alertThreshold])
 
   const windPeak = conditions?.windHourly?.length
     ? Math.max(...conditions.windHourly.map(h => h.speed))
