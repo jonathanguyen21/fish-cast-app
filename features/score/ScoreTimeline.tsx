@@ -74,7 +74,7 @@ export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUp
       </View>
 
       {viewMode === 'chart' ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.scroll}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scroll}>
           {hourlyScores.map((item) => {
             const barHeight = (item.score / 100) * BAR_MAX_HEIGHT
             const isPeak = item.score === maxScore

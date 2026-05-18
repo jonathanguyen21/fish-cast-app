@@ -83,6 +83,8 @@ export function ForecastStrip({ forecast, isPro, isLoading, isError, onUpgrade }
     )
   }
 
+  const maxScore = Math.max(...forecast.map(d => d.peakScore))
+
   return (
     <View style={styles.container}>
       <Text style={Typography.sectionTitle}>7-Day Forecast</Text>
@@ -91,9 +93,15 @@ export function ForecastStrip({ forecast, isPro, isLoading, isError, onUpgrade }
           const color = scoreColor(day.peakScore)
           const iconName: IoniconName = day.skyIcon ? (SKY_ICON[day.skyIcon] ?? 'partly-sunny-outline') : 'partly-sunny-outline'
           const iconColor = day.skyIcon ? (SKY_COLOR[day.skyIcon] ?? Colors.textSecondary) : Colors.textSecondary
+          const isBest = day.peakScore === maxScore && maxScore >= 60
           return (
-            <View key={day.date} style={styles.dayCard}>
-              <Text style={styles.dayLabel}>{day.dayLabel}</Text>
+            <View key={day.date} style={[styles.dayCard, isBest && styles.dayCardBest]}>
+              {isBest && (
+                <View style={styles.bestChip}>
+                  <Text style={styles.bestChipText}>BEST</Text>
+                </View>
+              )}
+              <Text style={[styles.dayLabel, isBest && { color: Colors.accent }]}>{day.dayLabel}</Text>
               <Ionicons name={iconName} size={20} color={iconColor} style={{ marginBottom: 4 }} />
               <View style={[styles.scoreBadge, { borderColor: color, backgroundColor: color + '20' }]}>
                 <Text style={[styles.scoreText, { color }]}>{day.peakScore}</Text>
@@ -122,6 +130,16 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card, borderRadius: Spacing.cardRadius,
     padding: Spacing.sm, alignItems: 'center', minWidth: 72,
   },
+  dayCardBest: {
+    borderWidth: 1.5,
+    borderColor: Colors.accent + '60',
+    backgroundColor: Colors.accent + '0A',
+  },
+  bestChip: {
+    backgroundColor: Colors.accent, borderRadius: 4,
+    paddingHorizontal: 5, paddingVertical: 1, marginBottom: 4,
+  },
+  bestChipText: { fontSize: 7, fontWeight: '800', color: Colors.background, letterSpacing: 0.5 },
   dayLabel: { fontSize: 12, fontWeight: '600', color: Colors.textSecondary, marginBottom: 6 },
   scoreBadge: { borderWidth: 1.5, borderRadius: 20, width: 40, height: 40, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   scoreText: { fontSize: 15, fontWeight: '700' },
