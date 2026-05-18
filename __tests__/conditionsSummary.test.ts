@@ -133,3 +133,69 @@ describe('buildConditionsSummary', () => {
     expect(summary.length).toBeGreaterThan(0)
   })
 })
+
+describe('buildConditionsSummary - solunar section', () => {
+  beforeAll(() => {
+    // Pin time to 10:00 AM so period timing is predictable
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date('2026-05-18T10:00:00'))
+  })
+  afterAll(() => {
+    jest.useRealTimers()
+  })
+
+  it('shows "Major solunar period active" when current time is within major period', () => {
+    // Period spans 9 AM – 10:30 AM; at 10 AM we are inside it
+    const summary = buildConditionsSummary(makeConditions({
+      moon: {
+        phase: 'Full Moon', illumination: 100,
+        majorPeriods: [{ start: '9:00 AM', end: '10:30 AM' }],
+        minorPeriods: [],
+      },
+    }))
+    expect(summary).toContain('Major solunar period active')
+  })
+
+  it('shows future major period time range when period is later today', () => {
+    // Period starts at 2 PM, current is 10 AM → future
+    const summary = buildConditionsSummary(makeConditions({
+      moon: {
+        phase: 'Waxing Gibbous', illumination: 72,
+        majorPeriods: [{ start: '2:00 PM', end: '3:00 PM' }],
+        minorPeriods: [],
+      },
+    }))
+    expect(summary).toContain('Major solunar 2:00 PM')
+  })
+
+  it('omits past major period from summary', () => {
+    // Period was 7:00 AM – 8:00 AM; at 10 AM it is in the past
+    const summary = buildConditionsSummary(makeConditions({
+      moon: {
+        phase: 'Waxing Gibbous', illumination: 72,
+        majorPeriods: [{ start: '7:00 AM', end: '8:00 AM' }],
+        minorPeriods: [],
+      },
+    }))
+    expect(summary).not.toContain('Major solunar')
+    expect(summary).not.toContain('solunar period active')
+  })
+
+  it('shows minor solunar when no major and minor is future', () => {
+    const summary = buildConditionsSummary(makeConditions({
+      moon: {
+        phase: 'Waxing Gibbous', illumination: 72,
+        majorPeriods: [],
+        minorPeriods: [{ start: '4:00 PM', end: '5:00 PM' }],
+      },
+    }))
+    expect(summary).toContain('Minor solunar 4:00 PM')
+  })
+
+  it('omits solunar section entirely when no periods', () => {
+    const summary = buildConditionsSummary(makeConditions({
+      moon: { phase: 'New Moon', illumination: 2, majorPeriods: [], minorPeriods: [] },
+    }))
+    expect(summary).not.toContain('solunar')
+  })
+})
