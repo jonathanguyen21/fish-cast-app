@@ -22,6 +22,7 @@ function pressurePoints(p: ScoringInputs['pressure']): number {
   if (p.trend === 'stable') return 15
   if (p.trend === 'rising' && p.rate === 'slow') return 10
   if (p.trend === 'rising' && p.rate === 'normal') return 7
+  // Falling fast scores below rising-normal: rapid drop = barometric shock, fish go deep and stop feeding
   if (p.trend === 'falling' && p.rate === 'fast') return 8
   return 5  // rising+fast
 }

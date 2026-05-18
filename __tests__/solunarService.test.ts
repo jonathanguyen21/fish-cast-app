@@ -60,4 +60,28 @@ describe('calculateSolunar', () => {
     expect(result.sun.sunrise).toMatch(/\d+:\d{2}\s?(AM|PM)/i)
     expect(result.sun.sunset).toMatch(/\d+:\d{2}\s?(AM|PM)/i)
   })
+
+  it('golden hour times are formatted strings when present', () => {
+    const result = calculateSolunar(LAT, LNG, DATE)
+    if (result.sun.goldenHourMorning) {
+      expect(result.sun.goldenHourMorning).toMatch(/\d+:\d{2}\s?(AM|PM)/i)
+    }
+    if (result.sun.goldenHourEvening) {
+      expect(result.sun.goldenHourEvening).toMatch(/\d+:\d{2}\s?(AM|PM)/i)
+    }
+  })
+
+  it('golden hour morning is after sunrise', () => {
+    const result = calculateSolunar(LAT, LNG, DATE)
+    if (!result.sun.goldenHourMorning) return
+    const toMins = (t: string) => {
+      const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i)
+      if (!m) return 0
+      let h = parseInt(m[1])
+      if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12
+      if (m[3].toUpperCase() === 'AM' && h === 12) h = 0
+      return h * 60 + parseInt(m[2])
+    }
+    expect(toMins(result.sun.goldenHourMorning)).toBeGreaterThan(toMins(result.sun.sunrise))
+  })
 })
