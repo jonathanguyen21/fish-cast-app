@@ -314,7 +314,7 @@ export default function ForecastScreen() {
             </View>
             <ScoreTimeline
               hourlyScores={conditions.hourlyScores}
-              tidePhasesByHour={conditions.tidePhasesByHour}
+              tidePhasesByHour={conditions.tide ? conditions.tidePhasesByHour : undefined}
               windHourly={conditions.windHourly}
               onUpgrade={() => router.push('/settings')}
             />
