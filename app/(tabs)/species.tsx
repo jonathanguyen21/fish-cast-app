@@ -16,6 +16,7 @@ import { scoreSpeciesHourly, type SpeciesHourlyScore } from '../../features/spec
 import { detectPhase } from '../../features/tide/tideUtils'
 import { getSpeciesForRegion } from '../../data/species'
 import { ScoreCardSkeleton, ConditionsGridSkeleton } from '../../features/common/SkeletonLoader'
+import { scoreColor } from '../../features/score/scoringEngine'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
@@ -86,7 +87,14 @@ export default function SpeciesScreen() {
   return (
     <View style={styles.screen}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        <Text style={styles.title}>What's Biting</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>What's Biting</Text>
+          {conditions && (
+            <View style={[styles.scoreBadge, { borderColor: scoreColor(conditions.fishingScore) + '60', backgroundColor: scoreColor(conditions.fishingScore) + '18' }]}>
+              <Text style={[styles.scoreBadgeText, { color: scoreColor(conditions.fishingScore) }]}>{conditions.fishingScore}</Text>
+            </View>
+          )}
+        </View>
         <Text style={styles.subtitle}>{activeSpot.name}</Text>
       </View>
 
@@ -149,8 +157,14 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.sm,
     backgroundColor: Colors.background,
   },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   title: { fontSize: 28, fontWeight: '700', color: Colors.textPrimary },
   subtitle: { fontSize: 14, color: Colors.textSecondary, marginTop: 2 },
+  scoreBadge: {
+    borderRadius: 20, borderWidth: 1.5,
+    paddingHorizontal: 8, paddingVertical: 2,
+  },
+  scoreBadgeText: { fontSize: 14, fontWeight: '700' },
   content: { paddingBottom: Spacing.xl },
   section: { marginHorizontal: Spacing.screenPad, marginBottom: Spacing.md },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.sm },
