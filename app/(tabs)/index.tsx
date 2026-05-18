@@ -147,9 +147,27 @@ export default function ForecastScreen() {
   if (!activeSpot) {
     return (
       <View style={styles.empty}>
-        <Ionicons name="fish-outline" size={56} color={Colors.textTertiary} style={styles.emptyIcon} />
-        <Text style={styles.emptyText}>No spot selected</Text>
-        <Text style={styles.emptyHint}>Add a fishing spot to get your first forecast</Text>
+        <Ionicons name="fish-outline" size={64} color={Colors.accent} style={styles.emptyIcon} />
+        <Text style={styles.emptyText}>Welcome to FishCast</Text>
+        <Text style={styles.emptyHint}>Add a spot to get your personalized 0–100 fishing forecast powered by real tide, pressure, solunar, and weather data.</Text>
+        <View style={styles.featurePills}>
+          <View style={styles.featurePill}>
+            <Ionicons name="water-outline" size={14} color={Colors.ocean} />
+            <Text style={styles.featurePillText}>Live tides</Text>
+          </View>
+          <View style={styles.featurePill}>
+            <Ionicons name="moon-outline" size={14} color={Colors.accent} />
+            <Text style={styles.featurePillText}>Solunar</Text>
+          </View>
+          <View style={styles.featurePill}>
+            <Ionicons name="speedometer-outline" size={14} color={Colors.textSecondary} />
+            <Text style={styles.featurePillText}>Pressure</Text>
+          </View>
+          <View style={styles.featurePill}>
+            <Ionicons name="navigate-outline" size={14} color={Colors.success} />
+            <Text style={styles.featurePillText}>Wind</Text>
+          </View>
+        </View>
         <TouchableOpacity style={styles.emptyCta} onPress={() => router.push('/(tabs)/spots')}>
           <Text style={styles.emptyCtaText}>Add Your First Spot →</Text>
         </TouchableOpacity>
@@ -184,7 +202,14 @@ export default function ForecastScreen() {
         refreshControl={<RefreshControl refreshing={isLoading && !!conditions} onRefresh={refetch} tintColor={Colors.accent} />}
       >
         <View style={[styles.header, { paddingTop: insets.top }]}>
-          <Text style={styles.spotName}>{activeSpot.name}</Text>
+          <TouchableOpacity
+            style={styles.spotNameRow}
+            onPress={spots.length > 1 ? () => router.push('/spots') : undefined}
+            activeOpacity={spots.length > 1 ? 0.7 : 1}
+          >
+            <Text style={styles.spotName}>{activeSpot.name}</Text>
+            {spots.length > 1 && <Ionicons name="chevron-down" size={16} color={Colors.textSecondary} />}
+          </TouchableOpacity>
           <View style={styles.headerRight}>
             {conditions && (
               <TouchableOpacity
@@ -201,9 +226,6 @@ export default function ForecastScreen() {
               <Ionicons name="journal-outline" size={14} color={Colors.accent} />
               <Text style={styles.logBtnText}>Log</Text>
             </TouchableOpacity>
-            {spots.length > 1 && (
-              <Text style={styles.switchHint} onPress={() => router.push('/spots')}>Switch ›</Text>
-            )}
           </View>
         </View>
 
@@ -361,7 +383,14 @@ const styles = StyleSheet.create({
   },
   summaryText: { fontSize: 12, color: Colors.textSecondary, lineHeight: 18 },
   emptyText: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center' },
-  emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20 },
+  emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20, maxWidth: 300 },
+  featurePills: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, justifyContent: 'center', marginVertical: Spacing.sm },
+  featurePill: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: Colors.surface, borderRadius: 12,
+    paddingHorizontal: 10, paddingVertical: 5,
+  },
+  featurePillText: { fontSize: 12, color: Colors.textSecondary },
   emptyCta: {
     marginTop: Spacing.sm,
     backgroundColor: Colors.accent,
@@ -375,8 +404,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.screenPad, paddingBottom: Spacing.sm,
   },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  spotName: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary, flex: 1 },
-  switchHint: { fontSize: 14, color: Colors.accent },
+  spotNameRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4 },
+  spotName: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
   logBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     backgroundColor: Colors.accent + '18',
