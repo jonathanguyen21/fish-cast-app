@@ -125,8 +125,11 @@ export function TideChart({ tide, currentHour }: Props) {
           {tide.events.map((ev, idx) => {
             const evHour = parseEventHour(ev.time)
             const ex = Math.max(PADDING.left + 20, Math.min(PADDING.left + chartW - 20, toX(evHour)))
-            const symbol = ev.type === 'high' ? '▲' : '▼'
             const symbolColor = ev.type === 'high' ? Colors.accent : Colors.textSecondary
+            const ey = baseline + 7
+            const triPath = ev.type === 'high'
+              ? `M ${ex} ${ey - 5} L ${ex - 4} ${ey + 1} L ${ex + 4} ${ey + 1} Z`
+              : `M ${ex - 4} ${ey - 5} L ${ex + 4} ${ey - 5} L ${ex} ${ey + 1} Z`
 
             const prevHours = tide.events.slice(0, idx).map(e => parseEventHour(e.time))
             const tooClose = prevHours.some(ph => Math.abs(toX(ph) - ex) < 30)
@@ -138,21 +141,16 @@ export function TideChart({ tide, currentHour }: Props) {
                   x2={ex} y2={baseline + 5}
                   stroke={symbolColor} strokeWidth={1.5}
                 />
+                <Path d={triPath} fill={symbolColor} />
                 <SvgText
-                  x={ex} y={baseline + 14}
-                  fill={symbolColor} fontSize={9} textAnchor="middle"
-                >
-                  {symbol}
-                </SvgText>
-                <SvgText
-                  x={ex} y={baseline + 24}
+                  x={ex} y={baseline + 22}
                   fill={Colors.textSecondary} fontSize={8} textAnchor="middle"
                 >
                   {fmtHeight(ev.height)}{heightUnit}
                 </SvgText>
                 {!tooClose && (
                   <SvgText
-                    x={ex} y={baseline + 34}
+                    x={ex} y={baseline + 32}
                     fill={Colors.textTertiary} fontSize={7} textAnchor="middle"
                   >
                     {ev.time}
