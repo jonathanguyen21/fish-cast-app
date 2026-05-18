@@ -19,6 +19,14 @@ function windColor(speed: number): string {
   return Colors.success
 }
 
+function windQuality(speed: number): string {
+  if (speed === 0) return 'Calm'
+  if (speed <= 8) return 'Light'
+  if (speed <= 15) return 'Moderate'
+  if (speed <= 24) return 'Strong'
+  return 'Dangerous'
+}
+
 export function WindDisplay({ wind, peakSpeed, onPress }: Props) {
   const speedUnit = useSettingsStore(s => s.speedUnit)
 
@@ -56,6 +64,7 @@ export function WindDisplay({ wind, peakSpeed, onPress }: Props) {
       <Text style={styles.sub} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         {wind.directionLabel} · G {displayGusts} {unitLabel}
       </Text>
+      <Text style={[styles.quality, { color }]}>{windQuality(wind.speed)}</Text>
       {displayPeak !== undefined && (
         <Text style={styles.peak} numberOfLines={1}>
           max {displayPeak} {unitLabel}
@@ -89,5 +98,6 @@ const styles = StyleSheet.create({
   speed: { fontSize: 22, fontWeight: '700', lineHeight: 26 },
   unit: { fontSize: 11, color: Colors.textSecondary, marginBottom: 2 },
   sub: { fontSize: 11, color: Colors.textSecondary, marginTop: 2, textAlign: 'center' },
-  peak: { fontSize: 10, color: Colors.textTertiary, marginTop: 2 },
+  quality: { fontSize: 10, fontWeight: '600', marginTop: 2 },
+  peak: { fontSize: 10, color: Colors.textTertiary, marginTop: 1 },
 })

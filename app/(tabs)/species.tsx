@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import {
   ScrollView, View, Text, StyleSheet,
-  RefreshControl, ActivityIndicator,
+  RefreshControl,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -15,6 +15,7 @@ import { scoreSpecies } from '../../features/species/speciesScoring'
 import { scoreSpeciesHourly, type SpeciesHourlyScore } from '../../features/species/speciesHourlyScoring'
 import { detectPhase } from '../../features/tide/tideUtils'
 import { getSpeciesForRegion } from '../../data/species'
+import { ScoreCardSkeleton, ConditionsGridSkeleton } from '../../features/common/SkeletonLoader'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
@@ -132,8 +133,9 @@ export default function SpeciesScreen() {
       </ScrollView>
 
       {isLoading && !conditions && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={Colors.accent} />
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: Colors.background }]}>
+          <ScoreCardSkeleton />
+          <ConditionsGridSkeleton />
         </View>
       )}
     </View>
@@ -154,10 +156,4 @@ const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.sm },
   emptyText: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center', marginTop: Spacing.sm },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center' },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: Colors.background + 'AA',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 })
