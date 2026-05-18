@@ -21,10 +21,10 @@ const PRO_FEATURES: { icon: IoniconName; text: string }[] = [
   { icon: 'fish-outline', text: 'Full species library' },
 ]
 
-function Row({ icon, label, children }: { icon: string; label: string; children: React.ReactNode }) {
+function Row({ iconName, label, children }: { iconName: IoniconName; label: string; children: React.ReactNode }) {
   return (
     <View style={styles.row}>
-      <Text style={styles.rowIcon}>{icon}</Text>
+      <Ionicons name={iconName} size={16} color={Colors.textSecondary} style={{ marginRight: Spacing.sm }} />
       <Text style={styles.rowLabel}>{label}</Text>
       <View style={styles.rowControl}>{children}</View>
     </View>
@@ -102,14 +102,14 @@ export default function SettingsScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text style={Typography.sectionTitle}>Units</Text>
       <View style={styles.card}>
-        <Row icon="🌡️" label="Temperature"><TogglePair value={tempUnit} options={['F', 'C']} onChange={setTempUnit} /></Row>
-        <Row icon="💨" label="Wind Speed"><TogglePair value={speedUnit} options={['mph', 'kts']} onChange={setSpeedUnit} /></Row>
-        <Row icon="📏" label="Height / Distance"><TogglePair value={lengthUnit} options={['ft', 'm']} onChange={setLengthUnit} /></Row>
+        <Row iconName="thermometer-outline" label="Temperature"><TogglePair value={tempUnit} options={['F', 'C']} onChange={setTempUnit} /></Row>
+        <Row iconName="speedometer-outline" label="Wind Speed"><TogglePair value={speedUnit} options={['mph', 'kts']} onChange={setSpeedUnit} /></Row>
+        <Row iconName="resize-outline" label="Height / Distance"><TogglePair value={lengthUnit} options={['ft', 'm']} onChange={setLengthUnit} /></Row>
       </View>
 
       <Text style={[Typography.sectionTitle, styles.sectionSpacer]}>Alerts</Text>
       <View style={styles.card}>
-        <Row icon="🔔" label="Score Alerts">
+        <Row iconName="notifications-outline" label="Score Alerts">
           <Switch value={alertsEnabled} onValueChange={setAlertsEnabled} trackColor={{ true: Colors.accent }} />
         </Row>
         {alertsEnabled && (
@@ -175,7 +175,7 @@ export default function SettingsScreen() {
       <Text style={[Typography.sectionTitle, styles.sectionSpacer]}>Feedback</Text>
       <View style={styles.card}>
         <TouchableOpacity style={styles.feedbackRow} onPress={() => setShowFeatureModal(true)}>
-          <Text style={styles.feedbackIcon}>💡</Text>
+          <Ionicons name="bulb-outline" size={20} color={Colors.accent} />
           <View style={styles.feedbackText}>
             <Text style={styles.feedbackTitle}>Request a Feature</Text>
             <Text style={styles.feedbackSub}>Share ideas, report bugs, or suggest improvements</Text>
@@ -213,7 +213,7 @@ export default function SettingsScreen() {
                   onPress={() => setFeatureCategory(c)}
                 >
                   <Text style={[styles.categoryText, featureCategory === c && styles.categoryTextActive]}>
-                    {c === 'feature' ? '✨ Feature' : c === 'improvement' ? '🔧 Improve' : '🐛 Bug'}
+                    {c === 'feature' ? 'Feature' : c === 'improvement' ? 'Improve' : 'Bug'}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -261,7 +261,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     padding: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.surface,
   },
-  rowIcon: { fontSize: 16, marginRight: Spacing.sm },
   rowLabel: { fontSize: 15, color: Colors.textPrimary, flex: 1 },
   rowControl: { alignItems: 'flex-end' },
   togglePair: { flexDirection: 'row', gap: 4 },
@@ -320,7 +319,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     padding: Spacing.md, gap: Spacing.sm,
   },
-  feedbackIcon: { fontSize: 20 },
   feedbackText: { flex: 1 },
   feedbackTitle: { fontSize: 15, color: Colors.textPrimary, fontWeight: '600' },
   feedbackSub: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },

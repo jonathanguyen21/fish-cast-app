@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
@@ -55,7 +56,10 @@ export function ScoreTimeline({ hourlyScores, onUpgrade }: Props) {
 
       {!isPro && (
         <TouchableOpacity style={styles.proBanner} onPress={onUpgrade} activeOpacity={0.8}>
-          <Text style={styles.proBannerText}>🔒 Unlock detailed hourly breakdown</Text>
+          <View style={styles.proBannerLeft}>
+            <Ionicons name="lock-closed" size={12} color={Colors.textSecondary} />
+            <Text style={styles.proBannerText}> Unlock detailed hourly breakdown</Text>
+          </View>
           <Text style={styles.proBannerCta}>Go Pro →</Text>
         </TouchableOpacity>
       )}
@@ -94,6 +98,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: 8,
   },
+  proBannerLeft: { flexDirection: 'row', alignItems: 'center' },
   proBannerText: { fontSize: 12, color: Colors.textSecondary },
   proBannerCta: { fontSize: 12, fontWeight: '700', color: Colors.accent },
 })

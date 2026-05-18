@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from '../score/scoringEngine'
@@ -36,9 +37,14 @@ export function SpeciesCard({ speciesScore, hourly, isPro, onPress }: Props) {
     <TouchableOpacity style={styles.card} onPress={onPress} testID={`species-card-${species.id}`}>
       <View style={styles.row}>
         <View style={styles.info}>
-          <Text style={[styles.name, isLocked && styles.locked]}>
-            {isLocked ? '🔒 Pro Species' : species.common_name}
-          </Text>
+          {isLocked ? (
+            <View style={styles.lockedNameRow}>
+              <Ionicons name="lock-closed" size={12} color={Colors.textTertiary} />
+              <Text style={[styles.name, styles.locked]}> Pro Species</Text>
+            </View>
+          ) : (
+            <Text style={styles.name}>{species.common_name}</Text>
+          )}
           <Text style={[styles.status, { color: statusColor[status] ?? Colors.textSecondary }]}>
             {status}
           </Text>
@@ -69,6 +75,7 @@ const styles = StyleSheet.create({
   info: { flex: 1 },
   name: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
   locked: { color: Colors.textTertiary },
+  lockedNameRow: { flexDirection: 'row', alignItems: 'center' },
   status: { fontSize: 12, marginTop: 2 },
   badge: {
     width: 44, height: 44, borderRadius: 22, borderWidth: 1.5,
