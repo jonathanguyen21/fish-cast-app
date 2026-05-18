@@ -4,6 +4,7 @@ import {
   Alert, ScrollView, ActivityIndicator,
 } from 'react-native'
 import MapView, { Marker, MapPressEvent } from 'react-native-maps'
+import { Ionicons } from '@expo/vector-icons'
 import * as Location from 'expo-location'
 import { useRouter } from 'expo-router'
 import { useSpots } from '../../hooks/useSpots'
@@ -180,6 +181,11 @@ export default function AddSpotScreen() {
               style={[styles.toggleOption, type === t && styles.toggleActive]}
               onPress={() => setType(t)}
             >
+              <Ionicons
+                name={t === 'saltwater' ? 'water-outline' : 'leaf-outline'}
+                size={16}
+                color={type === t ? Colors.accent : Colors.textTertiary}
+              />
               <Text style={[styles.toggleText, type === t && styles.toggleTextActive]}>
                 {t === 'saltwater' ? 'Saltwater' : 'Freshwater'}
               </Text>
@@ -226,6 +232,7 @@ const styles = StyleSheet.create({
   toggleOption: {
     flex: 1, padding: Spacing.md, borderRadius: Spacing.cardRadius,
     backgroundColor: Colors.card, alignItems: 'center',
+    flexDirection: 'row', justifyContent: 'center', gap: 6,
   },
   toggleActive: { backgroundColor: Colors.accent + '33', borderWidth: 1.5, borderColor: Colors.accent },
   toggleText: { fontSize: 14, color: Colors.textSecondary },

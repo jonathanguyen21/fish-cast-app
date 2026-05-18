@@ -131,7 +131,10 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         )}
         {alertsEnabled && permissionStatus === 'granted' && (
-          <Text style={styles.permGranted}>✓ Notifications enabled</Text>
+          <View style={styles.permGrantedRow}>
+            <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
+            <Text style={styles.permGranted}>Notifications enabled</Text>
+          </View>
         )}
       </View>
 
@@ -141,7 +144,7 @@ export default function SettingsScreen() {
       {isPro ? (
         <View style={styles.card}>
           <View style={styles.proActiveRow}>
-            <Text style={styles.proActiveIcon}>✦</Text>
+            <Ionicons name="star" size={18} color={Colors.accent} />
             <Text style={styles.proActiveLabel}>FishCast Pro</Text>
           </View>
           <TouchableOpacity
@@ -222,8 +225,8 @@ export default function SettingsScreen() {
           <ScrollView style={styles.modal} contentContainerStyle={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Request a Feature</Text>
-              <TouchableOpacity onPress={() => setShowFeatureModal(false)}>
-                <Text style={styles.modalClose}>✕</Text>
+              <TouchableOpacity onPress={() => setShowFeatureModal(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="close" size={22} color={Colors.textSecondary} />
               </TouchableOpacity>
             </View>
             <Text style={styles.modalSub}>Help us build a better app. All requests are reviewed.</Text>
@@ -300,12 +303,12 @@ const styles = StyleSheet.create({
   sliderValue: { color: Colors.textPrimary, fontWeight: '700' },
   permButton: { padding: Spacing.md, backgroundColor: Colors.accent + '22' },
   permText: { color: Colors.accent, fontSize: 14, fontWeight: '600' },
-  permGranted: { padding: Spacing.md, color: Colors.success, fontSize: 13 },
+  permGrantedRow: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: Spacing.md },
+  permGranted: { color: Colors.success, fontSize: 13 },
   proActiveRow: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
     padding: Spacing.md,
   },
-  proActiveIcon: { fontSize: 18, color: Colors.accent },
   proActiveLabel: { fontSize: 16, fontWeight: '700', color: Colors.accent },
   manageLink: { paddingHorizontal: Spacing.md, paddingBottom: Spacing.md, color: Colors.ocean, fontSize: 14 },
   upgradeCard: {
@@ -365,7 +368,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   modalTitle: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
-  modalClose: { fontSize: 20, color: Colors.textTertiary, padding: 4 },
   modalSub: { fontSize: 13, color: Colors.textSecondary, marginBottom: Spacing.lg },
   fieldLabel: { fontSize: 12, fontWeight: '600', color: Colors.textTertiary, marginBottom: 6, marginTop: Spacing.md },
   fieldInput: {
