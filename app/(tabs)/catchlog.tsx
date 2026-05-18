@@ -22,6 +22,41 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+function CatchStats({ entries }: { entries: CatchEntry[] }) {
+  const total = entries.length
+  const withScore = entries.filter(e => e.fishingScore != null)
+  const avgScore = withScore.length
+    ? Math.round(withScore.reduce((s, e) => s + e.fishingScore!, 0) / withScore.length)
+    : null
+  const speciesCounts: Record<string, number> = {}
+  entries.forEach(e => { speciesCounts[e.species] = (speciesCounts[e.species] ?? 0) + 1 })
+  const topSpecies = Object.entries(speciesCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+
+  return (
+    <View style={styles.statsCard}>
+      <View style={styles.statItem}>
+        <Ionicons name="fish-outline" size={18} color={Colors.accent} />
+        <Text style={styles.statValue}>{total}</Text>
+        <Text style={styles.statLabel}>Catches</Text>
+      </View>
+      {avgScore !== null && (
+        <View style={styles.statItem}>
+          <Ionicons name="speedometer-outline" size={18} color={Colors.accent} />
+          <Text style={styles.statValue}>{avgScore}</Text>
+          <Text style={styles.statLabel}>Avg Score</Text>
+        </View>
+      )}
+      {topSpecies && (
+        <View style={[styles.statItem, { flex: 1 }]}>
+          <Ionicons name="star-outline" size={18} color={Colors.accent} />
+          <Text style={styles.statValue} numberOfLines={1}>{topSpecies}</Text>
+          <Text style={styles.statLabel}>Top Species</Text>
+        </View>
+      )}
+    </View>
+  )
+}
+
 function CatchCard({ entry, onDelete }: { entry: CatchEntry; onDelete: () => void }) {
   return (
     <View style={styles.catchCard}>
@@ -121,7 +156,8 @@ export default function CatchLogScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Catch Log</Text>
         <TouchableOpacity style={styles.addButton} onPress={() => setShowModal(true)}>
-          <Text style={styles.addButtonText}>+ Log Catch</Text>
+          <Ionicons name="add" size={16} color={Colors.background} />
+          <Text style={styles.addButtonText}>Log Catch</Text>
         </TouchableOpacity>
       </View>
 
@@ -133,14 +169,17 @@ export default function CatchLogScreen() {
             <Text style={styles.emptyHint}>Tap "Log Catch" after a successful trip to track your catches over time.</Text>
           </View>
         ) : (
-          grouped.map(([date, dayEntries]) => (
-            <View key={date}>
-              <Text style={styles.dayLabel}>{formatDate(date)}</Text>
-              {dayEntries.map(e => (
-                <CatchCard key={e.id} entry={e} onDelete={() => deleteEntry(e.id)} />
-              ))}
-            </View>
-          ))
+          <>
+            {entries.length >= 3 && <CatchStats entries={entries} />}
+            {grouped.map(([date, dayEntries]) => (
+              <View key={date}>
+                <Text style={styles.dayLabel}>{formatDate(date)}</Text>
+                {dayEntries.map(e => (
+                  <CatchCard key={e.id} entry={e} onDelete={() => deleteEntry(e.id)} />
+                ))}
+              </View>
+            ))}
+          </>
         )}
       </ScrollView>
 
@@ -163,7 +202,7 @@ export default function CatchLogScreen() {
               <Text style={form.species ? styles.speciesValue : styles.speciesPlaceholder}>
                 {form.species || 'What did you catch?'}
               </Text>
-              <Text style={styles.speciesArrow}>{showSpeciesPicker ? '▴' : '▾'}</Text>
+              <Ionicons name={showSpeciesPicker ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textTertiary} />
             </TouchableOpacity>
             {showSpeciesPicker && (
               <View style={styles.speciesList}>
@@ -261,6 +300,7 @@ const styles = StyleSheet.create({
   addButton: {
     backgroundColor: Colors.accent, borderRadius: 20,
     paddingHorizontal: Spacing.md, paddingVertical: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
   },
   addButtonText: { fontSize: 14, fontWeight: '700', color: Colors.background },
   content: { paddingHorizontal: Spacing.screenPad, paddingBottom: Spacing.xl },
@@ -300,7 +340,13 @@ const styles = StyleSheet.create({
   },
   speciesValue: { fontSize: 15, color: Colors.textPrimary },
   speciesPlaceholder: { fontSize: 15, color: Colors.textTertiary },
-  speciesArrow: { color: Colors.textTertiary, fontSize: 12 },
+  statsCard: {
+    backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
+    padding: Spacing.md, marginBottom: Spacing.md, flexDirection: 'row', gap: Spacing.md,
+  },
+  statItem: { alignItems: 'center', gap: 2 },
+  statValue: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
+  statLabel: { fontSize: 10, color: Colors.textTertiary },
   speciesList: {
     backgroundColor: Colors.card, borderRadius: 10, marginTop: 4,
     overflow: 'hidden',
