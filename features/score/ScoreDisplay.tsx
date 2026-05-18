@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, LayoutAnimation } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, LayoutAnimation, type DimensionValue } from 'react-native'
 import Animated, { useSharedValue, useAnimatedProps, withTiming, Easing } from 'react-native-reanimated'
 import { Svg, Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
@@ -124,7 +124,7 @@ export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
                 <Ionicons name={icon} size={14} color={Colors.textSecondary} style={styles.breakdownIcon} />
                 <Text style={styles.breakdownLabel}>{factorLabel}</Text>
                 <View style={styles.breakdownBarTrack}>
-                  <View style={[styles.breakdownBarFill, { width: `${ratio * 100}%` as any, backgroundColor: fillColor }]} />
+                  <View style={[styles.breakdownBarFill, { width: `${ratio * 100}%` as DimensionValue, backgroundColor: fillColor }]} />
                 </View>
                 <Text style={styles.breakdownPts}>{pts} / {max}</Text>
               </View>

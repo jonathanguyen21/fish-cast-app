@@ -270,7 +270,7 @@ export default function ForecastScreen() {
                 <Text style={[styles.logBtnText, { color: Colors.textSecondary }]}>Share</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity style={styles.logBtn} onPress={() => router.push('/(tabs)/catchlog' as any)}>
+            <TouchableOpacity style={styles.logBtn} onPress={() => router.push('/(tabs)/catchlog')}>
               <Ionicons name="journal-outline" size={14} color={Colors.accent} />
               <Text style={styles.logBtnText}>Log</Text>
             </TouchableOpacity>
@@ -367,27 +367,27 @@ export default function ForecastScreen() {
               conditions={conditions}
               spotType={activeSpot.type}
               onPressPressure={() => router.push({
-                pathname: '/detail/pressure' as any,
+                pathname: '/detail/pressure',
                 params: { data: JSON.stringify(conditions.pressure) },
               })}
               onPressSwell={conditions.swellHourly ? () => router.push({
-                pathname: '/detail/swell' as any,
+                pathname: '/detail/swell',
                 params: { data: JSON.stringify(conditions.swellHourly) },
               }) : undefined}
               onPressAir={() => router.push({
-                pathname: '/detail/airtemp' as any,
+                pathname: '/detail/airtemp',
                 params: { data: JSON.stringify(conditions.airHourly) },
               })}
               onPressSky={() => router.push({
-                pathname: '/detail/sky' as any,
+                pathname: '/detail/sky',
                 params: { data: JSON.stringify(conditions.airHourly) },
               })}
               onPressMoon={() => router.push({
-                pathname: '/detail/moon' as any,
+                pathname: '/detail/moon',
                 params: { data: JSON.stringify(conditions.moon) },
               })}
               onPressSun={() => router.push({
-                pathname: '/detail/sun' as any,
+                pathname: '/detail/sun',
                 params: { data: JSON.stringify(conditions.sun) },
               })}
             />
@@ -398,7 +398,7 @@ export default function ForecastScreen() {
               hourlyByMap={scoredHourlyByMap}
               currentHour={currentHour}
               maxRows={2}
-              onSeeAll={() => router.push('/(tabs)/species' as any)}
+              onSeeAll={() => router.push('/(tabs)/species')}
               onPressSpecies={(id) => {
                 const ss = scoredSpecies.find(s => s.species.id === id)
                 if (!ss) return
@@ -412,7 +412,7 @@ export default function ForecastScreen() {
             {recentCatch && (
               <TouchableOpacity
                 style={styles.recentCatchCard}
-                onPress={() => router.push('/(tabs)/catchlog' as any)}
+                onPress={() => router.push('/(tabs)/catchlog')}
                 activeOpacity={0.8}
               >
                 <Ionicons name="fish-outline" size={16} color={Colors.accent} />
