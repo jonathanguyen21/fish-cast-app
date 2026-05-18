@@ -220,9 +220,44 @@ Service tests use `global.fetch = jest.fn()` with fixture JSON from `__tests__/f
 
 ---
 
+## Web Testing in Cloud Environment
+
+The cloud env blocks outbound calls to `api.expo.dev` and `ngrok`. To run the web build for visual testing / Playwright screenshots:
+
+```bash
+npm run web:cloud   # starts Metro at http://localhost:8083
+                    # (sets EXPO_NO_DEPENDENCY_VALIDATION=1 EXPO_OFFLINE=1)
+```
+
+**Playwright** is pre-installed at `/opt/node22/lib/node_modules/playwright`.
+**Chromium** is at `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`.
+
+Minimal screenshot script:
+```js
+const { chromium } = require('/opt/node22/lib/node_modules/playwright')
+const browser = await chromium.launch({
+  executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+  args: ['--no-sandbox', '--disable-setuid-sandbox'],
+})
+const page = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage()
+await page.goto('http://localhost:8083', { waitUntil: 'networkidle', timeout: 120000 })
+await page.screenshot({ path: '/tmp/screen.png' })
+await browser.close()
+```
+
+**Known cloud-env quirks:**
+- All API times (sunrise, tide turns) display in **UTC** — they are correct on a real device in local time.
+- NWS / NOAA API calls succeed; only `api.expo.dev` is blocked.
+- Zustand's ESM `import.meta.env` is patched via `patches/zustand+5.0.13.patch` (applied automatically by `postinstall`). Re-run `npx patch-package zustand` if you upgrade Zustand.
+- `react-native-maps` is aliased to empty on web in `metro.config.js` — the Add Spot map won't render in the browser, but all other screens work.
+
+**Scrolling inside screenshots:** The main ScrollView selector is `[class*="WebkitOverflowScrolling"]`. Set `scrollTop` via `page.evaluate()` to capture below-the-fold content.
+
+---
+
 ## What's Next (Phase B2 / C)
 
-- **Phase B2:** `useForecast` / `forecastService.ts` — 7-day forecast from NWS daily gridpoints
-- **Phase C:** Push notifications (background fetch at user's alert threshold), Pro subscription (RevenueCat), species data for northeast/southeast/freshwater regions
+- **Phase B2:** `useForecast` / `forecastService.ts` — 7-day forecast from NWS daily gridpoints (now implemented)
+- **Phase C:** Push notifications (background fetch at user's alert threshold), Pro subscription (RevenueCat), species data for northeast/southeast regions
 
-`forecastService.ts` currently throws `'Phase B2: not yet implemented'`.
+`forecastService.ts` is implemented. `useForecast.ts` uses real TanStack Query.

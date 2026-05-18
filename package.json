@@ -6,7 +6,9 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "web:cloud": "EXPO_NO_DEPENDENCY_VALIDATION=1 EXPO_OFFLINE=1 expo start --web --port 8083",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@expo/ngrok": "^4.1.0",
@@ -50,6 +52,7 @@
     "@types/react": "~19.1.0",
     "@types/suncalc": "^1.9.2",
     "jest-expo": "^55.0.16",
+    "patch-package": "^8.0.1",
     "react-test-renderer": "19.1.0",
     "typescript": "~5.9.2"
   },
