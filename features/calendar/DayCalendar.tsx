@@ -1,7 +1,9 @@
 import React, { useState, useCallback } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
+import { scoreColor } from '../score/scoringEngine'
 
 interface Props {
   selectedDate: string
@@ -17,13 +19,9 @@ function localDateKey(d: Date): string {
   return `${y}-${m}-${day}`
 }
 
-function scoreColor(score: number | null): string {
+function calScoreColor(score: number | null): string {
   if (score === null) return Colors.card
-  if (score >= 85) return '#4CAF70'
-  if (score >= 70) return '#8BC34A'
-  if (score >= 55) return '#FFC107'
-  if (score >= 40) return '#FF9800'
-  return '#F44336'
+  return scoreColor(score)
 }
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -74,7 +72,7 @@ export function DayCalendar({ selectedDate, onSelect, todayScore, isPro }: Props
     let dotColor: string
     if (isPast) dotColor = Colors.card
     else if (isLocked) dotColor = Colors.background
-    else if (isToday && todayScore !== null) dotColor = scoreColor(todayScore)
+    else if (isToday && todayScore !== null) dotColor = calScoreColor(todayScore)
     else dotColor = Colors.card
 
     cells.push(
@@ -100,7 +98,7 @@ export function DayCalendar({ selectedDate, onSelect, todayScore, isPro }: Props
           {d}
         </Text>
         <View style={[styles.dot, { backgroundColor: dotColor }]} />
-        {isLocked && <Text style={styles.lockIcon}>🔒</Text>}
+        {isLocked && <Ionicons name="lock-closed" size={7} color={Colors.textTertiary} style={styles.lockIcon} />}
       </TouchableOpacity>
     )
   }
@@ -133,7 +131,7 @@ export function DayCalendar({ selectedDate, onSelect, todayScore, isPro }: Props
         <View style={styles.legendDot} />
         <Text style={styles.legendText}>Today's score</Text>
         <Text style={styles.legendSep}>·</Text>
-        <Text style={styles.legendLock}>🔒</Text>
+        <Ionicons name="lock-closed" size={11} color={Colors.textTertiary} />
         <Text style={styles.legendText}>Pro only</Text>
       </View>
     </View>
@@ -180,7 +178,7 @@ const styles = StyleSheet.create({
   dayNumSelected: { color: Colors.background },
   dayNumPast: { color: Colors.textSecondary },
   dot: { width: 5, height: 5, borderRadius: 2.5, marginTop: 3 },
-  lockIcon: { fontSize: 7, position: 'absolute', top: 2, right: 4 },
+  lockIcon: { position: 'absolute', top: 2, right: 4 },
   legend: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: Spacing.md, paddingTop: 4, paddingBottom: 6, gap: 5,
@@ -188,5 +186,4 @@ const styles = StyleSheet.create({
   legendDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: Colors.success },
   legendText: { fontSize: 11, color: Colors.textSecondary },
   legendSep: { fontSize: 11, color: Colors.textTertiary },
-  legendLock: { fontSize: 11 },
 })

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { View, Text, Switch, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking, Modal, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import Slider from '@react-native-community/slider'
 import * as Notifications from 'expo-notifications'
 import Constants from 'expo-constants'
@@ -12,10 +13,12 @@ import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
 
-const PRO_FEATURES = [
-  { icon: '📅', text: '7-day fishing forecast' },
-  { icon: '📊', text: 'Hourly score breakdown' },
-  { icon: '🐟', text: 'Full species library' },
+type IoniconName = keyof typeof import('@expo/vector-icons').Ionicons.glyphMap
+
+const PRO_FEATURES: { icon: IoniconName; text: string }[] = [
+  { icon: 'calendar-outline', text: '7-day fishing forecast' },
+  { icon: 'bar-chart-outline', text: 'Hourly score breakdown' },
+  { icon: 'fish-outline', text: 'Full species library' },
 ]
 
 function Row({ icon, label, children }: { icon: string; label: string; children: React.ReactNode }) {
@@ -158,7 +161,7 @@ export default function SettingsScreen() {
           <View style={styles.featureList}>
             {PRO_FEATURES.map(f => (
               <View key={f.text} style={styles.featureRow}>
-                <Text style={styles.featureIcon}>{f.icon}</Text>
+                <Ionicons name={f.icon} size={16} color={Colors.accent} />
                 <Text style={styles.featureText}>{f.text}</Text>
               </View>
             ))}
@@ -300,7 +303,6 @@ const styles = StyleSheet.create({
   upgradeSub: { fontSize: 13, color: Colors.textSecondary, marginTop: 2 },
   featureList: { padding: Spacing.md, gap: Spacing.sm },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  featureIcon: { fontSize: 16 },
   featureText: { fontSize: 14, color: Colors.textPrimary },
   upgradeButton: {
     margin: Spacing.md,

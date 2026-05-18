@@ -62,9 +62,9 @@ describe('ActiveRightNow', () => {
     expect(queryByText(/Active Right Now/i)).toBeNull()
   })
 
-  it('hides card when all species have score 0', () => {
+  it('shows inactive rows with quiet note when all species have score 0', () => {
     const zeros = Array.from({ length: 16 }, (_, i) => ({ hour: 5 + i, score: 0 }))
-    const { queryByText } = render(
+    const { queryByText, getByText } = render(
       <ActiveRightNow
         species={mockSpecies}
         hourlyByMap={{ sp_a: zeros, sp_b: zeros }}
@@ -72,7 +72,13 @@ describe('ActiveRightNow', () => {
         onPressSpecies={() => {}}
       />
     )
-    expect(queryByText(/Active Right Now/i)).toBeNull()
+    // Still renders the section title
+    expect(getByText(/Active Right Now/i)).toBeTruthy()
+    // Shows species names in inactive state
+    expect(getByText('Striped Bass')).toBeTruthy()
+    expect(getByText('Halibut')).toBeTruthy()
+    // Shows the quiet note instead of hiding everything
+    expect(queryByText(/No species peaking/i)).toBeTruthy()
   })
 
   it('tap calls onPressSpecies with id', () => {

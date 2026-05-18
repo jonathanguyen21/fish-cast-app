@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Modal, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useCatchLogStore, type CatchEntry } from '../../store/catchLogStore'
 import { useSpots } from '../../hooks/useSpots'
@@ -125,7 +126,7 @@ export default function CatchLogScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         {entries.length === 0 ? (
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🎣</Text>
+            <Ionicons name="fish-outline" size={56} color={Colors.textTertiary} />
             <Text style={styles.emptyText}>No catches logged yet</Text>
             <Text style={styles.emptyHint}>Tap "Log Catch" after a successful trip to track your catches over time.</Text>
           </View>
@@ -247,7 +248,7 @@ const styles = StyleSheet.create({
   addButtonText: { fontSize: 14, fontWeight: '700', color: Colors.background },
   content: { paddingHorizontal: Spacing.screenPad, paddingBottom: Spacing.xl },
   empty: { alignItems: 'center', marginTop: 80, gap: Spacing.sm },
-  emptyIcon: { fontSize: 56 },
+  emptyIconPlaceholder: {},
   emptyText: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20, maxWidth: 280 },
   dayLabel: { fontSize: 13, fontWeight: '600', color: Colors.textTertiary, marginTop: Spacing.md, marginBottom: Spacing.xs },

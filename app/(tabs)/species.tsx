@@ -3,6 +3,7 @@ import {
   ScrollView, View, Text, StyleSheet,
   RefreshControl, ActivityIndicator,
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useSpots } from '../../hooks/useSpots'
@@ -74,7 +75,7 @@ export default function SpeciesScreen() {
   if (!activeSpot) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyIcon}>🎣</Text>
+        <Ionicons name="fish-outline" size={56} color={Colors.textTertiary} />
         <Text style={styles.emptyText}>No spot selected</Text>
         <Text style={styles.emptyHint}>Add a fishing spot to see what's biting</Text>
       </View>
@@ -107,22 +108,18 @@ export default function SpeciesScreen() {
 
             <View style={styles.section}>
               <Text style={Typography.sectionTitle}>All Species</Text>
-              {scoredSpecies.every(ss => ss.score === 0) ? (
-                <Text style={styles.emptySpecies}>Nothing active right now</Text>
-              ) : (
-                scoredSpecies.map(ss => (
-                  <SpeciesCard
-                    key={ss.species.id}
-                    speciesScore={ss}
-                    hourly={scoredHourlyByMap[ss.species.id]}
-                    isPro={isPro}
-                    onPress={() => {
-                      if (ss.species.tier === 'pro' && !isPro) return
-                      router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss), hourlyData: JSON.stringify(scoredHourlyByMap[ss.species.id] ?? []) } })
-                    }}
-                  />
-                ))
-              )}
+              {scoredSpecies.map(ss => (
+                <SpeciesCard
+                  key={ss.species.id}
+                  speciesScore={ss}
+                  hourly={scoredHourlyByMap[ss.species.id]}
+                  isPro={isPro}
+                  onPress={() => {
+                    if (ss.species.tier === 'pro' && !isPro) return
+                    router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss), hourlyData: JSON.stringify(scoredHourlyByMap[ss.species.id] ?? []) } })
+                  }}
+                />
+              ))}
             </View>
           </>
         ) : (
@@ -155,10 +152,8 @@ const styles = StyleSheet.create({
   content: { paddingBottom: Spacing.xl },
   section: { marginHorizontal: Spacing.screenPad, marginBottom: Spacing.md },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.sm },
-  emptyIcon: { fontSize: 48 },
-  emptyText: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center' },
+  emptyText: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center', marginTop: Spacing.sm },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center' },
-  emptySpecies: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', paddingVertical: Spacing.md },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: Colors.background + 'AA',

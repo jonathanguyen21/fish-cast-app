@@ -122,7 +122,7 @@ export default function ForecastScreen() {
   if (!activeSpot) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyIcon}>🎣</Text>
+        <Ionicons name="fish-outline" size={56} color={Colors.textTertiary} style={styles.emptyIcon} />
         <Text style={styles.emptyText}>No spot selected</Text>
         <Text style={styles.emptyHint}>Add a fishing spot to get your first forecast</Text>
         <TouchableOpacity style={styles.emptyCta} onPress={() => router.push('/(tabs)/spots')}>
@@ -135,7 +135,7 @@ export default function ForecastScreen() {
   if (isError && !conditions) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyIcon}>⚠️</Text>
+        <Ionicons name="alert-circle-outline" size={56} color={Colors.warning} style={styles.emptyIcon} />
         <Text style={styles.emptyText}>Could not load conditions</Text>
         <TouchableOpacity style={styles.emptyCta} onPress={refetch}>
           <Text style={styles.emptyCtaText}>Tap to Retry</Text>
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.sm },
-  emptyIcon: { fontSize: 56, marginBottom: Spacing.sm },
+  emptyIcon: { marginBottom: Spacing.sm },
   emptyText: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center' },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20 },
   emptyCta: {
