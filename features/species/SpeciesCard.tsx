@@ -60,7 +60,10 @@ export function SpeciesCard({ speciesScore, hourly, isPro, onPress }: Props) {
         </View>
       </View>
       {isLocked && (
-        <Text style={styles.upgradeHint}>Upgrade to Pro to see what's biting →</Text>
+        <View style={styles.upgradeHintRow}>
+          <Text style={styles.upgradeHint}>Upgrade to Pro to see what's biting</Text>
+          <Ionicons name="chevron-forward" size={12} color={Colors.accent} />
+        </View>
       )}
     </TouchableOpacity>
   )
@@ -82,6 +85,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   badgeScore: { fontSize: 15, fontWeight: '700' },
-  upgradeHint: { fontSize: 12, color: Colors.accent, marginTop: Spacing.xs },
+  upgradeHintRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: Spacing.xs },
+  upgradeHint: { fontSize: 12, color: Colors.accent },
   bestWindow: { fontSize: 11, color: Colors.textTertiary, marginTop: 1 },
 })

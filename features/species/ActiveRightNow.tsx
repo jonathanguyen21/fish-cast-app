@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
@@ -79,8 +80,9 @@ export function ActiveRightNow({ species, hourlyByMap, currentHour, onPressSpeci
           )
         })}
         {onSeeAll && (
-          <TouchableOpacity style={styles.seeAll} onPress={onSeeAll}>
-            <Text style={styles.seeAllText}>See all species →</Text>
+          <TouchableOpacity style={styles.seeAll} onPress={onSeeAll} accessibilityRole="button" accessibilityLabel="See all species">
+            <Text style={styles.seeAllText}>See all species</Text>
+            <Ionicons name="chevron-forward" size={14} color={Colors.accent} />
           </TouchableOpacity>
         )}
       </View>
@@ -114,7 +116,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     borderTopWidth: 1,
     borderTopColor: Colors.surface,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
   },
   seeAllText: { fontSize: 13, color: Colors.accent, fontWeight: '600' },
 })

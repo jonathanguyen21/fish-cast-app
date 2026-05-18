@@ -117,11 +117,11 @@ export function DayCalendar({ selectedDate, onSelect, todayScore, isPro, majorMo
           disabled={isCurrentMonth}
           activeOpacity={isCurrentMonth ? 1 : 0.7}
         >
-          <Text style={[styles.navArrow, isCurrentMonth && styles.navArrowDisabled]}>‹</Text>
+          <Ionicons name="chevron-back" size={18} color={isCurrentMonth ? Colors.textTertiary : Colors.textSecondary} />
         </TouchableOpacity>
         <Text style={styles.monthLabel}>{MONTH_NAMES[viewMonth]} {viewYear}</Text>
         <TouchableOpacity onPress={nextMonth} style={styles.navBtn}>
-          <Text style={styles.navArrow}>›</Text>
+          <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
         </TouchableOpacity>
       </View>
       <View style={styles.weekdayRow}>
@@ -161,8 +161,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: Colors.card,
   },
   navBtn: { padding: 4 },
-  navArrow: { fontSize: 18, color: Colors.textSecondary, fontWeight: '600' },
-  navArrowDisabled: { color: Colors.textTertiary, opacity: 0.3 },
   monthLabel: { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
   weekdayRow: {
     flexDirection: 'row', paddingHorizontal: 6, paddingTop: 6, paddingBottom: 2,
