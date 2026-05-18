@@ -46,4 +46,33 @@ describe('SpeciesAlertsSection', () => {
     const { getByText } = render(<SpeciesAlertsSection species={mockSpecies} />)
     expect(getByText(/Pro/i)).toBeTruthy()
   })
+
+  it('returns null when species list is empty', () => {
+    const { toJSON } = render(<SpeciesAlertsSection species={[]} />)
+    expect(toJSON()).toBeNull()
+  })
+
+  it('shows all species names in section title', () => {
+    const { getByText } = render(<SpeciesAlertsSection species={mockSpecies} />)
+    expect(getByText('Per-Species Alerts')).toBeTruthy()
+  })
+
+  it('toggle is disabled when not Pro', () => {
+    useSettingsStore.setState({ isPro: false })
+    const { getByTestId } = render(<SpeciesAlertsSection species={mockSpecies} />)
+    const toggle = getByTestId('species-alert-toggle-sp_a')
+    // disabled prop should be true
+    expect(toggle.props.disabled).toBe(true)
+  })
+
+  it('shows "Get alerts when YOUR species are biting" hint when not Pro', () => {
+    useSettingsStore.setState({ isPro: false })
+    const { getByText } = render(<SpeciesAlertsSection species={mockSpecies} />)
+    expect(getByText(/Get alerts when YOUR species are biting/)).toBeTruthy()
+  })
+
+  it('does not show locked overlay when Pro', () => {
+    const { queryByText } = render(<SpeciesAlertsSection species={mockSpecies} />)
+    expect(queryByText(/Get alerts when YOUR species are biting/)).toBeNull()
+  })
 })
