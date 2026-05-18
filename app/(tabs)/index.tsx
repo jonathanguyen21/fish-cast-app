@@ -27,6 +27,7 @@ import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
 import { useRouter } from 'expo-router'
 import { ScoreCardSkeleton, TimelineSkeleton, QuickStatsSkeleton, ConditionsGridSkeleton } from '../../features/common/SkeletonLoader'
+import { buildConditionsSummary } from '../../features/conditions/conditionsSummary'
 
 function tidePhaseLabel(phase: string): string {
   if (phase === 'incoming') return '↑ Incoming'
@@ -161,9 +162,15 @@ export default function ForecastScreen() {
       >
         <View style={[styles.header, { paddingTop: insets.top }]}>
           <Text style={styles.spotName}>{activeSpot.name}</Text>
-          {spots.length > 1 && (
-            <Text style={styles.switchHint} onPress={() => router.push('/spots')}>Switch ›</Text>
-          )}
+          <View style={styles.headerRight}>
+            <TouchableOpacity style={styles.logBtn} onPress={() => router.push('/(tabs)/catchlog' as any)}>
+              <Ionicons name="journal-outline" size={14} color={Colors.accent} />
+              <Text style={styles.logBtnText}>Log</Text>
+            </TouchableOpacity>
+            {spots.length > 1 && (
+              <Text style={styles.switchHint} onPress={() => router.push('/spots')}>Switch ›</Text>
+            )}
+          </View>
         </View>
 
         <TouchableOpacity
@@ -191,6 +198,9 @@ export default function ForecastScreen() {
               bestWindow={conditions.bestWindow}
               breakdown={(conditions as any).scoreBreakdown}
             />
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryText}>{buildConditionsSummary(conditions)}</Text>
+            </View>
             <ScoreTimeline hourlyScores={conditions.hourlyScores} onUpgrade={() => router.push('/settings')} />
             <View style={styles.quickStats}>
               <WindDisplay
@@ -308,6 +318,12 @@ const styles = StyleSheet.create({
   },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.sm },
   emptyIcon: { marginBottom: Spacing.sm },
+  summaryCard: {
+    marginHorizontal: Spacing.screenPad, marginBottom: Spacing.sm,
+    backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
+    paddingHorizontal: Spacing.md, paddingVertical: 10,
+  },
+  summaryText: { fontSize: 12, color: Colors.textSecondary, lineHeight: 18 },
   emptyText: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center' },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20 },
   emptyCta: {
@@ -322,8 +338,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.screenPad, paddingBottom: Spacing.sm,
   },
-  spotName: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  spotName: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary, flex: 1 },
   switchHint: { fontSize: 14, color: Colors.accent },
+  logBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: Colors.accent + '18',
+    borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5,
+    borderWidth: 1, borderColor: Colors.accent + '40',
+  },
+  logBtnText: { fontSize: 12, fontWeight: '600', color: Colors.accent },
   quickStats: {
     flexDirection: 'row', gap: Spacing.sm,
     marginHorizontal: Spacing.screenPad, marginBottom: Spacing.md,
