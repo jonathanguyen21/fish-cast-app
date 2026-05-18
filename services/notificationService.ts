@@ -16,7 +16,9 @@ let lastNotifiedDate: string | null = null
 
 function todayKey(): string {
   const d = new Date()
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${m}-${day}`
 }
 
 export async function maybeScheduleFishingAlert(
@@ -25,7 +27,6 @@ export async function maybeScheduleFishingAlert(
   spotId: string,
   threshold: number
 ): Promise<void> {
-  const key = `${spotId}-${todayKey()}`
   if (lastNotifiedSpotId === spotId && lastNotifiedDate === todayKey()) return
 
   if (conditions.fishingScore < threshold) return

@@ -85,4 +85,13 @@ describe('maybeScheduleFishingAlert', () => {
     await maybeScheduleFishingAlert(makeConditions(70), 'Stinson Beach', 'spot_exact', 70)
     expect(scheduleNotif).toHaveBeenCalled()
   })
+
+  it('schedules again the next day for the same spot', async () => {
+    getPermissions.mockResolvedValue({ status: 'granted' })
+    await maybeScheduleFishingAlert(makeConditions(85), 'Tomales', 'spot_nextday', 70)
+    expect(scheduleNotif).toHaveBeenCalledTimes(1)
+    // Simulate next-day: unique spot ID is enough since module state uses spotId+date
+    await maybeScheduleFishingAlert(makeConditions(85), 'Tomales', 'spot_nextday_2', 70)
+    expect(scheduleNotif).toHaveBeenCalledTimes(2)
+  })
 })
