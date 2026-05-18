@@ -62,8 +62,6 @@ export default function MoonDetailScreen() {
         <View>
           <Text style={styles.moonPhase}>{moon.phase.replace(/_/g, ' ')}</Text>
           <Text style={styles.moonIllum}>{moon.illumination}% illuminated</Text>
-          {(moon as any).rise && <Text style={styles.moonTime}>Rise {(moon as any).rise}</Text>}
-          {(moon as any).set && <Text style={styles.moonTime}>Set {(moon as any).set}</Text>}
         </View>
       </View>
 

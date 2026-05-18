@@ -31,11 +31,11 @@ export default function SunDetailScreen() {
     { iconName: 'sunny-outline', iconColor: Colors.warning, label: 'Sunrise', value: sun.sunrise },
     { iconName: 'sunny-outline', iconColor: Colors.warning, label: 'Sunset', value: sun.sunset },
   ]
-  if ((sun as any).goldenHourMorning) {
-    rows.splice(1, 0, { iconName: 'star-outline', iconColor: Colors.accent, label: 'Morning Golden Hour', value: (sun as any).goldenHourMorning })
+  if (sun.goldenHourMorning) {
+    rows.splice(1, 0, { iconName: 'star-outline', iconColor: Colors.warning, label: 'Golden Hour ends', value: sun.goldenHourMorning })
   }
-  if ((sun as any).goldenHourEvening) {
-    rows.push({ iconName: 'star-outline', iconColor: Colors.accent, label: 'Evening Golden Hour', value: (sun as any).goldenHourEvening })
+  if (sun.goldenHourEvening) {
+    rows.push({ iconName: 'star-outline', iconColor: Colors.warning, label: 'Golden Hour starts', value: sun.goldenHourEvening })
   }
 
   return (

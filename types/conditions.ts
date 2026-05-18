@@ -55,6 +55,8 @@ export interface SkyData {
 export interface SunData {
   sunrise: string
   sunset: string
+  goldenHourMorning?: string
+  goldenHourEvening?: string
 }
 
 export interface MoonData {
