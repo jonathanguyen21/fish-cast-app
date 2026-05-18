@@ -127,7 +127,9 @@ export default function SettingsScreen() {
         )}
         {alertsEnabled && permissionStatus !== 'granted' && (
           <TouchableOpacity style={styles.permButton} onPress={requestPermission}>
-            <Text style={styles.permText}>Enable Notifications →</Text>
+            <Ionicons name="notifications-outline" size={14} color={Colors.accent} />
+            <Text style={styles.permText}>Enable Notifications</Text>
+            <Ionicons name="chevron-forward" size={14} color={Colors.accent} />
           </TouchableOpacity>
         )}
         {alertsEnabled && permissionStatus === 'granted' && (
@@ -170,7 +172,8 @@ export default function SettingsScreen() {
             ))}
           </View>
           <TouchableOpacity style={styles.upgradeButton} onPress={() => Alert.alert('Coming Soon', 'Pro subscriptions will be available soon!')}>
-            <Text style={styles.upgradeButtonText}>Upgrade to Pro →</Text>
+            <Text style={styles.upgradeButtonText}>Upgrade to Pro</Text>
+            <Ionicons name="arrow-forward" size={16} color={Colors.background} />
           </TouchableOpacity>
         </View>
       )}
@@ -183,7 +186,7 @@ export default function SettingsScreen() {
             <Text style={styles.feedbackTitle}>Request a Feature</Text>
             <Text style={styles.feedbackSub}>Share ideas, report bugs, or suggest improvements</Text>
           </View>
-          <Text style={styles.feedbackChevron}>›</Text>
+          <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
         </TouchableOpacity>
       </View>
 
@@ -301,7 +304,7 @@ const styles = StyleSheet.create({
   sliderRow: { padding: Spacing.md },
   sliderLabel: { fontSize: 14, color: Colors.textSecondary, marginBottom: 4 },
   sliderValue: { color: Colors.textPrimary, fontWeight: '700' },
-  permButton: { padding: Spacing.md, backgroundColor: Colors.accent + '22' },
+  permButton: { padding: Spacing.md, backgroundColor: Colors.accent + '22', flexDirection: 'row', alignItems: 'center', gap: 6 },
   permText: { color: Colors.accent, fontSize: 14, fontWeight: '600' },
   permGrantedRow: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: Spacing.md },
   permGranted: { color: Colors.success, fontSize: 13 },
@@ -336,7 +339,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accent,
     borderRadius: Spacing.cardRadius,
     paddingVertical: 14,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   upgradeButtonText: { fontSize: 16, fontWeight: '700', color: Colors.background },
   sectionSpacer: { marginTop: Spacing.lg },
@@ -360,7 +366,6 @@ const styles = StyleSheet.create({
   feedbackText: { flex: 1 },
   feedbackTitle: { fontSize: 15, color: Colors.textPrimary, fontWeight: '600' },
   feedbackSub: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
-  feedbackChevron: { fontSize: 20, color: Colors.textTertiary },
   modal: { flex: 1, backgroundColor: Colors.background },
   modalContent: { padding: Spacing.screenPad, paddingBottom: 60 },
   modalHeader: {

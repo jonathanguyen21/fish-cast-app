@@ -37,14 +37,10 @@ export function SpeciesCard({ speciesScore, hourly, isPro, onPress }: Props) {
     <TouchableOpacity style={styles.card} onPress={onPress} testID={`species-card-${species.id}`}>
       <View style={styles.row}>
         <View style={styles.info}>
-          {isLocked ? (
-            <View style={styles.lockedNameRow}>
-              <Ionicons name="lock-closed" size={12} color={Colors.textTertiary} />
-              <Text style={[styles.name, styles.locked]}> Pro Species</Text>
-            </View>
-          ) : (
-            <Text style={styles.name}>{species.common_name}</Text>
-          )}
+          <View style={styles.lockedNameRow}>
+            {isLocked && <Ionicons name="lock-closed" size={11} color={Colors.textTertiary} style={{ marginRight: 4 }} />}
+            <Text style={[styles.name, isLocked && styles.locked]}>{species.common_name}</Text>
+          </View>
           <Text style={[styles.status, { color: statusColor[status] ?? Colors.textSecondary }]}>
             {status}
           </Text>
