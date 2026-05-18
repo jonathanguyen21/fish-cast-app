@@ -40,10 +40,13 @@ export function SpeciesHourlyChart({ hourly, onUpgrade }: Props) {
           return (
             <View key={item.hour} style={styles.barWrapper} testID={`species-hourly-bar-${item.hour}`}>
               <Text style={[styles.scoreLabel, isPeak && { color }]}>{item.score}</Text>
+              {isNow
+                ? <View style={styles.nowChip}><Text style={styles.nowChipText}>NOW</Text></View>
+                : <View style={styles.nowChipPlaceholder} />}
               <View style={styles.barTrack}>
                 <View style={[
                   styles.bar,
-                  { height: barHeight, backgroundColor: color, opacity: isPeak ? 1 : 0.65 },
+                  { height: barHeight, backgroundColor: color, opacity: isPeak || isNow ? 1 : 0.65 },
                   isNow && { borderWidth: 2, borderColor: Colors.accent },
                 ]} />
               </View>
@@ -75,6 +78,9 @@ const styles = StyleSheet.create({
   },
   scroll: { paddingBottom: Spacing.xs, gap: Spacing.xs },
   barWrapper: { alignItems: 'center', width: BAR_WIDTH + 8 },
+  nowChip: { backgroundColor: Colors.accent, borderRadius: 6, paddingHorizontal: 4, paddingVertical: 1, marginBottom: 2 },
+  nowChipText: { fontSize: 8, color: '#0B1622', fontWeight: '700' },
+  nowChipPlaceholder: { height: 14, marginBottom: 2 },
   barTrack: { height: BAR_MAX_HEIGHT, justifyContent: 'flex-end' },
   bar: { width: BAR_WIDTH, borderRadius: 4 },
   hourLabel: { fontSize: 10, color: Colors.textTertiary, marginTop: 4 },
