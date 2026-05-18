@@ -27,7 +27,7 @@ export function ScoreTimeline({ hourlyScores, onUpgrade }: Props) {
   return (
     <View style={styles.container}>
       <Text style={Typography.sectionTitle}>Today's Forecast</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.scroll}>
         {hourlyScores.map((item) => {
           const barHeight = (item.score / 100) * BAR_MAX_HEIGHT
           const isPeak = item.score === maxScore

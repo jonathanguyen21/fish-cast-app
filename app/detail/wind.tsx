@@ -272,7 +272,7 @@ export default function WindDetailScreen() {
                 {convert(currentWind.speed)} {unitLabel}
               </Text>
               <Text style={styles.cursorSub}>
-                Gusts {convert(currentWind.gusts ?? currentWind.speed)} {unitLabel}  ·  {directionArrow(currentWind.direction ?? 0)} {currentWind.directionLabel}
+                Gusts {convert(currentWind.gusts ?? currentWind.speed)} {unitLabel}  ·  {currentWind.directionLabel}
               </Text>
               <Text style={styles.empty}>Hourly chart not available for this spot</Text>
             </>
