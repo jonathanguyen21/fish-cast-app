@@ -78,16 +78,18 @@ export function scoreSpecies(species: Species, ctx: ScoringContext): SpeciesScor
       ? `In range (${ctx.waterTemp}°F — optimal ${peak_min}–${peak_max}°F)`
       : `Outside range (${ctx.waterTemp}°F — optimal ${peak_min}–${peak_max}°F)`
 
+  const tidePhaseLabel = ctx.tidePhase.charAt(0).toUpperCase() + ctx.tidePhase.slice(1)
   const tideLabel = species.preferred_tide === 'any'
-    ? `${ctx.tidePhase} — neutral`
+    ? `${tidePhaseLabel} (neutral)`
     : ctx.tidePhase === species.preferred_tide
-      ? `${ctx.tidePhase} — preferred`
-      : `${ctx.tidePhase} — not preferred`
+      ? `${tidePhaseLabel} (preferred)`
+      : `${tidePhaseLabel} (not preferred)`
 
   const tod = hourToTimeOfDay(ctx.currentHour)
+  const todLabel = tod.charAt(0).toUpperCase() + tod.slice(1)
   const timeLabel = species.preferred_time_of_day.includes(tod)
-    ? `${tod} — prime time`
-    : `${tod} — secondary`
+    ? `${todLabel} (prime time)`
+    : `${todLabel} (secondary)`
 
   return {
     species,

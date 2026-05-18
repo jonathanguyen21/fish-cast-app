@@ -61,6 +61,7 @@ export const MOCK_CONDITIONS: ConditionsData = {
     13: 'outgoing', 14: 'outgoing', 15: 'outgoing', 16: 'outgoing',
     17: 'slack', 18: 'incoming', 19: 'incoming', 20: 'incoming',
   },
+  scoreBreakdown: { pressure: 20, solunar: 14, tide: 15, wind: 15, waterTemp: 8, sky: 10 },
 }
 
 const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']

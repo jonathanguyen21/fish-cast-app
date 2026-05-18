@@ -37,7 +37,7 @@ function hourLabel(h: number) {
 }
 
 export default function WindDetailScreen() {
-  const { data } = useLocalSearchParams<{ data: string }>()
+  const { data, current } = useLocalSearchParams<{ data: string; current: string }>()
   const router = useRouter()
   const { width } = useWindowDimensions()
   const insets = useSafeAreaInsets()
@@ -48,6 +48,11 @@ export default function WindDetailScreen() {
     const parsed = JSON.parse(data)
     return Array.isArray(parsed) ? parsed : []
   }, [data])
+
+  const currentWind = useMemo(() => {
+    if (!current) return null
+    try { return JSON.parse(current) } catch { return null }
+  }, [current])
   const convert = useCallback(
     (mph: number) => speedUnit === 'kts' ? Math.round(mph * 0.868) : mph,
     [speedUnit]
@@ -260,7 +265,21 @@ export default function WindDetailScreen() {
           </View>
         </View>
       ) : (
-        <Text style={styles.empty}>No hourly wind data available</Text>
+        <View style={styles.emptyCard}>
+          {currentWind ? (
+            <>
+              <Text style={[styles.cursorSpeed, { color: speedColor(currentWind.speed) }]}>
+                {convert(currentWind.speed)} {unitLabel}
+              </Text>
+              <Text style={styles.cursorSub}>
+                Gusts {convert(currentWind.gusts ?? currentWind.speed)} {unitLabel}  ·  {currentWind.directionLabel}
+              </Text>
+              <Text style={styles.empty}>Hourly chart not available for this spot</Text>
+            </>
+          ) : (
+            <Text style={styles.empty}>No wind data available</Text>
+          )}
+        </View>
       )}
 
       {/* Legend */}
@@ -291,8 +310,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card, borderRadius: 8, padding: Spacing.sm,
     marginBottom: Spacing.sm,
   },
-  cursorSpeed: { fontSize: 14, fontWeight: '700', textAlign: 'center' },
+  cursorSpeed: { fontSize: 22, fontWeight: '700', textAlign: 'center', marginBottom: 4 },
   cursorSub: { fontSize: 12, color: Colors.textSecondary, textAlign: 'center', marginTop: 2 },
+  emptyCard: {
+    backgroundColor: Colors.card, borderRadius: Spacing.cardRadius,
+    padding: Spacing.lg, alignItems: 'center',
+  },
   chartCard: {
     backgroundColor: Colors.card, borderRadius: Spacing.cardRadius,
     padding: Spacing.md, marginBottom: Spacing.md,
@@ -302,5 +325,5 @@ const styles = StyleSheet.create({
   legendLine: { width: 16, height: 3, borderRadius: 2 },
   legendLabel: { fontSize: 11, color: Colors.textSecondary },
   rangeNote: { fontSize: 11, color: Colors.textTertiary, textAlign: 'center', marginBottom: Spacing.sm },
-  empty: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', marginTop: Spacing.xl },
+  empty: { fontSize: 13, color: Colors.textTertiary, textAlign: 'center', marginTop: Spacing.sm },
 })
