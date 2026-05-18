@@ -25,7 +25,7 @@ class AppErrorBoundary extends React.Component<{ children: React.ReactNode }, { 
     if (this.state.hasError) {
       return (
         <View style={{ flex: 1, backgroundColor: '#0B1622', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <Text style={{ fontSize: 48, marginBottom: 16 }}>🎣</Text>
+          <Text style={{ fontSize: 64, marginBottom: 16, color: '#F59E0B' }}>⚠</Text>
           <Text style={{ fontSize: 20, fontWeight: '700', color: '#F1F5F9', textAlign: 'center' }}>Something went wrong</Text>
           <Text style={{ fontSize: 14, color: '#94A3B8', marginTop: 8, textAlign: 'center' }}>Pull to refresh or restart the app</Text>
         </View>

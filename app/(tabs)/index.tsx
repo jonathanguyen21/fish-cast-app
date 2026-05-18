@@ -26,6 +26,7 @@ import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
 import { useRouter } from 'expo-router'
+import { ScoreCardSkeleton, TimelineSkeleton, QuickStatsSkeleton, ConditionsGridSkeleton } from '../../features/common/SkeletonLoader'
 
 function tidePhaseLabel(phase: string): string {
   if (phase === 'incoming') return '↑ Incoming'
@@ -275,10 +276,13 @@ export default function ForecastScreen() {
         )}
       </ScrollView>
 
-      {/* Loading overlay — sits on top of ScrollView while fetching */}
+      {/* Skeleton loading — replaces spinner while first fetch runs */}
       {isLoading && !conditions && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={Colors.accent} />
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: Colors.background }]}>
+          <ScoreCardSkeleton />
+          <TimelineSkeleton />
+          <QuickStatsSkeleton />
+          <ConditionsGridSkeleton />
         </View>
       )}
 

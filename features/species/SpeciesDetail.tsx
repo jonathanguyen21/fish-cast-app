@@ -46,22 +46,27 @@ export function SpeciesDetail({ speciesScore, hourly, onUpgrade }: Props) {
       </View>
 
       <Text style={styles.sectionTitle}>Activity by Month</Text>
-      <View style={styles.monthBar}>
+      <View style={styles.monthChart}>
         {MONTHS.map((m, i) => {
           const month = i + 1
           const isPeak = species.months_peak.includes(month)
           const isPresent = species.months_present.includes(month)
+          const barColor = isPeak ? Colors.success : isPresent ? Colors.accent : Colors.card
+          const barHeight = isPeak ? 36 : isPresent ? 24 : 10
           return (
-            <View key={m} style={styles.monthItem}>
-              <View style={[
-                styles.monthDot,
-                isPeak && { backgroundColor: Colors.success },
-                !isPeak && isPresent && { backgroundColor: Colors.accent },
-              ]} />
-              <Text style={styles.monthLabel}>{m}</Text>
+            <View key={m} style={styles.monthCol}>
+              <View style={styles.monthBarTrack}>
+                <View style={[styles.monthBarFill, { height: barHeight, backgroundColor: barColor }]} />
+              </View>
+              <Text style={[styles.monthLabel, isPeak && { color: Colors.success, fontWeight: '600' }]}>{m}</Text>
             </View>
           )
         })}
+      </View>
+      <View style={styles.monthLegend}>
+        <View style={styles.legendItem}><View style={[styles.legendSwatch, { backgroundColor: Colors.success }]} /><Text style={styles.legendText}>Peak</Text></View>
+        <View style={styles.legendItem}><View style={[styles.legendSwatch, { backgroundColor: Colors.accent }]} /><Text style={styles.legendText}>Present</Text></View>
+        <View style={styles.legendItem}><View style={[styles.legendSwatch, { backgroundColor: Colors.card }]} /><Text style={styles.legendText}>Absent</Text></View>
       </View>
 
       <Text style={styles.sectionTitle}>Current Match</Text>
@@ -114,10 +119,15 @@ const styles = StyleSheet.create({
   scoreNum: { fontSize: 20, fontWeight: '700', lineHeight: 22 },
   scoreStatus: { fontSize: 8, fontWeight: '600', textAlign: 'center', lineHeight: 11 },
   sectionTitle: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginTop: Spacing.md, marginBottom: Spacing.sm },
-  monthBar: { flexDirection: 'row', gap: 4 },
-  monthItem: { alignItems: 'center', flex: 1 },
-  monthDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.card, marginBottom: 4 },
-  monthLabel: { fontSize: 9, color: Colors.textTertiary },
+  monthChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 52 },
+  monthCol: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
+  monthBarTrack: { width: '100%', height: 40, justifyContent: 'flex-end' },
+  monthBarFill: { width: '100%', borderRadius: 3 },
+  monthLabel: { fontSize: 8, color: Colors.textTertiary, marginTop: 4 },
+  monthLegend: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.xs },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  legendSwatch: { width: 10, height: 10, borderRadius: 2 },
+  legendText: { fontSize: 10, color: Colors.textSecondary },
   matchRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: Colors.surface },
   matchLabel: { fontSize: 13, color: Colors.textSecondary, flex: 1 },
   matchValue: { fontSize: 13, color: Colors.textPrimary, flex: 2, textAlign: 'right' },

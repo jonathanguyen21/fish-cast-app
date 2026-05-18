@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import { useSpots } from '../../hooks/useSpots'
 import { useConditions } from '../../hooks/useConditions'
@@ -58,7 +59,7 @@ export default function SpotsScreen() {
         contentContainerStyle={spots.length === 0 ? styles.emptyContainer : styles.list}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🗺️</Text>
+            <Ionicons name="map-outline" size={56} color={Colors.textTertiary} style={{ marginBottom: Spacing.sm }} />
             <Text style={styles.emptyTitle}>No spots yet</Text>
             <Text style={styles.emptyHint}>Save your favourite fishing locations to get personalised forecasts</Text>
             <TouchableOpacity style={styles.emptyCta} onPress={() => router.push('/spot/new')}>
@@ -90,7 +91,6 @@ const styles = StyleSheet.create({
   list: { padding: Spacing.screenPad, gap: Spacing.sm },
   emptyContainer: { flex: 1 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.sm },
-  emptyIcon: { fontSize: 52, marginBottom: Spacing.sm },
   emptyTitle: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20 },
   emptyCta: {
