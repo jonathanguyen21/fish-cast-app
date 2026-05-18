@@ -36,7 +36,16 @@ function SpotRow({ spot, isActive, onPress, onDelete }: {
             </View>
           )}
         </View>
-        <Text style={styles.rowType}>{spot.type}</Text>
+        <View style={styles.rowMeta}>
+          <Ionicons
+            name={spot.type === 'saltwater' ? 'water-outline' : 'leaf-outline'}
+            size={11}
+            color={spot.type === 'saltwater' ? Colors.ocean : Colors.success}
+          />
+          <Text style={[styles.rowType, { color: spot.type === 'saltwater' ? Colors.ocean : Colors.success }]}>
+            {spot.type === 'saltwater' ? 'Saltwater' : 'Freshwater'}
+          </Text>
+        </View>
       </View>
       {score !== null && (
         <View style={[styles.scoreBadge, { borderColor: color, backgroundColor: color + '18' }]}>
@@ -80,7 +89,7 @@ export default function SpotsScreen() {
         )}
       />
       <TouchableOpacity style={styles.fab} onPress={() => router.push('/spot/new')}>
-        <Text style={styles.fabText}>＋</Text>
+        <Ionicons name="add" size={28} color={Colors.background} />
       </TouchableOpacity>
     </View>
   )
@@ -129,7 +138,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.accent + '60',
   },
   activeBadgeText: { fontSize: 11, color: Colors.accent, fontWeight: '700' },
-  rowType: { fontSize: 12, color: Colors.textSecondary, marginTop: 2, textTransform: 'capitalize' },
+  rowMeta: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 },
+  rowType: { fontSize: 11, fontWeight: '500' },
   scoreBadge: {
     width: 48, height: 48, borderRadius: 24, borderWidth: 1.5,
     alignItems: 'center', justifyContent: 'center', marginLeft: Spacing.sm,
@@ -141,5 +151,4 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', elevation: 4,
     shadowColor: Colors.accent, shadowOpacity: 0.4, shadowRadius: 8, shadowOffset: { width: 0, height: 3 },
   },
-  fabText: { fontSize: 28, color: Colors.background, lineHeight: 32 },
 })
