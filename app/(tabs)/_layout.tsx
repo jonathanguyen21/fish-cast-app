@@ -2,12 +2,13 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 
-type TabName = 'Forecast' | 'Species' | 'Spots' | 'Settings';
+type TabName = 'Forecast' | 'Species' | 'Spots' | 'Log' | 'Settings';
 
 const ICONS: Record<TabName, { focused: keyof typeof Ionicons.glyphMap; default: keyof typeof Ionicons.glyphMap }> = {
   Forecast: { focused: 'partly-sunny', default: 'partly-sunny-outline' },
   Species: { focused: 'fish', default: 'fish-outline' },
   Spots: { focused: 'location', default: 'location-outline' },
+  Log: { focused: 'journal', default: 'journal-outline' },
   Settings: { focused: 'settings', default: 'settings-outline' },
 };
 
@@ -54,6 +55,14 @@ export default function TabLayout() {
         options={{
           title: 'Spots',
           tabBarIcon: ({ focused }) => <TabIcon name="Spots" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="catchlog"
+        options={{
+          title: 'Log',
+          headerShown: false,
+          tabBarIcon: ({ focused }) => <TabIcon name="Log" focused={focused} />,
         }}
       />
       <Tabs.Screen

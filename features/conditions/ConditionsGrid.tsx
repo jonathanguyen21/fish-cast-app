@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
@@ -19,6 +20,14 @@ interface Props {
   onPressSun?: () => void
 }
 
+const SKY_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
+  'clear': 'sunny-outline',
+  'partly-cloudy': 'partly-sunny-outline',
+  'overcast': 'cloud-outline',
+  'light-rain': 'rainy-outline',
+  'heavy-rain': 'thunderstorm-outline',
+}
+
 export function ConditionsGrid({
   conditions,
   onPressPressure,
@@ -34,20 +43,20 @@ export function ConditionsGrid({
   const toDisplayTemp = (f: number) => tempUnit === 'C' ? Math.round((f - 32) * 5 / 9) : f
   const tempSuffix = tempUnit === 'C' ? '°C' : '°F'
 
+  const skyIcon = SKY_ICON[sky.icon] ?? 'cloud-outline'
+
   const swellContent = swell ? (
     <>
-      <Text style={cardStyles.icon}>🌊</Text>
+      <Ionicons name="water" size={18} color={Colors.ocean} style={{ marginBottom: 4 }} />
       <Text style={cardStyles.label}>Swell</Text>
-      <Text style={cardStyles.value}>
+      <Text style={cardStyles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         {swell.height} {swell.unit}
       </Text>
-      <Text style={cardStyles.sub}>
-        {swell.period}s {swell.directionLabel}
-      </Text>
+      <Text style={cardStyles.sub}>{swell.period}s {swell.directionLabel}</Text>
     </>
   ) : (
     <>
-      <Text style={cardStyles.icon}>🏞️</Text>
+      <Ionicons name="leaf-outline" size={18} color={Colors.textTertiary} style={{ marginBottom: 4 }} />
       <Text style={cardStyles.label}>Swell</Text>
       <Text style={cardStyles.sub}>Freshwater</Text>
       <Text style={cardStyles.sub}>N/A</Text>
@@ -75,23 +84,27 @@ export function ConditionsGrid({
       </View>
       <View style={[styles.row, { marginTop: Spacing.sm }]}>
         <TouchableOpacity style={cardStyles.card} onPress={onPressSky} activeOpacity={0.75}>
-          <Text style={cardStyles.icon}>☁️</Text>
+          <Ionicons name={skyIcon} size={18} color={Colors.accent} style={{ marginBottom: 4 }} />
           <Text style={cardStyles.label}>Sky</Text>
           <Text style={cardStyles.value}>{sky.rainChance}%</Text>
-          <Text style={cardStyles.sub}>{sky.condition}</Text>
+          <Text style={cardStyles.sub} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+            {sky.condition}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity style={cardStyles.card} onPress={onPressAir} activeOpacity={0.75}>
-          <Text style={cardStyles.icon}>🌤️</Text>
+          <Ionicons name="thermometer-outline" size={18} color={Colors.accent} style={{ marginBottom: 4 }} />
           <Text style={cardStyles.label}>Air Temp</Text>
           <Text style={cardStyles.value}>{toDisplayTemp(air.temp)}°</Text>
           <Text style={cardStyles.sub}>{tempSuffix}</Text>
-          <Text style={cardStyles.sub}>H:{toDisplayTemp(air.high)}° L:{toDisplayTemp(air.low)}°</Text>
+          <Text style={cardStyles.sub} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+            H:{toDisplayTemp(air.high)}° L:{toDisplayTemp(air.low)}°
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity style={cardStyles.card} onPress={onPressSun} activeOpacity={0.75}>
-          <Text style={cardStyles.icon}>☀️</Text>
+          <Ionicons name="sunny-outline" size={18} color={Colors.warning} style={{ marginBottom: 4 }} />
           <Text style={cardStyles.label}>Sun</Text>
-          <Text style={cardStyles.sub}>↑ {sun.sunrise}</Text>
-          <Text style={cardStyles.sub}>↓ {sun.sunset}</Text>
+          <Text style={cardStyles.sub} numberOfLines={1}>↑ {sun.sunrise}</Text>
+          <Text style={cardStyles.sub} numberOfLines={1}>↓ {sun.sunset}</Text>
         </TouchableOpacity>
       </View>
     </View>

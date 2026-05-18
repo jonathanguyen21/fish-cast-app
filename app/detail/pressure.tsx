@@ -141,16 +141,23 @@ export default function PressureDetailScreen() {
                   fill={cursorIdx === i ? Colors.accent : Colors.ocean}
                 />
               ))}
-              {readings.map((_, i) => (
-                <SvgText
-                  key={i}
-                  x={toX(i)} y={CHART_HEIGHT - 4}
-                  fill={i === readings.length - 1 ? Colors.accent : Colors.textTertiary}
-                  fontSize={8} textAnchor="middle"
-                >
-                  {i === readings.length - 1 ? 'Now' : hourForIndex(i)}
-                </SvgText>
-              ))}
+              {readings.map((_, i) => {
+                const isLast = i === readings.length - 1
+                const isMid = i === Math.floor((readings.length - 1) / 2)
+                const isFirst = i === 0
+                const isCursor = cursorIdx === i
+                if (!isFirst && !isMid && !isLast && !isCursor) return null
+                return (
+                  <SvgText
+                    key={i}
+                    x={toX(i)} y={CHART_HEIGHT - 4}
+                    fill={isLast || isCursor ? Colors.accent : Colors.textTertiary}
+                    fontSize={8} textAnchor="middle"
+                  >
+                    {isLast ? 'Now' : hourForIndex(i)}
+                  </SvgText>
+                )
+              })}
             </Svg>
           </View>
         </View>

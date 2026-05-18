@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, Switch, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native'
+import { View, Text, Switch, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking, Modal, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
 import Slider from '@react-native-community/slider'
 import * as Notifications from 'expo-notifications'
 import Constants from 'expo-constants'
@@ -7,6 +7,7 @@ import { useSettingsStore } from '../../store/settingsStore'
 import { useSpots } from '../../hooks/useSpots'
 import { getSpeciesForRegion } from '../../data/species'
 import { SpeciesAlertsSection } from '../../features/settings/SpeciesAlertsSection'
+import { submitFeatureRequest } from '../../services/featureRequestService'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
@@ -59,6 +60,11 @@ export default function SettingsScreen() {
   const speciesForRegion = activeSpot ? getSpeciesForRegion(activeSpot.lat, activeSpot.lng) : []
 
   const [permissionStatus, setPermissionStatus] = useState<string>('undetermined')
+  const [showFeatureModal, setShowFeatureModal] = useState(false)
+  const [featureTitle, setFeatureTitle] = useState('')
+  const [featureDesc, setFeatureDesc] = useState('')
+  const [featureCategory, setFeatureCategory] = useState<'feature' | 'bug' | 'improvement'>('feature')
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     Notifications.getPermissionsAsync().then(p => setPermissionStatus(p.status))
@@ -67,6 +73,26 @@ export default function SettingsScreen() {
   async function requestPermission() {
     const { status } = await Notifications.requestPermissionsAsync()
     setPermissionStatus(status)
+  }
+
+  async function handleSubmitFeature() {
+    if (!featureTitle.trim()) {
+      Alert.alert('Title required', 'Please give your request a short title.')
+      return
+    }
+    setSubmitting(true)
+    try {
+      await submitFeatureRequest({ title: featureTitle.trim(), description: featureDesc.trim(), category: featureCategory })
+      setShowFeatureModal(false)
+      setFeatureTitle('')
+      setFeatureDesc('')
+      setFeatureCategory('feature')
+      Alert.alert('Thanks!', 'Your request has been submitted. We review all feedback.')
+    } catch {
+      Alert.alert('Error', 'Could not submit right now. Please try again later.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -143,6 +169,18 @@ export default function SettingsScreen() {
         </View>
       )}
 
+      <Text style={[Typography.sectionTitle, styles.sectionSpacer]}>Feedback</Text>
+      <View style={styles.card}>
+        <TouchableOpacity style={styles.feedbackRow} onPress={() => setShowFeatureModal(true)}>
+          <Text style={styles.feedbackIcon}>💡</Text>
+          <View style={styles.feedbackText}>
+            <Text style={styles.feedbackTitle}>Request a Feature</Text>
+            <Text style={styles.feedbackSub}>Share ideas, report bugs, or suggest improvements</Text>
+          </View>
+          <Text style={styles.feedbackChevron}>›</Text>
+        </TouchableOpacity>
+      </View>
+
       <Text style={styles.version}>FishCast v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
       <TouchableOpacity
         accessibilityRole="link"
@@ -151,6 +189,63 @@ export default function SettingsScreen() {
       >
         <Text style={styles.privacyLink}>Privacy Policy</Text>
       </TouchableOpacity>
+
+      <Modal visible={showFeatureModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowFeatureModal(false)}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView style={styles.modal} contentContainerStyle={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Request a Feature</Text>
+              <TouchableOpacity onPress={() => setShowFeatureModal(false)}>
+                <Text style={styles.modalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalSub}>Help us build a better app. All requests are reviewed.</Text>
+
+            <Text style={styles.fieldLabel}>Category</Text>
+            <View style={styles.categoryRow}>
+              {(['feature', 'improvement', 'bug'] as const).map(c => (
+                <TouchableOpacity
+                  key={c}
+                  style={[styles.categoryChip, featureCategory === c && styles.categoryChipActive]}
+                  onPress={() => setFeatureCategory(c)}
+                >
+                  <Text style={[styles.categoryText, featureCategory === c && styles.categoryTextActive]}>
+                    {c === 'feature' ? '✨ Feature' : c === 'improvement' ? '🔧 Improve' : '🐛 Bug'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.fieldLabel}>Title *</Text>
+            <TextInput
+              style={styles.fieldInput}
+              placeholder="Short summary of your request"
+              placeholderTextColor={Colors.textTertiary}
+              value={featureTitle}
+              onChangeText={setFeatureTitle}
+              maxLength={100}
+            />
+
+            <Text style={styles.fieldLabel}>Details (optional)</Text>
+            <TextInput
+              style={[styles.fieldInput, styles.fieldInputMulti]}
+              placeholder="Describe your idea or what went wrong..."
+              placeholderTextColor={Colors.textTertiary}
+              multiline
+              numberOfLines={5}
+              value={featureDesc}
+              onChangeText={setFeatureDesc}
+            />
+
+            <TouchableOpacity style={[styles.submitBtn, submitting && { opacity: 0.6 }]} onPress={handleSubmitFeature} disabled={submitting}>
+              {submitting
+                ? <ActivityIndicator color={Colors.background} />
+                : <Text style={styles.submitBtnText}>Submit Request</Text>
+              }
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </Modal>
     </ScrollView>
   )
 }
@@ -219,4 +314,41 @@ const styles = StyleSheet.create({
   sectionSpacer: { marginTop: Spacing.lg },
   version: { textAlign: 'center', color: Colors.textTertiary, fontSize: 12, marginTop: Spacing.xl },
   privacyLink: { textAlign: 'center', color: Colors.ocean, fontSize: 12, marginTop: Spacing.sm, paddingBottom: Spacing.sm },
+  feedbackRow: {
+    flexDirection: 'row', alignItems: 'center',
+    padding: Spacing.md, gap: Spacing.sm,
+  },
+  feedbackIcon: { fontSize: 20 },
+  feedbackText: { flex: 1 },
+  feedbackTitle: { fontSize: 15, color: Colors.textPrimary, fontWeight: '600' },
+  feedbackSub: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
+  feedbackChevron: { fontSize: 20, color: Colors.textTertiary },
+  modal: { flex: 1, backgroundColor: Colors.background },
+  modalContent: { padding: Spacing.screenPad, paddingBottom: 60 },
+  modalHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: Spacing.xs,
+  },
+  modalTitle: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
+  modalClose: { fontSize: 20, color: Colors.textTertiary, padding: 4 },
+  modalSub: { fontSize: 13, color: Colors.textSecondary, marginBottom: Spacing.lg },
+  fieldLabel: { fontSize: 12, fontWeight: '600', color: Colors.textTertiary, marginBottom: 6, marginTop: Spacing.md },
+  fieldInput: {
+    backgroundColor: Colors.card, borderRadius: 10,
+    padding: Spacing.md, color: Colors.textPrimary, fontSize: 15,
+  },
+  fieldInputMulti: { minHeight: 100, textAlignVertical: 'top' },
+  categoryRow: { flexDirection: 'row', gap: Spacing.sm },
+  categoryChip: {
+    flex: 1, paddingVertical: 8, borderRadius: 8,
+    backgroundColor: Colors.surface, alignItems: 'center',
+  },
+  categoryChipActive: { backgroundColor: Colors.accent + '22', borderWidth: 1, borderColor: Colors.accent },
+  categoryText: { fontSize: 13, color: Colors.textSecondary },
+  categoryTextActive: { color: Colors.accent, fontWeight: '600' },
+  submitBtn: {
+    backgroundColor: Colors.accent, borderRadius: Spacing.cardRadius,
+    paddingVertical: 16, alignItems: 'center', marginTop: Spacing.lg,
+  },
+  submitBtnText: { fontSize: 16, fontWeight: '700', color: Colors.background },
 })

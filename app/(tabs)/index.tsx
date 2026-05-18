@@ -3,6 +3,7 @@ import {
   ScrollView, View, Text, StyleSheet, RefreshControl,
   ActivityIndicator, TouchableOpacity,
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNetInfo } from '@react-native-community/netinfo'
 import { useSpots } from '../../hooks/useSpots'
@@ -204,15 +205,17 @@ export default function ForecastScreen() {
               />
               {conditions.tide && (
                 <View style={styles.quickCard}>
-                  <Text style={styles.quickIcon}>🌊</Text>
+                  <Ionicons name="water-outline" size={18} color={Colors.ocean} />
                   <Text style={styles.quickLabel}>Tide</Text>
-                  <Text style={styles.quickValue}>{conditions.tide.current.height.toFixed(1)} <Text style={styles.quickUnit}>{conditions.tide.current.unit}</Text></Text>
-                  <Text style={styles.quickSub}>{tidePhaseLabel(conditions.tide.phase)}</Text>
-                  <Text style={styles.quickPeak}>{tideTurnCountdown(conditions.tide)}</Text>
+                  <Text style={styles.quickValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                    {conditions.tide.current.height.toFixed(1)} <Text style={styles.quickUnit}>{conditions.tide.current.unit}</Text>
+                  </Text>
+                  <Text style={styles.quickSub} numberOfLines={1}>{tidePhaseLabel(conditions.tide.phase)}</Text>
+                  <Text style={styles.quickPeak} numberOfLines={1}>{tideTurnCountdown(conditions.tide)}</Text>
                 </View>
               )}
               <View style={styles.quickCard}>
-                <Text style={styles.quickIcon}>🌡️</Text>
+                <Ionicons name="thermometer-outline" size={18} color={Colors.accent} />
                 <Text style={styles.quickLabel}>Water</Text>
                 <Text style={styles.quickValue}>
                   {tempUnit === 'C'
@@ -325,8 +328,7 @@ const styles = StyleSheet.create({
     flex: 1, backgroundColor: Colors.card, borderRadius: Spacing.cardRadius,
     padding: Spacing.md, alignItems: 'center',
   },
-  quickIcon: { fontSize: 18, marginBottom: 2 },
-  quickLabel: { fontSize: 11, color: Colors.textTertiary },
+  quickLabel: { fontSize: 11, color: Colors.textTertiary, marginTop: 2 },
   quickValue: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary },
   quickSub: { fontSize: 11, color: Colors.textSecondary },
   quickPeak: { fontSize: 10, color: Colors.textTertiary, marginTop: 2 },

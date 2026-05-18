@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, LayoutAnimation } from 'react-native'
 import Animated, { useSharedValue, useAnimatedProps, withTiming, Easing } from 'react-native-reanimated'
 import { Svg, Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
+import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from './scoringEngine'
@@ -29,13 +30,15 @@ interface Props {
   }
 }
 
-const FACTORS: { key: keyof NonNullable<Props['breakdown']>; icon: string; label: string; max: number }[] = [
-  { key: 'pressure',  icon: '🌡️', label: 'Pressure',   max: 25 },
-  { key: 'solunar',   icon: '🌙', label: 'Solunar',    max: 20 },
-  { key: 'tide',      icon: '🌊', label: 'Tide',        max: 20 },
-  { key: 'wind',      icon: '💨', label: 'Wind',        max: 15 },
-  { key: 'waterTemp', icon: '🐟', label: 'Water Temp', max: 10 },
-  { key: 'sky',       icon: '☁️', label: 'Sky',         max: 10 },
+type IoniconName = keyof typeof Ionicons.glyphMap
+
+const FACTORS: { key: keyof NonNullable<Props['breakdown']>; icon: IoniconName; label: string; max: number }[] = [
+  { key: 'pressure',  icon: 'speedometer-outline', label: 'Pressure',   max: 25 },
+  { key: 'solunar',   icon: 'moon-outline',         label: 'Solunar',    max: 20 },
+  { key: 'tide',      icon: 'water-outline',         label: 'Tide',       max: 20 },
+  { key: 'wind',      icon: 'navigate-outline',      label: 'Wind',       max: 15 },
+  { key: 'waterTemp', icon: 'thermometer-outline',   label: 'Water Temp', max: 10 },
+  { key: 'sky',       icon: 'cloud-outline',          label: 'Sky',        max: 10 },
 ]
 
 export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
@@ -67,7 +70,6 @@ export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
       activeOpacity={0.9}
     >
       <View style={styles.circleWrapper}>
-        {/* SVG rotated so arc starts at top */}
         <Svg width={SIZE} height={SIZE} style={styles.svg}>
           <Defs>
             <LinearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
@@ -75,14 +77,12 @@ export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
               <Stop offset="1" stopColor={GRAD_END} />
             </LinearGradient>
           </Defs>
-          {/* Background track */}
           <Circle
             cx={SIZE / 2} cy={SIZE / 2} r={RADIUS}
             fill="none"
             stroke={Colors.surface}
             strokeWidth={STROKE_WIDTH}
           />
-          {/* Progress arc */}
           <AnimatedCircle
             cx={SIZE / 2} cy={SIZE / 2} r={RADIUS}
             fill="none"
@@ -93,13 +93,16 @@ export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
             animatedProps={animatedProps}
           />
         </Svg>
-        {/* Text overlay — native Text nodes so tests can find them */}
+        {/* Text overlay constrained to inner circle width */}
         <View style={styles.textOverlay} pointerEvents="none">
           <Text style={[styles.scoreNumber, { color: scoreColor(score) }]} testID="score-number">{score}</Text>
           <Text style={styles.scoreName}>FISHING SCORE</Text>
-          <Text style={styles.scoreLabel}>{label}</Text>
         </View>
       </View>
+
+      {/* Label sits below the circle so it never overflows */}
+      <Text style={styles.scoreLabel} numberOfLines={2}>{label}</Text>
+
       <View style={styles.bestWindowRow}>
         <Text style={styles.bestWindowLabel}>Best window</Text>
         <View style={styles.bestWindowPill}>
@@ -107,6 +110,8 @@ export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
           <Text style={styles.bestWindowScore}> · {bestWindow.score}</Text>
         </View>
       </View>
+
+      <Text style={styles.tapHint}>{expanded ? 'Tap to collapse' : 'Tap to see score breakdown'}</Text>
 
       {expanded && breakdown && (
         <View style={styles.breakdownPanel}>
@@ -116,7 +121,7 @@ export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
             const fillColor = scoreColor(ratio * 100)
             return (
               <View key={key} style={styles.breakdownRow}>
-                <Text style={styles.breakdownIcon}>{icon}</Text>
+                <Ionicons name={icon} size={14} color={Colors.textSecondary} style={styles.breakdownIcon} />
                 <Text style={styles.breakdownLabel}>{factorLabel}</Text>
                 <View style={styles.breakdownBarTrack}>
                   <View style={[styles.breakdownBarFill, { width: `${ratio * 100}%` as any, backgroundColor: fillColor }]} />
@@ -160,16 +165,18 @@ const styles = StyleSheet.create({
     lineHeight: 52,
   },
   scoreName: {
-    fontSize: 11,
+    fontSize: 10,
     color: GRAD_END,
     letterSpacing: 1.5,
     marginTop: 2,
     fontWeight: '600',
   },
   scoreLabel: {
-    fontSize: 12,
+    fontSize: 13,
     color: Colors.textSecondary,
-    marginTop: 4,
+    marginTop: Spacing.sm,
+    textAlign: 'center',
+    paddingHorizontal: Spacing.lg,
   },
   bestWindowRow: {
     marginTop: Spacing.sm,
@@ -200,6 +207,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textSecondary,
   },
+  tapHint: {
+    fontSize: 11,
+    color: Colors.textTertiary,
+    marginTop: 6,
+  },
   breakdownPanel: {
     alignSelf: 'stretch',
     marginTop: Spacing.md,
@@ -215,8 +227,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   breakdownIcon: {
-    fontSize: 14,
-    width: 20,
+    width: 18,
     textAlign: 'center',
   },
   breakdownLabel: {
