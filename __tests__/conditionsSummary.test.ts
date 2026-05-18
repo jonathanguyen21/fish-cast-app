@@ -116,11 +116,15 @@ describe('buildConditionsSummary', () => {
     expect(summary).not.toContain('rain')
   })
 
-  it('joins parts with " · " separator', () => {
-    const summary = buildConditionsSummary(makeConditions())
-    if (summary.includes(' · ')) {
-      expect(summary).toMatch(/^.+ · .+/)
-    }
+  it('joins multiple parts with " · " separator', () => {
+    // Wind > 20 + rain >= 50% produce at least 3 parts alongside pressure
+    const summary = buildConditionsSummary(makeConditions({
+      wind: { speed: 25, gusts: 32, direction: 270, directionLabel: 'W', unit: 'mph' },
+      sky: { condition: 'Heavy Rain', rainChance: 70, icon: 'heavy-rain' },
+    }))
+    expect(summary).toContain(' · ')
+    const parts = summary.split(' · ')
+    expect(parts.length).toBeGreaterThanOrEqual(3)
   })
 
   it('returns a non-empty string', () => {
