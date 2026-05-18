@@ -184,6 +184,30 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
 
+      <TouchableOpacity
+        style={styles.resetBtn}
+        onPress={() => Alert.alert(
+          'Reset to Defaults',
+          'This will reset all unit and alert settings to defaults. Spots and catch log are not affected.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Reset',
+              style: 'destructive',
+              onPress: () => {
+                setTempUnit('F')
+                setSpeedUnit('mph')
+                setLengthUnit('ft')
+                setAlertThreshold(70)
+                setAlertsEnabled(false)
+              },
+            },
+          ]
+        )}
+      >
+        <Text style={styles.resetBtnText}>Reset to Defaults</Text>
+      </TouchableOpacity>
+
       <Text style={styles.version}>FishCast v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
       <TouchableOpacity
         accessibilityRole="link"
@@ -313,6 +337,17 @@ const styles = StyleSheet.create({
   },
   upgradeButtonText: { fontSize: 16, fontWeight: '700', color: Colors.background },
   sectionSpacer: { marginTop: Spacing.lg },
+  resetBtn: {
+    marginTop: Spacing.lg,
+    alignSelf: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: 8,
+    borderRadius: 16,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.textTertiary + '40',
+  },
+  resetBtnText: { fontSize: 13, color: Colors.textTertiary },
   version: { textAlign: 'center', color: Colors.textTertiary, fontSize: 12, marginTop: Spacing.xl },
   privacyLink: { textAlign: 'center', color: Colors.ocean, fontSize: 12, marginTop: Spacing.sm, paddingBottom: Spacing.sm },
   feedbackRow: {

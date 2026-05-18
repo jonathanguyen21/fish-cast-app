@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import {
   ScrollView, View, Text, StyleSheet, RefreshControl,
-  ActivityIndicator, TouchableOpacity,
+  ActivityIndicator, TouchableOpacity, Share,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -19,6 +19,7 @@ import { ActiveRightNow } from '../../features/species/ActiveRightNow'
 import { ForecastStrip } from '../../features/forecast/ForecastStrip'
 import { DayCalendar } from '../../features/calendar/DayCalendar'
 import { scoreSpecies } from '../../features/species/speciesScoring'
+import { scoreColor } from '../../features/score/scoringEngine'
 import { scoreSpeciesHourly, type SpeciesHourlyScore } from '../../features/species/speciesHourlyScoring'
 import { detectPhase } from '../../features/tide/tideUtils'
 import { getSpeciesForRegion } from '../../data/species'
@@ -171,6 +172,17 @@ export default function ForecastScreen() {
         <View style={[styles.header, { paddingTop: insets.top }]}>
           <Text style={styles.spotName}>{activeSpot.name}</Text>
           <View style={styles.headerRight}>
+            {conditions && (
+              <TouchableOpacity
+                style={styles.logBtn}
+                onPress={() => Share.share({
+                  message: `${activeSpot.name} — Fishing Score: ${conditions.fishingScore} (${conditions.scoreLabel})\nBest window: ${conditions.bestWindow.start}–${conditions.bestWindow.end}\nvia FishCast`,
+                })}
+              >
+                <Ionicons name="share-outline" size={14} color={Colors.textSecondary} />
+                <Text style={[styles.logBtnText, { color: Colors.textSecondary }]}>Share</Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity style={styles.logBtn} onPress={() => router.push('/(tabs)/catchlog' as any)}>
               <Ionicons name="journal-outline" size={14} color={Colors.accent} />
               <Text style={styles.logBtnText}>Log</Text>
@@ -206,7 +218,7 @@ export default function ForecastScreen() {
               bestWindow={conditions.bestWindow}
               breakdown={(conditions as any).scoreBreakdown}
             />
-            <View style={styles.summaryCard}>
+            <View style={[styles.summaryCard, { borderLeftColor: scoreColor(conditions.fishingScore) }]}>
               <Text style={styles.summaryText}>{buildConditionsSummary(conditions)}</Text>
             </View>
             <ScoreTimeline hourlyScores={conditions.hourlyScores} onUpgrade={() => router.push('/settings')} />
@@ -330,6 +342,7 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.screenPad, marginBottom: Spacing.sm,
     backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
     paddingHorizontal: Spacing.md, paddingVertical: 10,
+    borderLeftWidth: 3,
   },
   summaryText: { fontSize: 12, color: Colors.textSecondary, lineHeight: 18 },
   emptyText: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center' },
