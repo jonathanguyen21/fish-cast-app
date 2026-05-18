@@ -258,7 +258,12 @@ export default function ForecastScreen() {
             <View style={[styles.summaryCard, { borderLeftColor: scoreColor(conditions.fishingScore) }]}>
               <Text style={styles.summaryText}>{buildConditionsSummary(conditions)}</Text>
             </View>
-            <ScoreTimeline hourlyScores={conditions.hourlyScores} onUpgrade={() => router.push('/settings')} />
+            <ScoreTimeline
+              hourlyScores={conditions.hourlyScores}
+              tidePhasesByHour={conditions.tidePhasesByHour}
+              windHourly={conditions.windHourly}
+              onUpgrade={() => router.push('/settings')}
+            />
             <View style={styles.quickStats}>
               <WindDisplay
                 wind={conditions.wind}
