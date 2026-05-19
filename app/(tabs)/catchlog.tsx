@@ -5,9 +5,11 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useCatchLogStore, type CatchEntry } from '../../store/catchLogStore'
+import { useCatchLog } from '../../hooks/useCatchLog'
+import { AuthModal } from '../../features/auth/AuthModal'
 import { useSpots } from '../../hooks/useSpots'
 import { scoreColor } from '../../features/score/scoringEngine'
+import type { CatchEntry } from '../../types/catchLog'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
@@ -104,9 +106,10 @@ interface FormState {
 
 export default function CatchLogScreen() {
   const insets = useSafeAreaInsets()
-  const { entries, addEntry, deleteEntry } = useCatchLogStore()
+  const { entries, addEntry, deleteEntry, isSignedIn } = useCatchLog()
   const { activeSpot } = useSpots()
   const [showModal, setShowModal] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const [form, setForm] = useState<FormState>({ species: '', weight: '', length: '', note: '', score: '' })
   const [showSpeciesPicker, setShowSpeciesPicker] = useState(false)
 
@@ -122,6 +125,14 @@ export default function CatchLogScreen() {
     const d = new Date()
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
   }, [showModal])
+
+  function handleLogCatchPress() {
+    if (!isSignedIn) {
+      setShowAuthModal(true)
+    } else {
+      setShowModal(true)
+    }
+  }
 
   function handleAdd() {
     if (!form.species.trim()) {
@@ -156,7 +167,7 @@ export default function CatchLogScreen() {
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Catch Log</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => setShowModal(true)}>
+        <TouchableOpacity style={styles.addButton} onPress={handleLogCatchPress}>
           <Ionicons name="add" size={16} color={Colors.background} />
           <Text style={styles.addButtonText}>Log Catch</Text>
         </TouchableOpacity>
@@ -183,6 +194,12 @@ export default function CatchLogScreen() {
           </>
         )}
       </ScrollView>
+
+      <AuthModal
+        visible={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => { setShowAuthModal(false); setShowModal(true) }}
+      />
 
       <Modal visible={showModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowModal(false)}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

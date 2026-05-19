@@ -5,6 +5,8 @@ import Slider from '@react-native-community/slider'
 import * as Notifications from 'expo-notifications'
 import Constants from 'expo-constants'
 import { useSettingsStore } from '../../store/settingsStore'
+import { useAuthStore } from '../../store/authStore'
+import { AuthModal } from '../../features/auth/AuthModal'
 import { useSpots } from '../../hooks/useSpots'
 import { getSpeciesForRegion } from '../../data/species'
 import { SpeciesAlertsSection } from '../../features/settings/SpeciesAlertsSection'
@@ -58,6 +60,10 @@ export default function SettingsScreen() {
     alertsEnabled, setAlertsEnabled,
     isPro, setIsPro,
   } = useSettingsStore()
+
+  const session = useAuthStore(s => s.session)
+  const signOut = useAuthStore(s => s.signOut)
+  const [showAuthModal, setShowAuthModal] = useState(false)
 
   const { activeSpot } = useSpots()
   const speciesForRegion = activeSpot ? getSpeciesForRegion(activeSpot.lat, activeSpot.lng) : []
@@ -141,6 +147,27 @@ export default function SettingsScreen() {
       </View>
 
       <SpeciesAlertsSection species={speciesForRegion} />
+
+      <Text style={[Typography.sectionTitle, styles.sectionSpacer]}>Account</Text>
+      {session ? (
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <Ionicons name="person-outline" size={16} color={Colors.textSecondary} style={{ marginRight: Spacing.sm }} />
+            <Text style={[styles.rowLabel, { flex: 1 }]} numberOfLines={1}>{session.user.email}</Text>
+            <TouchableOpacity onPress={() => signOut().catch(() => {})}>
+              <Text style={{ color: Colors.warning, fontSize: 14, fontWeight: '600' }}>Sign Out</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        <TouchableOpacity style={styles.card} onPress={() => setShowAuthModal(true)}>
+          <View style={styles.row}>
+            <Ionicons name="log-in-outline" size={16} color={Colors.accent} style={{ marginRight: Spacing.sm }} />
+            <Text style={[styles.rowLabel, { color: Colors.accent }]}>Sign In</Text>
+            <Ionicons name="chevron-forward" size={16} color={Colors.accent} />
+          </View>
+        </TouchableOpacity>
+      )}
 
       <Text style={[Typography.sectionTitle, styles.sectionSpacer]}>Subscription</Text>
       {isPro ? (
@@ -233,6 +260,12 @@ export default function SettingsScreen() {
       >
         <Text style={styles.privacyLink}>Privacy Policy</Text>
       </TouchableOpacity>
+
+      <AuthModal
+        visible={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => setShowAuthModal(false)}
+      />
 
       <Modal visible={showFeatureModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowFeatureModal(false)}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
