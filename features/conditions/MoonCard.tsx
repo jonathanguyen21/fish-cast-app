@@ -45,18 +45,30 @@ function nextPeriodLabel(moon: MoonData): string | null {
   return null
 }
 
+const PHASE_SHORT: Record<string, string> = {
+  'New Moon': 'New',
+  'Waxing Crescent': 'Wax Crescent',
+  'First Quarter': '1st Quarter',
+  'Waxing Gibbous': 'Wax Gibbous',
+  'Full Moon': 'Full',
+  'Waning Gibbous': 'Wan Gibbous',
+  'Last Quarter': 'Last Qtr',
+  'Waning Crescent': 'Wan Crescent',
+}
+
 export function MoonCard({ moon, onPress }: Props) {
   const periodHint = nextPeriodLabel(moon)
+  const phaseLabel = PHASE_SHORT[moon.phase] ?? moon.phase
   return (
     <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.75}>
       <Ionicons name="moon-outline" size={18} color={Colors.accent} style={{ marginBottom: 4 }} />
       <Text style={cardStyles.label}>Moon</Text>
       <Text style={cardStyles.value}>{moon.illumination}%</Text>
-      <Text style={cardStyles.sub} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-        {moon.phase}
+      <Text style={cardStyles.sub} numberOfLines={1}>
+        {phaseLabel}
       </Text>
       {periodHint && (
-        <Text style={[cardStyles.sub, { color: Colors.accent }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+        <Text style={[cardStyles.sub, { color: Colors.accent }]} numberOfLines={1}>
           {periodHint}
         </Text>
       )}

@@ -392,9 +392,7 @@ export default function ForecastScreen() {
               })}
             />
             <ActiveRightNow
-              species={scoredSpecies
-                .filter(ss => isPro || ss.species.tier === 'free')
-                .map(ss => ss.species)}
+              scoredSpecies={scoredSpecies.filter(ss => isPro || ss.species.tier === 'free')}
               hourlyByMap={scoredHourlyByMap}
               currentHour={currentHour}
               maxRows={2}
