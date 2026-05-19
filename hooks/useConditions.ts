@@ -37,7 +37,7 @@ export function useConditions(spot: Spot | null, selectedDate: string): UseCondi
   const marineQuery = useQuery({
     queryKey: ['marine', spot?.id],
     queryFn: () => fetchMarineData(spot!),
-    enabled: enabled && spot?.type === 'saltwater',
+    enabled,
     staleTime: 60 * 60 * 1000,
     gcTime: 4 * 60 * 60 * 1000,
   })

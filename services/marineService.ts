@@ -34,8 +34,54 @@ function buildPressureFromHourly(readings: number[]): PressureData | null {
   }
 }
 
+async function fetchWeatherWindOnly(spot: Spot): Promise<Record<string, MarineDay> | null> {
+  const weatherRes = await fetch(
+    `${WEATHER_BASE}?latitude=${spot.lat}&longitude=${spot.lng}` +
+    `&hourly=surface_pressure,windspeed_10m,winddirection_10m,windgusts_10m` +
+    `&wind_speed_unit=mph&timezone=auto`
+  )
+  const weatherJson = weatherRes.ok ? await weatherRes.json() : null
+  if (!weatherJson) return null
+
+  const times: string[] = weatherJson.hourly?.time ?? []
+  const pressures: number[] = weatherJson.hourly?.surface_pressure ?? []
+  const windSpeeds: number[] = weatherJson.hourly?.windspeed_10m ?? []
+  const windDirs: number[] = weatherJson.hourly?.winddirection_10m ?? []
+  const windGusts: number[] = weatherJson.hourly?.windgusts_10m ?? []
+
+  const byDay: Record<string, { pressures: number[]; windSpeeds: number[]; windDirs: number[]; windGusts: number[] }> = {}
+  for (let i = 0; i < times.length; i++) {
+    const dateStr = times[i].slice(0, 10)
+    if (!byDay[dateStr]) byDay[dateStr] = { pressures: [], windSpeeds: [], windDirs: [], windGusts: [] }
+    byDay[dateStr].pressures.push(pressures[i] ?? 0)
+    byDay[dateStr].windSpeeds.push(windSpeeds[i] ?? 0)
+    byDay[dateStr].windDirs.push(windDirs[i] ?? 0)
+    byDay[dateStr].windGusts.push(windGusts[i] ?? 0)
+  }
+
+  const result: Record<string, MarineDay> = {}
+  for (const [date, data] of Object.entries(byDay)) {
+    result[date] = {
+      swell: null,
+      waterTemp: null,
+      pressure: buildPressureFromHourly(data.pressures),
+      swellHourly: [],
+      windHourly: data.windSpeeds.map((s, i) => ({
+        hour: i,
+        speed: Math.round(s),
+        gusts: Math.round(data.windGusts[i] ?? s),
+        direction: Math.round(data.windDirs[i] ?? 0),
+        directionLabel: degreesToLabel(data.windDirs[i] ?? 0),
+      })),
+    }
+  }
+  return result
+}
+
 export async function fetchMarineData(spot: Spot): Promise<Record<string, MarineDay> | null> {
   try {
+    if (spot.type === 'freshwater') return fetchWeatherWindOnly(spot)
+
     const [marineRes, weatherRes] = await Promise.all([
       fetch(
         `${MARINE_BASE}?latitude=${spot.lat}&longitude=${spot.lng}` +

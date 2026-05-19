@@ -23,6 +23,7 @@ interface SettingsState {
   setIsPro: (v: boolean) => void
   setSpeciesAlert: (speciesId: string, alert: Partial<SpeciesAlert>) => void
   clearSpeciesAlert: (speciesId: string) => void
+  setAll: (s: Partial<Pick<SettingsState, 'tempUnit' | 'speedUnit' | 'lengthUnit' | 'alertThreshold' | 'alertsEnabled' | 'isPro' | 'speciesAlerts'>>) => void
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -54,6 +55,7 @@ export const useSettingsStore = create<SettingsState>()(
         delete next[speciesId]
         set({ speciesAlerts: next })
       },
+      setAll: (s) => set(s),
     }),
     {
       name: 'fishcast-settings',

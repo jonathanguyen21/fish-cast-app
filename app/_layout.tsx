@@ -18,6 +18,9 @@ import { useSpotsStore } from '../store/spotsStore'
 import { DEFAULT_SPOTS } from '../data/defaultSpots'
 import { resolveNearestStation } from '../services/noaaStationService'
 import { detectRegion } from '../data/species'
+import { fetchSpots, saveAllSpots } from '../services/spotsService'
+import { settingsFromMetadata, saveSettings } from '../services/settingsService'
+import { useSettingsStore } from '../store/settingsStore'
 
 export { ErrorBoundary } from 'expo-router'
 
@@ -62,21 +65,48 @@ const asyncStoragePersister = createAsyncStoragePersister({
 export default function RootLayout() {
   const [loaded, error] = useFonts({})
   const setSession = useAuthStore(s => s.setSession)
+  const userId = useAuthStore(s => s.session)?.user.id ?? null
   const spots = useSpotsStore(s => s.spots)
   const addSpot = useSpotsStore(s => s.addSpot)
+  const setSpots = useSpotsStore(s => s.setSpots)
+  const setAllSettings = useSettingsStore(s => s.setAll)
   const hasSeeded = useRef(false)
+  const spotsRef = useRef(spots)
+  useEffect(() => { spotsRef.current = spots }, [spots])
 
   useEffect(() => { if (error) throw error }, [error])
   useEffect(() => { if (loaded) SplashScreen.hideAsync() }, [loaded])
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
-    })
+    }).catch(() => {})
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
+      if (session) {
+        const uid = session.user.id
+        fetchSpots(uid).then(remoteSpots => {
+          if (remoteSpots.length > 0) {
+            setSpots(remoteSpots)
+          } else {
+            const local = spotsRef.current
+            if (local.length > 0) {
+              saveAllSpots(uid, local).catch(() => {})
+            }
+          }
+        }).catch(() => {})
+        const s = settingsFromMetadata(session.user.user_metadata ?? {})
+        if (s) setAllSettings(s)
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
+  useEffect(() => {
+    if (!userId) return
+    return useSettingsStore.subscribe((state) => {
+      saveSettings(state).catch(() => {})
+    })
+  }, [userId])
+
   useEffect(() => {
     if (hasSeeded.current || spots.length > 0) return
     hasSeeded.current = true
