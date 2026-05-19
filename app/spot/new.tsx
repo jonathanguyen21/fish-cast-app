@@ -32,8 +32,7 @@ export default function AddSpotScreen() {
   const [isSaving, setIsSaving] = useState(false)
   const [stations, setStations] = useState<NearbyStation[]>([])
   const [loadingStations, setLoadingStations] = useState(false)
-  const [showPopular, setShowPopular] = useState(true)
-  const [popularRegion, setPopularRegion] = useState<string>(Object.keys(POPULAR_SPOTS)[0])
+  const allPopularSpots = Object.values(POPULAR_SPOTS).flat()
 
   const isFreeAndHasSpot = !isPro && spots.length >= 1
 
@@ -162,6 +161,25 @@ export default function AddSpotScreen() {
             <View style={styles.markerOcean} />
           </Marker>
         ))}
+        {allPopularSpots.map(spot => (
+          <Marker
+            key={spot.name}
+            coordinate={{ latitude: spot.lat, longitude: spot.lng }}
+            title={spot.name}
+            description="Tap to select this spot"
+            onPress={() => {
+              setName(spot.name)
+              setType(spot.type)
+              setCoords({ lat: spot.lat, lng: spot.lng })
+              mapRef.current?.animateToRegion({
+                latitude: spot.lat, longitude: spot.lng,
+                latitudeDelta: 0.15, longitudeDelta: 0.15,
+              }, 400)
+            }}
+          >
+            <View style={styles.markerPopular} />
+          </Marker>
+        ))}
       </MapView>
 
       <View style={styles.form}>
@@ -177,58 +195,7 @@ export default function AddSpotScreen() {
           </Text>
         )}
 
-        <Text style={styles.label}>Popular Spots</Text>
-        {/* Popular spots picker */}
-        <TouchableOpacity style={styles.popularToggle} onPress={() => setShowPopular(v => !v)}>
-          <Ionicons name="location-outline" size={14} color={Colors.accent} />
-          <Text style={styles.popularToggleText}>Popular Spots</Text>
-          <Ionicons name={showPopular ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textTertiary} />
-        </TouchableOpacity>
-
-        {showPopular && (
-          <View style={styles.popularContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.regionTabs}>
-              {Object.keys(POPULAR_SPOTS).map(region => (
-                <TouchableOpacity
-                  key={region}
-                  style={[styles.regionTab, popularRegion === region && styles.regionTabActive]}
-                  onPress={() => setPopularRegion(region)}
-                >
-                  <Text style={[styles.regionTabText, popularRegion === region && styles.regionTabTextActive]}>
-                    {region}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <View style={styles.popularList}>
-              {(POPULAR_SPOTS[popularRegion] ?? []).map(spot => (
-                <TouchableOpacity
-                  key={spot.name}
-                  style={styles.popularItem}
-                  onPress={() => {
-                    setName(spot.name)
-                    setType(spot.type)
-                    setCoords({ lat: spot.lat, lng: spot.lng })
-                    mapRef.current?.animateToRegion({
-                      latitude: spot.lat, longitude: spot.lng,
-                      latitudeDelta: 0.15, longitudeDelta: 0.15,
-                    }, 400)
-                    setShowPopular(false)
-                  }}
-                >
-                  <Ionicons
-                    name={spot.type === 'saltwater' ? 'water-outline' : 'leaf-outline'}
-                    size={13}
-                    color={spot.type === 'saltwater' ? Colors.ocean : Colors.success}
-                  />
-                  <Text style={styles.popularItemText}>{spot.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
-
-        <Text style={styles.label}>Or Enter a Custom Name</Text>
+        <Text style={styles.label}>Name</Text>
         <TextInput
           style={styles.input}
           value={name}
@@ -318,27 +285,8 @@ const styles = StyleSheet.create({
     width: 16, height: 16, borderRadius: 8,
     backgroundColor: Colors.ocean, borderWidth: 2, borderColor: '#fff',
   },
-  popularToggle: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingVertical: Spacing.sm, marginTop: Spacing.sm,
+  markerPopular: {
+    width: 12, height: 12, borderRadius: 6,
+    backgroundColor: Colors.warning, borderWidth: 2, borderColor: '#fff',
   },
-  popularToggleText: { flex: 1, fontSize: 13, color: Colors.accent, fontWeight: '600' },
-  popularContainer: {
-    backgroundColor: Colors.card, borderRadius: Spacing.cardRadius,
-    marginBottom: Spacing.sm, overflow: 'hidden',
-  },
-  regionTabs: { paddingHorizontal: Spacing.sm, paddingTop: Spacing.sm },
-  regionTab: {
-    paddingHorizontal: Spacing.md, paddingVertical: 6,
-    borderRadius: 20, marginRight: 6, backgroundColor: Colors.surface,
-  },
-  regionTabActive: { backgroundColor: Colors.accent + '33' },
-  regionTabText: { fontSize: 12, color: Colors.textSecondary },
-  regionTabTextActive: { color: Colors.accent, fontWeight: '600' },
-  popularList: { paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm },
-  popularItem: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: Colors.background,
-  },
-  popularItemText: { fontSize: 14, color: Colors.textPrimary },
 })

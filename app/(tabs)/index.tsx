@@ -31,7 +31,7 @@ import { useRouter } from 'expo-router'
 import { ScoreCardSkeleton, TimelineSkeleton, QuickStatsSkeleton, ConditionsGridSkeleton } from '../../features/common/SkeletonLoader'
 import { buildConditionsSummary } from '../../features/conditions/conditionsSummary'
 import { maybeScheduleFishingAlert } from '../../services/notificationService'
-import { useCatchLogStore } from '../../store/catchLogStore'
+import { useCatchLog } from '../../hooks/useCatchLog'
 
 function tidePhaseIcon(phase: string): keyof typeof Ionicons.glyphMap {
   if (phase === 'incoming') return 'arrow-up-outline'
@@ -115,7 +115,7 @@ export default function ForecastScreen() {
   const tempUnit = useSettingsStore(s => s.tempUnit)
   const alertsEnabled = useSettingsStore(s => s.alertsEnabled)
   const alertThreshold = useSettingsStore(s => s.alertThreshold)
-  const catchEntries = useCatchLogStore(s => s.entries)
+  const { entries: catchEntries } = useCatchLog()
 
   const now = new Date()
   const currentHour = now.getHours()
