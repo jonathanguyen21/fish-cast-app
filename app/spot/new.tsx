@@ -32,7 +32,7 @@ export default function AddSpotScreen() {
   const [isSaving, setIsSaving] = useState(false)
   const [stations, setStations] = useState<NearbyStation[]>([])
   const [loadingStations, setLoadingStations] = useState(false)
-  const [showPopular, setShowPopular] = useState(false)
+  const [showPopular, setShowPopular] = useState(true)
   const [popularRegion, setPopularRegion] = useState<string>(Object.keys(POPULAR_SPOTS)[0])
 
   const isFreeAndHasSpot = !isPro && spots.length >= 1
@@ -177,10 +177,11 @@ export default function AddSpotScreen() {
           </Text>
         )}
 
+        <Text style={styles.label}>Popular Spots</Text>
         {/* Popular spots picker */}
         <TouchableOpacity style={styles.popularToggle} onPress={() => setShowPopular(v => !v)}>
           <Ionicons name="location-outline" size={14} color={Colors.accent} />
-          <Text style={styles.popularToggleText}>Choose a popular spot</Text>
+          <Text style={styles.popularToggleText}>Popular Spots</Text>
           <Ionicons name={showPopular ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textTertiary} />
         </TouchableOpacity>
 
@@ -227,7 +228,7 @@ export default function AddSpotScreen() {
           </View>
         )}
 
-        <Text style={styles.label}>Spot Name</Text>
+        <Text style={styles.label}>Or Enter a Custom Name</Text>
         <TextInput
           style={styles.input}
           value={name}
