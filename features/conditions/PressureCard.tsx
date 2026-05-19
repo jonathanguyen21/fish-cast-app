@@ -51,7 +51,7 @@ export function PressureCard({ pressure, onPress }: Props) {
     <View style={cardStyles.card}>
       <Ionicons name="speedometer-outline" size={18} color={Colors.accent} style={{ marginBottom: 4 }} />
       <Text style={cardStyles.label}>Pressure</Text>
-      <Text style={cardStyles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+      <Text style={[cardStyles.value, { fontSize: 17 }]} numberOfLines={1}>
         {pressure.value.toFixed(2)}
       </Text>
       <Text style={[cardStyles.sub, { marginBottom: 2 }]}>{pressure.unit}</Text>
