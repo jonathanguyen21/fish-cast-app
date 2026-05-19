@@ -12,6 +12,8 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import 'react-native-reanimated'
 import { Colors } from '../theme/colors'
+import { supabase } from '../lib/supabase'
+import { useAuthStore } from '../store/authStore'
 import { useSpotsStore } from '../store/spotsStore'
 import { DEFAULT_SPOTS } from '../data/defaultSpots'
 import { resolveNearestStation } from '../services/noaaStationService'
@@ -59,12 +61,22 @@ const asyncStoragePersister = createAsyncStoragePersister({
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({})
+  const setSession = useAuthStore(s => s.setSession)
   const spots = useSpotsStore(s => s.spots)
   const addSpot = useSpotsStore(s => s.addSpot)
   const hasSeeded = useRef(false)
 
   useEffect(() => { if (error) throw error }, [error])
   useEffect(() => { if (loaded) SplashScreen.hideAsync() }, [loaded])
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
   useEffect(() => {
     if (hasSeeded.current || spots.length > 0) return
     hasSeeded.current = true
