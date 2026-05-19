@@ -168,13 +168,16 @@ export function buildConditionsData(
       }
     : { start: formatHourTime(5), end: formatHourTime(7), score: 0 }
 
-  // Always produce hours 0-23 for the selected day.
-  // Past hours not returned by NWS are backfilled with the first available entry.
+  // Produce hours from the first NWS period through hour 23.
+  // NWS only has future forecast data so never backfill past hours.
   const todayHourly = nws?.hourlyForecast ?? []
   const hourMap = new Map(todayHourly.map(h => [h.hour, h]))
   const firstEntry = todayHourly[0]
   const extendedHourly = firstEntry
-    ? Array.from({ length: 24 }, (_, hour) => hourMap.get(hour) ?? { ...firstEntry, hour })
+    ? Array.from({ length: 24 - firstEntry.hour }, (_, i) => {
+        const hour = firstEntry.hour + i
+        return hourMap.get(hour) ?? { ...firstEntry, hour }
+      })
     : todayHourly
 
   return {
