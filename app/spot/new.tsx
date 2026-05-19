@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router'
 import { useSpots } from '../../hooks/useSpots'
 import { useSettingsStore } from '../../store/settingsStore'
 import { detectRegion } from '../../data/species'
+import { POPULAR_SPOTS } from '../../data/defaultSpots'
 import { resolveNearestStation, getNearbyStations, NearbyStation } from '../../services/noaaStationService'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
@@ -31,6 +32,8 @@ export default function AddSpotScreen() {
   const [isSaving, setIsSaving] = useState(false)
   const [stations, setStations] = useState<NearbyStation[]>([])
   const [loadingStations, setLoadingStations] = useState(false)
+  const [showPopular, setShowPopular] = useState(false)
+  const [popularRegion, setPopularRegion] = useState<string>(Object.keys(POPULAR_SPOTS)[0])
 
   const isFreeAndHasSpot = !isPro && spots.length >= 1
 
@@ -72,7 +75,17 @@ export default function AddSpotScreen() {
   function handleMapPress(e: MapPressEvent) {
     const { latitude, longitude } = e.nativeEvent.coordinate
     setCoords({ lat: latitude, lng: longitude })
-    if (!name) setName(`Spot at ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`)
+    if (!name) {
+      // Auto-suggest nearest station name; fall back to coordinates if none loaded
+      const nearest = stations.length > 0
+        ? stations.reduce((best, s) => {
+            const d = (s.lat - latitude) ** 2 + (s.lng - longitude) ** 2
+            const bd = (best.lat - latitude) ** 2 + (best.lng - longitude) ** 2
+            return d < bd ? s : best
+          })
+        : null
+      setName(nearest ? nearest.name : `Spot at ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`)
+    }
   }
 
   function handleStationPress(station: NearbyStation) {
@@ -162,6 +175,56 @@ export default function AddSpotScreen() {
           <Text style={styles.hint}>
             {stations.length} NOAA stations nearby — tap a blue marker to use one
           </Text>
+        )}
+
+        {/* Popular spots picker */}
+        <TouchableOpacity style={styles.popularToggle} onPress={() => setShowPopular(v => !v)}>
+          <Ionicons name="location-outline" size={14} color={Colors.accent} />
+          <Text style={styles.popularToggleText}>Choose a popular spot</Text>
+          <Ionicons name={showPopular ? 'chevron-up' : 'chevron-down'} size={14} color={Colors.textTertiary} />
+        </TouchableOpacity>
+
+        {showPopular && (
+          <View style={styles.popularContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.regionTabs}>
+              {Object.keys(POPULAR_SPOTS).map(region => (
+                <TouchableOpacity
+                  key={region}
+                  style={[styles.regionTab, popularRegion === region && styles.regionTabActive]}
+                  onPress={() => setPopularRegion(region)}
+                >
+                  <Text style={[styles.regionTabText, popularRegion === region && styles.regionTabTextActive]}>
+                    {region}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <View style={styles.popularList}>
+              {(POPULAR_SPOTS[popularRegion] ?? []).map(spot => (
+                <TouchableOpacity
+                  key={spot.name}
+                  style={styles.popularItem}
+                  onPress={() => {
+                    setName(spot.name)
+                    setType(spot.type)
+                    setCoords({ lat: spot.lat, lng: spot.lng })
+                    mapRef.current?.animateToRegion({
+                      latitude: spot.lat, longitude: spot.lng,
+                      latitudeDelta: 0.15, longitudeDelta: 0.15,
+                    }, 400)
+                    setShowPopular(false)
+                  }}
+                >
+                  <Ionicons
+                    name={spot.type === 'saltwater' ? 'water-outline' : 'leaf-outline'}
+                    size={13}
+                    color={spot.type === 'saltwater' ? Colors.ocean : Colors.success}
+                  />
+                  <Text style={styles.popularItemText}>{spot.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
         )}
 
         <Text style={styles.label}>Spot Name</Text>
@@ -254,4 +317,27 @@ const styles = StyleSheet.create({
     width: 16, height: 16, borderRadius: 8,
     backgroundColor: Colors.ocean, borderWidth: 2, borderColor: '#fff',
   },
+  popularToggle: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingVertical: Spacing.sm, marginTop: Spacing.sm,
+  },
+  popularToggleText: { flex: 1, fontSize: 13, color: Colors.accent, fontWeight: '600' },
+  popularContainer: {
+    backgroundColor: Colors.card, borderRadius: Spacing.cardRadius,
+    marginBottom: Spacing.sm, overflow: 'hidden',
+  },
+  regionTabs: { paddingHorizontal: Spacing.sm, paddingTop: Spacing.sm },
+  regionTab: {
+    paddingHorizontal: Spacing.md, paddingVertical: 6,
+    borderRadius: 20, marginRight: 6, backgroundColor: Colors.surface,
+  },
+  regionTabActive: { backgroundColor: Colors.accent + '33' },
+  regionTabText: { fontSize: 12, color: Colors.textSecondary },
+  regionTabTextActive: { color: Colors.accent, fontWeight: '600' },
+  popularList: { paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm },
+  popularItem: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: Colors.background,
+  },
+  popularItemText: { fontSize: 14, color: Colors.textPrimary },
 })
