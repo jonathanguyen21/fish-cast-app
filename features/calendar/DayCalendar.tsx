@@ -1,13 +1,16 @@
 import React, { useState, useCallback } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
+import { scoreColor } from '../score/scoringEngine'
 
 interface Props {
   selectedDate: string
   onSelect: (dateStr: string) => void
   todayScore: number | null
   isPro: boolean
+  majorMoonDays?: Record<string, boolean>
 }
 
 function localDateKey(d: Date): string {
@@ -17,13 +20,9 @@ function localDateKey(d: Date): string {
   return `${y}-${m}-${day}`
 }
 
-function scoreColor(score: number | null): string {
+function calScoreColor(score: number | null): string {
   if (score === null) return Colors.card
-  if (score >= 85) return '#4CAF70'
-  if (score >= 70) return '#8BC34A'
-  if (score >= 55) return '#FFC107'
-  if (score >= 40) return '#FF9800'
-  return '#F44336'
+  return scoreColor(score)
 }
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
@@ -32,7 +31,7 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ]
 
-export function DayCalendar({ selectedDate, onSelect, todayScore, isPro }: Props) {
+export function DayCalendar({ selectedDate, onSelect, todayScore, isPro, majorMoonDays }: Props) {
   const today = new Date()
   const todayKey = localDateKey(today)
 
@@ -70,11 +69,12 @@ export function DayCalendar({ selectedDate, onSelect, todayScore, isPro }: Props
     const isSelected = dateStr === selectedDate
     const dayIndex = Math.round((cellDate.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) / 86400000)
     const isLocked = !isPro && dayIndex >= 7
+    const isMajorMoon = !isPast && majorMoonDays?.[dateStr] === true
 
     let dotColor: string
     if (isPast) dotColor = Colors.card
     else if (isLocked) dotColor = Colors.background
-    else if (isToday && todayScore !== null) dotColor = scoreColor(todayScore)
+    else if (isToday && todayScore !== null) dotColor = calScoreColor(todayScore)
     else dotColor = Colors.card
 
     cells.push(
@@ -99,8 +99,11 @@ export function DayCalendar({ selectedDate, onSelect, todayScore, isPro }: Props
         ]}>
           {d}
         </Text>
-        <View style={[styles.dot, { backgroundColor: dotColor }]} />
-        {isLocked && <Text style={styles.lockIcon}>🔒</Text>}
+        <View style={styles.dotRow}>
+          <View style={[styles.dot, { backgroundColor: dotColor }]} />
+          {isMajorMoon && <View style={styles.moonDot} />}
+        </View>
+        {isLocked && <Ionicons name="lock-closed" size={7} color={Colors.textTertiary} style={styles.lockIcon} />}
       </TouchableOpacity>
     )
   }
@@ -114,11 +117,11 @@ export function DayCalendar({ selectedDate, onSelect, todayScore, isPro }: Props
           disabled={isCurrentMonth}
           activeOpacity={isCurrentMonth ? 1 : 0.7}
         >
-          <Text style={[styles.navArrow, isCurrentMonth && styles.navArrowDisabled]}>‹</Text>
+          <Ionicons name="chevron-back" size={18} color={isCurrentMonth ? Colors.textTertiary : Colors.textSecondary} />
         </TouchableOpacity>
         <Text style={styles.monthLabel}>{MONTH_NAMES[viewMonth]} {viewYear}</Text>
         <TouchableOpacity onPress={nextMonth} style={styles.navBtn}>
-          <Text style={styles.navArrow}>›</Text>
+          <Ionicons name="chevron-forward" size={18} color={Colors.textSecondary} />
         </TouchableOpacity>
       </View>
       <View style={styles.weekdayRow}>
@@ -131,10 +134,13 @@ export function DayCalendar({ selectedDate, onSelect, todayScore, isPro }: Props
       </View>
       <View style={styles.legend}>
         <View style={styles.legendDot} />
-        <Text style={styles.legendText}>Today's score</Text>
+        <Text style={styles.legendText}>Score</Text>
         <Text style={styles.legendSep}>·</Text>
-        <Text style={styles.legendLock}>🔒</Text>
-        <Text style={styles.legendText}>Pro only</Text>
+        <View style={styles.moonDot} />
+        <Text style={styles.legendText}>Major moon</Text>
+        <Text style={styles.legendSep}>·</Text>
+        <Ionicons name="lock-closed" size={11} color={Colors.textTertiary} />
+        <Text style={styles.legendText}>Pro</Text>
       </View>
     </View>
   )
@@ -155,8 +161,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: Colors.card,
   },
   navBtn: { padding: 4 },
-  navArrow: { fontSize: 18, color: Colors.textSecondary, fontWeight: '600' },
-  navArrowDisabled: { color: Colors.textTertiary, opacity: 0.3 },
   monthLabel: { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
   weekdayRow: {
     flexDirection: 'row', paddingHorizontal: 6, paddingTop: 6, paddingBottom: 2,
@@ -179,8 +183,10 @@ const styles = StyleSheet.create({
   dayNumToday: { color: Colors.accent },
   dayNumSelected: { color: Colors.background },
   dayNumPast: { color: Colors.textSecondary },
-  dot: { width: 5, height: 5, borderRadius: 2.5, marginTop: 3 },
-  lockIcon: { fontSize: 7, position: 'absolute', top: 2, right: 4 },
+  dotRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 3 },
+  dot: { width: 5, height: 5, borderRadius: 2.5 },
+  moonDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: Colors.warning },
+  lockIcon: { position: 'absolute', top: 2, right: 4 },
   legend: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: Spacing.md, paddingTop: 4, paddingBottom: 6, gap: 5,
@@ -188,5 +194,4 @@ const styles = StyleSheet.create({
   legendDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: Colors.success },
   legendText: { fontSize: 11, color: Colors.textSecondary },
   legendSep: { fontSize: 11, color: Colors.textTertiary },
-  legendLock: { fontSize: 11 },
 })

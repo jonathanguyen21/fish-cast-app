@@ -89,6 +89,8 @@ export function calculateSolunar(lat: number, lng: number, date: Date): SolunarD
     sun: {
       sunrise: formatTime(sunTimes.sunrise),
       sunset: formatTime(sunTimes.sunset),
+      goldenHourMorning: sunTimes.goldenHourEnd instanceof Date ? formatTime(sunTimes.goldenHourEnd) : undefined,
+      goldenHourEvening: sunTimes.goldenHour instanceof Date ? formatTime(sunTimes.goldenHour) : undefined,
     },
     inMajorPeriod,
     inMinorPeriod,

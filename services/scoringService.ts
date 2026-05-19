@@ -209,7 +209,3 @@ export function buildConditionsData(
     scoreBreakdown,
   }
 }
-
-export async function fetchConditions(_spot: Spot): Promise<ConditionsData> {
-  throw new Error('fetchConditions not used in Phase B1 — use buildConditionsData via useConditions')
-}

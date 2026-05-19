@@ -5,6 +5,8 @@ import type { Spot } from '../types/spot'
 
 interface UseForecastResult {
   data: DayForecast[] | undefined
+  isLoading: boolean
+  isError: boolean
 }
 
 export function useForecast(spot: Spot | null): UseForecastResult {
@@ -14,7 +16,8 @@ export function useForecast(spot: Spot | null): UseForecastResult {
     enabled: !!spot,
     staleTime: 2 * 60 * 60 * 1000,  // 2 hours
     gcTime: 6 * 60 * 60 * 1000,     // 6 hours
+    retry: 2,
   })
 
-  return { data: query.data }
+  return { data: query.data, isLoading: query.isLoading, isError: query.isError }
 }

@@ -55,6 +55,8 @@ export interface SkyData {
 export interface SunData {
   sunrise: string
   sunset: string
+  goldenHourMorning?: string
+  goldenHourEvening?: string
 }
 
 export interface MoonData {
@@ -83,6 +85,9 @@ export interface DayForecast {
   peakScore: number
   scoreLabel: string
   peakWindow: { start: string; end: string }
+  skyIcon?: 'clear' | 'partly-cloudy' | 'overcast' | 'light-rain' | 'heavy-rain'
+  highTemp?: number
+  rainChance?: number
 }
 
 export interface ScoreBreakdown {

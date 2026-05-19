@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   PanResponder, PanResponderInstance, useWindowDimensions,
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   Svg, Path, Defs, LinearGradient, Stop,
@@ -25,9 +26,9 @@ function directionArrow(deg: number): string {
 }
 
 function speedColor(mph: number): string {
-  if (mph <= 12) return '#10B981'
-  if (mph <= 18) return '#F59E0B'
-  return '#EF4444'
+  if (mph <= 12) return Colors.success
+  if (mph <= 18) return Colors.warning
+  return Colors.danger
 }
 
 function hourLabel(h: number) {
@@ -118,8 +119,8 @@ export default function WindDetailScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xl }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Wind</Text>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.close}>✕ Close</Text>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Ionicons name="close" size={24} color={Colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -292,6 +293,10 @@ export default function WindDetailScreen() {
           <View style={[styles.legendLine, { backgroundColor: Colors.ocean, opacity: 0.3 }]} />
           <Text style={styles.legendLabel}>Gust band</Text>
         </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDash, { borderColor: Colors.danger }]} />
+          <Text style={styles.legendLabel}>25 mph limit</Text>
+        </View>
       </View>
     </ScrollView>
   )
@@ -305,7 +310,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   title: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
-  close: { fontSize: 14, color: Colors.accent },
   cursorInfo: {
     backgroundColor: Colors.card, borderRadius: 8, padding: Spacing.sm,
     marginBottom: Spacing.sm,
@@ -323,6 +327,7 @@ const styles = StyleSheet.create({
   legend: { flexDirection: 'row', gap: Spacing.lg, justifyContent: 'center', marginTop: 4 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendLine: { width: 16, height: 3, borderRadius: 2 },
+  legendDash: { width: 16, height: 0, borderBottomWidth: 1.5, borderStyle: 'dashed', borderRadius: 0 },
   legendLabel: { fontSize: 11, color: Colors.textSecondary },
   rangeNote: { fontSize: 11, color: Colors.textTertiary, textAlign: 'center', marginBottom: Spacing.sm },
   empty: { fontSize: 13, color: Colors.textTertiary, textAlign: 'center', marginTop: Spacing.sm },

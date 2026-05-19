@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   PanResponder, PanResponderInstance, useWindowDimensions,
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Svg, Polyline, Circle, Text as SvgText, Line, G } from 'react-native-svg'
 import { useLocalSearchParams, useRouter } from 'expo-router'
@@ -96,7 +97,7 @@ export default function PressureDetailScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Pressure Detail</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.close}>✕ Close</Text>
+          <Ionicons name="close" size={24} color={Colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -141,16 +142,23 @@ export default function PressureDetailScreen() {
                   fill={cursorIdx === i ? Colors.accent : Colors.ocean}
                 />
               ))}
-              {readings.map((_, i) => (
-                <SvgText
-                  key={i}
-                  x={toX(i)} y={CHART_HEIGHT - 4}
-                  fill={i === readings.length - 1 ? Colors.accent : Colors.textTertiary}
-                  fontSize={8} textAnchor="middle"
-                >
-                  {i === readings.length - 1 ? 'Now' : hourForIndex(i)}
-                </SvgText>
-              ))}
+              {readings.map((_, i) => {
+                const isLast = i === readings.length - 1
+                const isMid = i === Math.floor((readings.length - 1) / 2)
+                const isFirst = i === 0
+                const isCursor = cursorIdx === i
+                if (!isFirst && !isMid && !isLast && !isCursor) return null
+                return (
+                  <SvgText
+                    key={i}
+                    x={toX(i)} y={CHART_HEIGHT - 4}
+                    fill={isLast || isCursor ? Colors.accent : Colors.textTertiary}
+                    fontSize={8} textAnchor="middle"
+                  >
+                    {isLast ? 'Now' : hourForIndex(i)}
+                  </SvgText>
+                )
+              })}
             </Svg>
           </View>
         </View>
@@ -176,7 +184,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   title: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
-  close: { fontSize: 14, color: Colors.accent },
   cursorInfo: {
     backgroundColor: Colors.card, borderRadius: 8, padding: Spacing.sm,
     marginBottom: Spacing.sm,

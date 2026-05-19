@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from '../score/scoringEngine'
@@ -36,15 +37,17 @@ export function SpeciesCard({ speciesScore, hourly, isPro, onPress }: Props) {
     <TouchableOpacity style={styles.card} onPress={onPress} testID={`species-card-${species.id}`}>
       <View style={styles.row}>
         <View style={styles.info}>
-          <Text style={[styles.name, isLocked && styles.locked]}>
-            {isLocked ? '🔒 Pro Species' : species.common_name}
-          </Text>
+          <View style={styles.lockedNameRow}>
+            {isLocked && <Ionicons name="lock-closed" size={11} color={Colors.textTertiary} style={{ marginRight: 4 }} />}
+            <Text style={[styles.name, isLocked && styles.locked]}>{species.common_name}</Text>
+          </View>
           <Text style={[styles.status, { color: statusColor[status] ?? Colors.textSecondary }]}>
             {status}
           </Text>
           {window && !isLocked && (
             <Text style={styles.bestWindow}>
-              Best {formatHour(window.start)}–{formatHour(window.end + 1)} · {window.avgScore}
+              Best {formatHour(window.start)}–{formatHour(window.end + 1)}
+              {' · '}<Text style={{ color: scoreColor(window.avgScore) }}>{window.avgScore}</Text>
             </Text>
           )}
         </View>
@@ -54,7 +57,10 @@ export function SpeciesCard({ speciesScore, hourly, isPro, onPress }: Props) {
         </View>
       </View>
       {isLocked && (
-        <Text style={styles.upgradeHint}>Upgrade to Pro to see what's biting →</Text>
+        <View style={styles.upgradeHintRow}>
+          <Text style={styles.upgradeHint}>Upgrade to Pro to see what's biting</Text>
+          <Ionicons name="chevron-forward" size={12} color={Colors.accent} />
+        </View>
       )}
     </TouchableOpacity>
   )
@@ -69,12 +75,14 @@ const styles = StyleSheet.create({
   info: { flex: 1 },
   name: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
   locked: { color: Colors.textTertiary },
+  lockedNameRow: { flexDirection: 'row', alignItems: 'center' },
   status: { fontSize: 12, marginTop: 2 },
   badge: {
     width: 44, height: 44, borderRadius: 22, borderWidth: 1.5,
     alignItems: 'center', justifyContent: 'center',
   },
   badgeScore: { fontSize: 15, fontWeight: '700' },
-  upgradeHint: { fontSize: 12, color: Colors.accent, marginTop: Spacing.xs },
+  upgradeHintRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: Spacing.xs },
+  upgradeHint: { fontSize: 12, color: Colors.accent },
   bestWindow: { fontSize: 11, color: Colors.textTertiary, marginTop: 1 },
 })

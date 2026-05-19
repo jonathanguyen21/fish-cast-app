@@ -195,4 +195,31 @@ describe('buildConditionsData', () => {
       expect(phase).toBe('slack')
     }
   })
+
+  it('includes scoreBreakdown with all 6 factors', () => {
+    const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
+    expect(result.scoreBreakdown).toHaveProperty('pressure')
+    expect(result.scoreBreakdown).toHaveProperty('solunar')
+    expect(result.scoreBreakdown).toHaveProperty('tide')
+    expect(result.scoreBreakdown).toHaveProperty('wind')
+    expect(result.scoreBreakdown).toHaveProperty('waterTemp')
+    expect(result.scoreBreakdown).toHaveProperty('sky')
+  })
+
+  it('scoreBreakdown tide is 0 for freshwater spot', () => {
+    const freshwaterSpot: Spot = {
+      id: 'spot_fw', name: 'Lake Tahoe', lat: 39.10, lng: -120.04,
+      type: 'freshwater', stationId: null, region: 'west_coast',
+    }
+    const result = buildConditionsData(DATE, null, NWS_BY_DAY, null, SOLUNAR, freshwaterSpot, NOW)
+    expect(result.scoreBreakdown.tide).toBe(0)
+  })
+
+  it('scoreBreakdown values sum to a plausible range', () => {
+    const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
+    const { pressure, solunar, tide, wind, waterTemp, sky } = result.scoreBreakdown
+    const sum = pressure + solunar + tide + wind + waterTemp + sky
+    expect(sum).toBeGreaterThan(0)
+    expect(sum).toBeLessThanOrEqual(100)
+  })
 })

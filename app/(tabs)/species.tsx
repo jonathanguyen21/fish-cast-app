@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react'
 import {
   ScrollView, View, Text, StyleSheet,
-  RefreshControl, ActivityIndicator,
+  RefreshControl,
 } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useSpots } from '../../hooks/useSpots'
@@ -14,6 +15,8 @@ import { scoreSpecies } from '../../features/species/speciesScoring'
 import { scoreSpeciesHourly, type SpeciesHourlyScore } from '../../features/species/speciesHourlyScoring'
 import { detectPhase } from '../../features/tide/tideUtils'
 import { getSpeciesForRegion } from '../../data/species'
+import { ScoreCardSkeleton, ConditionsGridSkeleton } from '../../features/common/SkeletonLoader'
+import { scoreColor } from '../../features/score/scoringEngine'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
@@ -74,7 +77,7 @@ export default function SpeciesScreen() {
   if (!activeSpot) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyIcon}>🎣</Text>
+        <Ionicons name="fish-outline" size={56} color={Colors.textTertiary} />
         <Text style={styles.emptyText}>No spot selected</Text>
         <Text style={styles.emptyHint}>Add a fishing spot to see what's biting</Text>
       </View>
@@ -84,7 +87,14 @@ export default function SpeciesScreen() {
   return (
     <View style={styles.screen}>
       <View style={[styles.header, { paddingTop: insets.top }]}>
-        <Text style={styles.title}>What's Biting</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>What's Biting</Text>
+          {conditions && (
+            <View style={[styles.scoreBadge, { borderColor: scoreColor(conditions.fishingScore) + '60', backgroundColor: scoreColor(conditions.fishingScore) + '18' }]}>
+              <Text style={[styles.scoreBadgeText, { color: scoreColor(conditions.fishingScore) }]}>{conditions.fishingScore}</Text>
+            </View>
+          )}
+        </View>
         <Text style={styles.subtitle}>{activeSpot.name}</Text>
       </View>
 
@@ -107,22 +117,18 @@ export default function SpeciesScreen() {
 
             <View style={styles.section}>
               <Text style={Typography.sectionTitle}>All Species</Text>
-              {scoredSpecies.every(ss => ss.score === 0) ? (
-                <Text style={styles.emptySpecies}>Nothing active right now</Text>
-              ) : (
-                scoredSpecies.map(ss => (
-                  <SpeciesCard
-                    key={ss.species.id}
-                    speciesScore={ss}
-                    hourly={scoredHourlyByMap[ss.species.id]}
-                    isPro={isPro}
-                    onPress={() => {
-                      if (ss.species.tier === 'pro' && !isPro) return
-                      router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss), hourlyData: JSON.stringify(scoredHourlyByMap[ss.species.id] ?? []) } })
-                    }}
-                  />
-                ))
-              )}
+              {scoredSpecies.map(ss => (
+                <SpeciesCard
+                  key={ss.species.id}
+                  speciesScore={ss}
+                  hourly={scoredHourlyByMap[ss.species.id]}
+                  isPro={isPro}
+                  onPress={() => {
+                    if (ss.species.tier === 'pro' && !isPro) return
+                    router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss), hourlyData: JSON.stringify(scoredHourlyByMap[ss.species.id] ?? []) } })
+                  }}
+                />
+              ))}
             </View>
           </>
         ) : (
@@ -135,8 +141,9 @@ export default function SpeciesScreen() {
       </ScrollView>
 
       {isLoading && !conditions && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={Colors.accent} />
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: Colors.background }]}>
+          <ScoreCardSkeleton />
+          <ConditionsGridSkeleton />
         </View>
       )}
     </View>
@@ -150,19 +157,17 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.sm,
     backgroundColor: Colors.background,
   },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   title: { fontSize: 28, fontWeight: '700', color: Colors.textPrimary },
   subtitle: { fontSize: 14, color: Colors.textSecondary, marginTop: 2 },
+  scoreBadge: {
+    borderRadius: 20, borderWidth: 1.5,
+    paddingHorizontal: 8, paddingVertical: 2,
+  },
+  scoreBadgeText: { fontSize: 14, fontWeight: '700' },
   content: { paddingBottom: Spacing.xl },
   section: { marginHorizontal: Spacing.screenPad, marginBottom: Spacing.md },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.sm },
-  emptyIcon: { fontSize: 48 },
-  emptyText: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center' },
+  emptyText: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center', marginTop: Spacing.sm },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center' },
-  emptySpecies: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', paddingVertical: Spacing.md },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: Colors.background + 'AA',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 })

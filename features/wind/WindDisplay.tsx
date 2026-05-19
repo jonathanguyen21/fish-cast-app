@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { useSettingsStore } from '../../store/settingsStore'
@@ -16,6 +17,14 @@ function windColor(speed: number): string {
   if (speed > 18) return Colors.danger
   if (speed > 12) return Colors.warning
   return Colors.success
+}
+
+function windQuality(speed: number): string {
+  if (speed === 0) return 'Calm'
+  if (speed <= 8) return 'Light'
+  if (speed <= 15) return 'Moderate'
+  if (speed <= 24) return 'Strong'
+  return 'Dangerous'
 }
 
 export function WindDisplay({ wind, peakSpeed, onPress }: Props) {
@@ -43,16 +52,23 @@ export function WindDisplay({ wind, peakSpeed, onPress }: Props) {
 
   const card = (
     <View style={styles.card} testID="wind-display">
-      <Text style={styles.icon}>💨</Text>
+      <Ionicons name="navigate-outline" size={18} color={Colors.accent} style={styles.icon} />
       <Text style={styles.label}>Wind</Text>
-      <View style={styles.row}>
-        <Animated.Text style={[styles.arrow, arrowStyle]}>↑</Animated.Text>
+      <View style={styles.speedRow}>
+        <Animated.View style={arrowStyle}>
+          <Ionicons name="arrow-up" size={16} color={color} />
+        </Animated.View>
         <Text style={[styles.speed, { color }]}>{displaySpeed}</Text>
         <Text style={styles.unit}>{unitLabel}</Text>
       </View>
-      <Text style={styles.sub}>{wind.directionLabel} · Gusts {displayGusts} {unitLabel}</Text>
+      <Text style={styles.sub} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+        {wind.directionLabel} · G {displayGusts} {unitLabel}
+      </Text>
+      <Text style={[styles.quality, { color }]}>{windQuality(wind.speed)}</Text>
       {displayPeak !== undefined && (
-        <Text style={styles.peak}>↑ {displayPeak} {unitLabel} max</Text>
+        <Text style={styles.peak} numberOfLines={1}>
+          max {displayPeak} {unitLabel}
+        </Text>
       )}
     </View>
   )
@@ -76,12 +92,12 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     alignItems: 'center',
   },
-  icon: { fontSize: 18, marginBottom: 2 },
+  icon: { marginBottom: 2 },
   label: { fontSize: 11, color: Colors.textTertiary, marginBottom: 2 },
-  row: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
-  arrow: { fontSize: 20, color: Colors.accent, marginRight: 2 },
-  speed: { fontSize: 24, fontWeight: '700' },
-  unit: { fontSize: 12, color: Colors.textSecondary, marginBottom: 3 },
-  sub: { fontSize: 11, color: Colors.textSecondary, marginTop: 2 },
-  peak: { fontSize: 10, color: Colors.textTertiary, marginTop: 2 },
+  speedRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 2 },
+  speed: { fontSize: 22, fontWeight: '700', lineHeight: 26 },
+  unit: { fontSize: 11, color: Colors.textSecondary, marginBottom: 2 },
+  sub: { fontSize: 11, color: Colors.textSecondary, marginTop: 2, textAlign: 'center' },
+  quality: { fontSize: 10, fontWeight: '600', marginTop: 2 },
+  peak: { fontSize: 10, color: Colors.textTertiary, marginTop: 1 },
 })

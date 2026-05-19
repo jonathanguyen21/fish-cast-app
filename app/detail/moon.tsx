@@ -1,15 +1,33 @@
 import React, { useMemo } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import Svg, { Circle, Path } from 'react-native-svg'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import type { MoonData } from '../../types/conditions'
 
-const PHASE_EMOJI: Record<string, string> = {
-  'New Moon': '🌑', 'Waxing Crescent': '🌒', 'First Quarter': '🌓',
-  'Waxing Gibbous': '🌔', 'Full Moon': '🌕', 'Waning Gibbous': '🌖',
-  'Last Quarter': '🌗', 'Waning Crescent': '🌘',
+function MoonPhaseIcon({ phase, illumination }: { phase: string; illumination: number }) {
+  const r = 20
+  const cx = 24
+  const cy = 24
+  const pct = illumination / 100
+  const isWaning = phase.startsWith('Waning') || phase === 'Last Quarter'
+  const x = cx + (isWaning ? -1 : 1) * r * (1 - 2 * pct)
+  const sweepDir = isWaning ? 0 : 1
+  const largeArc = pct > 0.5 ? 1 : 0
+  const litPath = phase === 'Full Moon'
+    ? `M ${cx} ${cy - r} A ${r} ${r} 0 1 1 ${cx - 0.001} ${cy - r} Z`
+    : phase === 'New Moon'
+      ? undefined
+      : `M ${cx} ${cy - r} A ${r} ${r} 0 1 ${sweepDir} ${cx} ${cy + r} A ${Math.abs(x - cx)} ${r} 0 1 ${largeArc} ${cx} ${cy - r} Z`
+  return (
+    <Svg width={48} height={48}>
+      <Circle cx={cx} cy={cy} r={r} fill={Colors.surface} />
+      {litPath && <Path d={litPath} fill={Colors.textSecondary} />}
+    </Svg>
+  )
 }
 
 export default function MoonDetailScreen() {
@@ -30,24 +48,20 @@ export default function MoonDetailScreen() {
     )
   }
 
-  const phaseEmoji = PHASE_EMOJI[moon.phase] ?? '🌙'
-
   return (
     <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xl }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Moon & Solunar</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.close}>✕ Close</Text>
+          <Ionicons name="close" size={24} color={Colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.moonCard}>
-        <Text style={styles.moonEmoji}>{phaseEmoji}</Text>
+        <MoonPhaseIcon phase={moon.phase} illumination={moon.illumination} />
         <View>
           <Text style={styles.moonPhase}>{moon.phase.replace(/_/g, ' ')}</Text>
           <Text style={styles.moonIllum}>{moon.illumination}% illuminated</Text>
-          {(moon as any).rise && <Text style={styles.moonTime}>Rise {(moon as any).rise}</Text>}
-          {(moon as any).set && <Text style={styles.moonTime}>Set {(moon as any).set}</Text>}
         </View>
       </View>
 
@@ -96,13 +110,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   title: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
-  close: { fontSize: 14, color: Colors.accent },
   moonCard: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.md,
     backgroundColor: Colors.card, borderRadius: Spacing.cardRadius,
     padding: Spacing.md, marginBottom: Spacing.lg,
   },
-  moonEmoji: { fontSize: 40 },
   moonPhase: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, textTransform: 'capitalize' },
   moonIllum: { fontSize: 13, color: Colors.textSecondary, marginTop: 2 },
   moonTime: { fontSize: 12, color: Colors.textTertiary, marginTop: 2 },

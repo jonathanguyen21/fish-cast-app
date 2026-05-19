@@ -44,4 +44,38 @@ describe('spotsStore', () => {
     act(() => { result.current.setActiveSpot('spot_1') })
     expect(result.current.activeSpot).toEqual(mockSpot)
   })
+
+  it('first added spot auto-activates', () => {
+    const { result } = renderHook(() => useSpotsStore())
+    act(() => { result.current.addSpot(mockSpot) })
+    expect(result.current.activeSpotId).toBe('spot_1')
+    expect(result.current.activeSpot).toEqual(mockSpot)
+  })
+
+  it('adding a second spot does not change active spot', () => {
+    const spot2: Spot = { ...mockSpot, id: 'spot_2', name: 'Half Moon Bay' }
+    const { result } = renderHook(() => useSpotsStore())
+    act(() => { result.current.addSpot(mockSpot) })
+    act(() => { result.current.addSpot(spot2) })
+    expect(result.current.activeSpotId).toBe('spot_1')
+    expect(result.current.spots).toHaveLength(2)
+  })
+
+  it('removing active spot auto-switches to first remaining', () => {
+    const spot2: Spot = { ...mockSpot, id: 'spot_2', name: 'Half Moon Bay' }
+    const { result } = renderHook(() => useSpotsStore())
+    act(() => { result.current.addSpot(mockSpot) })
+    act(() => { result.current.addSpot(spot2) })
+    act(() => { result.current.removeSpot('spot_1') })
+    expect(result.current.activeSpotId).toBe('spot_2')
+    expect(result.current.activeSpot?.name).toBe('Half Moon Bay')
+  })
+
+  it('removing the last spot nulls activeSpot', () => {
+    const { result } = renderHook(() => useSpotsStore())
+    act(() => { result.current.addSpot(mockSpot) })
+    act(() => { result.current.removeSpot('spot_1') })
+    expect(result.current.activeSpotId).toBeNull()
+    expect(result.current.activeSpot).toBeNull()
+  })
 })

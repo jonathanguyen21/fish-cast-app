@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Text, Switch, StyleSheet, TouchableOpacity } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import Slider from '@react-native-community/slider'
 import { useSettingsStore } from '../../store/settingsStore'
 import { Colors } from '../../theme/colors'
@@ -58,7 +59,10 @@ export function SpeciesAlertsSection({ species }: Props) {
         })}
         {!isPro && (
           <TouchableOpacity style={styles.lockedOverlay}>
-            <Text style={styles.lockedText}>🔒 Pro feature</Text>
+            <View style={styles.lockedRow}>
+              <Ionicons name="lock-closed" size={14} color={Colors.accent} />
+              <Text style={styles.lockedText}> Pro feature</Text>
+            </View>
             <Text style={styles.lockedSub}>Get alerts when YOUR species are biting</Text>
           </TouchableOpacity>
         )}
@@ -84,6 +88,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 4,
   },
+  lockedRow: { flexDirection: 'row', alignItems: 'center' },
   lockedText: { fontSize: 15, fontWeight: '700', color: Colors.accent },
   lockedSub: { fontSize: 12, color: Colors.textSecondary },
 })

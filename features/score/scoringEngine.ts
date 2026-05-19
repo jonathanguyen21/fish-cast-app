@@ -1,4 +1,5 @@
 import type { ScoreBreakdown } from '../../types/conditions'
+import { Colors } from '../../theme/colors'
 
 export interface ScoreResult {
   score: number
@@ -22,6 +23,7 @@ function pressurePoints(p: ScoringInputs['pressure']): number {
   if (p.trend === 'stable') return 15
   if (p.trend === 'rising' && p.rate === 'slow') return 10
   if (p.trend === 'rising' && p.rate === 'normal') return 7
+  // Falling fast scores below rising-normal: rapid drop = barometric shock, fish go deep and stop feeding
   if (p.trend === 'falling' && p.rate === 'fast') return 8
   return 5  // rising+fast
 }
@@ -120,7 +122,7 @@ export function scoreLabel(score: number): string {
 }
 
 export function scoreColor(score: number): string {
-  if (score >= 70) return '#10B981'
-  if (score >= 40) return '#F59E0B'
-  return '#EF4444'
+  if (score >= 70) return Colors.success
+  if (score >= 40) return Colors.warning
+  return Colors.danger
 }

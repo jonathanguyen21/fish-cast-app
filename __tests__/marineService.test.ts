@@ -73,4 +73,36 @@ describe('fetchMarineData', () => {
     expect(typeof day.swell!.directionLabel).toBe('string')
     expect(day.swell!.directionLabel.length).toBeGreaterThan(0)
   })
+
+  it('returns null on network failure', async () => {
+    ;(global.fetch as jest.Mock).mockRejectedValueOnce(new Error('network error'))
+    const result = await fetchMarineData(SPOT)
+    expect(result).toBeNull()
+  })
+
+  it('returns swellHourly array with positive heights only', async () => {
+    mockBothFetches()
+    const result = await fetchMarineData(SPOT)
+    const day = result![FIXTURE_DATE]
+    expect(Array.isArray(day.swellHourly)).toBe(true)
+    for (const h of day.swellHourly) {
+      expect(h.height).toBeGreaterThan(0)
+      expect(typeof h.hour).toBe('number')
+      expect(typeof h.period).toBe('number')
+      expect(typeof h.directionLabel).toBe('string')
+    }
+  })
+
+  it('still returns a result map when weather fetch fails (graceful degradation)', async () => {
+    ;(global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: async () => marineFixture })
+      .mockResolvedValueOnce({ ok: false, status: 503 })
+    const result = await fetchMarineData(SPOT)
+    // Marine result still returned (not null) — marine data is available even without weather
+    expect(result).not.toBeNull()
+    // Swell and waterTemp still populated from marine data
+    const day = result![FIXTURE_DATE]
+    expect(day.swell).not.toBeNull()
+    expect(day.waterTemp).not.toBeNull()
+  })
 })
