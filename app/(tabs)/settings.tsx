@@ -56,7 +56,7 @@ export default function SettingsScreen() {
     lengthUnit, setLengthUnit,
     alertThreshold, setAlertThreshold,
     alertsEnabled, setAlertsEnabled,
-    isPro,
+    isPro, setIsPro,
   } = useSettingsStore()
 
   const { activeSpot } = useSpots()
@@ -213,6 +213,17 @@ export default function SettingsScreen() {
       >
         <Text style={styles.resetBtnText}>Reset to Defaults</Text>
       </TouchableOpacity>
+
+      {__DEV__ && (
+        <>
+          <Text style={[Typography.sectionTitle, styles.sectionSpacer]}>Developer</Text>
+          <View style={styles.card}>
+            <Row iconName="star-outline" label="Pro Mode">
+              <Switch value={isPro} onValueChange={setIsPro} trackColor={{ true: Colors.accent }} />
+            </Row>
+          </View>
+        </>
+      )}
 
       <Text style={styles.version}>FishCast v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
       <TouchableOpacity
