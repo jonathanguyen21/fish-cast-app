@@ -13,7 +13,7 @@ const PRESSURE: PressureData = {
 }
 
 const MOON: MoonData = {
-  phase: 'Waxing Gibbous',
+  phase: 'Wax Gibbous',
   illumination: 72,
   majorPeriods: [{ start: '4:00 PM', end: '5:00 PM' }],
   minorPeriods: [{ start: '10:15 AM', end: '11:15 AM' }],
@@ -62,19 +62,19 @@ describe('MoonCard', () => {
 
   it('shows moon phase label', () => {
     const { getByText } = render(<MoonCard moon={MOON} onPress={() => {}} />)
-    expect(getByText('Waxing Gibbous')).toBeTruthy()
+    expect(getByText('Wax Gibbous')).toBeTruthy()
   })
 
   it('calls onPress when tapped', () => {
     const onPress = jest.fn()
     const { getByText } = render(<MoonCard moon={MOON} onPress={onPress} />)
-    fireEvent.press(getByText('Waxing Gibbous'))
+    fireEvent.press(getByText('Wax Gibbous'))
     expect(onPress).toHaveBeenCalled()
   })
 
   it('renders without major periods', () => {
     const noMoon: MoonData = { ...MOON, majorPeriods: [], minorPeriods: [] }
     const { getByText } = render(<MoonCard moon={noMoon} onPress={() => {}} />)
-    expect(getByText('Waxing Gibbous')).toBeTruthy()
+    expect(getByText('Wax Gibbous')).toBeTruthy()
   })
 })

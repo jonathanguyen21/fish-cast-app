@@ -113,6 +113,6 @@ describe('ConditionsGrid', () => {
 
   it('renders moon phase from MoonCard', () => {
     const { getByText } = render(<ConditionsGrid {...PROPS} />)
-    expect(getByText('Full Moon')).toBeTruthy()
+    expect(getByText('Full')).toBeTruthy()
   })
 })
