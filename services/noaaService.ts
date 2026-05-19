@@ -151,7 +151,7 @@ export async function fetchNoaaData(spot: Spot): Promise<NoaaData> {
     fetchProduct(buildPredictionsUrl(id, 'h')),
     fetchProduct(buildUrl(id, 'water_temperature')),
     fetchProduct(buildUrl(id, 'wind', '&range=1')),
-    fetchProduct(buildUrl(id, 'air_pressure', '&range=7')),
+    fetchProduct(buildUrl(id, 'air_pressure')),
   ])
 
   const val = <T>(r: PromiseSettledResult<T>): T | null =>

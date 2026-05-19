@@ -44,13 +44,14 @@ export default function PressureDetailScreen() {
   )
   const readings = pressure?.readings ?? []
   const currentHour = new Date().getHours()
-  const hourForIndex = (i: number) => {
-    const raw = currentHour - (readings.length - 1 - i)
-    const h = ((raw % 24) + 24) % 24
+
+  const TOTAL_HOURS = 24
+  const formatHour = (h: number) => {
     const period = h < 12 ? 'AM' : 'PM'
     const display = h === 0 ? 12 : h > 12 ? h - 12 : h
     return `${display} ${period}`
   }
+
   const chartW = width - Spacing.screenPad * 2 - Spacing.md * 2
   const innerW = chartW - PADDING.left - PADDING.right
   const innerH = CHART_HEIGHT - PADDING.top - PADDING.bottom
@@ -59,15 +60,17 @@ export default function PressureDetailScreen() {
   const maxR = readings.length ? Math.max(...readings) + 0.05 : 30.2
   const range = maxR - minR || 0.1
 
+  // X maps hour (0–23) across full day; Y maps pressure value
   const toX = useCallback(
-    (i: number) => PADDING.left + (i / Math.max(readings.length - 1, 1)) * innerW,
-    [readings.length, innerW]
+    (hour: number) => PADDING.left + (hour / (TOTAL_HOURS - 1)) * innerW,
+    [innerW]
   )
   const toY = useCallback(
     (v: number) => PADDING.top + innerH - ((v - minR) / range) * innerH,
     [innerH, minR, range]
   )
 
+  // readings[0] = midnight, readings[i] = hour i
   const points = readings.map((v, i) => `${toX(i)},${toY(v)}`).join(' ')
 
   const [cursorIdx, setCursorIdx] = useState<number | null>(null)
@@ -77,13 +80,15 @@ export default function PressureDetailScreen() {
     onMoveShouldSetPanResponder: () => true,
     onPanResponderGrant: (e) => {
       const x = e.nativeEvent.locationX - PADDING.left
-      const idx = Math.round((x / innerW) * (readings.length - 1))
-      setCursorIdx(Math.max(0, Math.min(idx, readings.length - 1)))
+      const hour = Math.round((x / innerW) * (TOTAL_HOURS - 1))
+      const clamped = Math.max(0, Math.min(hour, readings.length - 1))
+      setCursorIdx(clamped)
     },
     onPanResponderMove: (e) => {
       const x = e.nativeEvent.locationX - PADDING.left
-      const idx = Math.round((x / innerW) * (readings.length - 1))
-      setCursorIdx(Math.max(0, Math.min(idx, readings.length - 1)))
+      const hour = Math.round((x / innerW) * (TOTAL_HOURS - 1))
+      const clamped = Math.max(0, Math.min(hour, readings.length - 1))
+      setCursorIdx(clamped)
     },
     onPanResponderRelease: () => {},
   }), [readings.length, innerW])
@@ -104,7 +109,7 @@ export default function PressureDetailScreen() {
       {cursorIdx !== null && readings[cursorIdx] !== undefined && (
         <View style={styles.cursorInfo}>
           <Text style={styles.cursorText}>
-            {readings[cursorIdx].toFixed(2)} inHg · {hourForIndex(cursorIdx)}
+            {readings[cursorIdx].toFixed(2)} inHg · {formatHour(cursorIdx)}
           </Text>
         </View>
       )}
@@ -135,6 +140,12 @@ export default function PressureDetailScreen() {
                 stroke={Colors.ocean}
                 strokeWidth={2}
               />
+              {/* Now marker */}
+              <Line
+                x1={toX(currentHour)} y1={PADDING.top}
+                x2={toX(currentHour)} y2={PADDING.top + innerH}
+                stroke={Colors.accent} strokeWidth={1} strokeOpacity={0.5}
+              />
               {readings.map((v, i) => (
                 <Circle
                   key={i}
@@ -142,23 +153,30 @@ export default function PressureDetailScreen() {
                   fill={cursorIdx === i ? Colors.accent : Colors.ocean}
                 />
               ))}
-              {readings.map((_, i) => {
-                const isLast = i === readings.length - 1
-                const isMid = i === Math.floor((readings.length - 1) / 2)
-                const isFirst = i === 0
-                const isCursor = cursorIdx === i
-                if (!isFirst && !isMid && !isLast && !isCursor) return null
-                return (
-                  <SvgText
-                    key={i}
-                    x={toX(i)} y={CHART_HEIGHT - 4}
-                    fill={isLast || isCursor ? Colors.accent : Colors.textTertiary}
-                    fontSize={8} textAnchor="middle"
-                  >
-                    {isLast ? 'Now' : hourForIndex(i)}
-                  </SvgText>
-                )
-              })}
+              {/* Fixed x-axis labels: 12 AM, 6 AM, 12 PM, 6 PM, + cursor */}
+              {[0, 6, 12, 18].map(h => (
+                <SvgText
+                  key={h}
+                  x={toX(h)} y={CHART_HEIGHT - 4}
+                  fill={Colors.textTertiary} fontSize={8} textAnchor="middle"
+                >
+                  {formatHour(h)}
+                </SvgText>
+              ))}
+              <SvgText
+                x={toX(currentHour)} y={CHART_HEIGHT - 4}
+                fill={Colors.accent} fontSize={8} textAnchor="middle"
+              >
+                Now
+              </SvgText>
+              {cursorIdx !== null && cursorIdx !== currentHour && (
+                <SvgText
+                  x={toX(cursorIdx)} y={PADDING.top + 10}
+                  fill={Colors.accent} fontSize={8} textAnchor="middle"
+                >
+                  {formatHour(cursorIdx)}
+                </SvgText>
+              )}
             </Svg>
           </View>
         </View>
