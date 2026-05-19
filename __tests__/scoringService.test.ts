@@ -62,6 +62,7 @@ const MARINE: Record<string, MarineDay> = {
       { hour: 12, height: 1.4, period: 12, directionLabel: 'WNW' },
       { hour: 16, height: 1.6, period: 13, directionLabel: 'W' },
     ],
+    windHourly: [],
   },
 }
 

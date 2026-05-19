@@ -6,6 +6,7 @@ export interface MarineDay {
   waterTemp: number | null
   pressure: PressureData | null
   swellHourly: { hour: number; height: number; period: number; directionLabel: string }[]
+  windHourly: { hour: number; speed: number; gusts: number; direction: number; directionLabel: string }[]
 }
 
 const MARINE_BASE = 'https://marine-api.open-meteo.com/v1/marine'
@@ -43,7 +44,8 @@ export async function fetchMarineData(spot: Spot): Promise<Record<string, Marine
       ),
       fetch(
         `${WEATHER_BASE}?latitude=${spot.lat}&longitude=${spot.lng}` +
-        `&hourly=surface_pressure&timezone=auto`
+        `&hourly=surface_pressure,windspeed_10m,winddirection_10m,windgusts_10m` +
+        `&wind_speed_unit=mph&timezone=auto`
       ),
     ])
 
@@ -58,20 +60,27 @@ export async function fetchMarineData(spot: Spot): Promise<Record<string, Marine
     const directions: number[] = marineJson.hourly?.wave_direction ?? []
     const seaTemps: number[] = marineJson.hourly?.sea_surface_temperature ?? []
     const pressures: number[] = weatherJson?.hourly?.surface_pressure ?? []
+    const windSpeeds: number[] = weatherJson?.hourly?.windspeed_10m ?? []
+    const windDirs: number[] = weatherJson?.hourly?.winddirection_10m ?? []
+    const windGusts: number[] = weatherJson?.hourly?.windgusts_10m ?? []
 
     const byDay: Record<string, {
       heights: number[]; periods: number[]; directions: number[]
       temps: number[]; pressures: number[]
+      windSpeeds: number[]; windDirs: number[]; windGusts: number[]
     }> = {}
 
     for (let i = 0; i < times.length; i++) {
       const dateStr = times[i].slice(0, 10)
-      if (!byDay[dateStr]) byDay[dateStr] = { heights: [], periods: [], directions: [], temps: [], pressures: [] }
+      if (!byDay[dateStr]) byDay[dateStr] = { heights: [], periods: [], directions: [], temps: [], pressures: [], windSpeeds: [], windDirs: [], windGusts: [] }
       byDay[dateStr].heights.push(heights[i] ?? 0)
       byDay[dateStr].periods.push(periods[i] ?? 0)
       byDay[dateStr].directions.push(directions[i] ?? 0)
       byDay[dateStr].temps.push(seaTemps[i] ?? 0)
       byDay[dateStr].pressures.push(pressures[i] ?? 0)
+      byDay[dateStr].windSpeeds.push(windSpeeds[i] ?? 0)
+      byDay[dateStr].windDirs.push(windDirs[i] ?? 0)
+      byDay[dateStr].windGusts.push(windGusts[i] ?? 0)
     }
 
     const result: Record<string, MarineDay> = {}
@@ -106,6 +115,13 @@ export async function fetchMarineData(spot: Spot): Promise<Record<string, Marine
             directionLabel: degreesToLabel(data.directions[i] ?? 0),
           }))
           .filter(h => h.height > 0),
+        windHourly: data.windSpeeds.map((s, i) => ({
+          hour: i,
+          speed: Math.round(s),
+          gusts: Math.round(data.windGusts[i] ?? s),
+          direction: Math.round(data.windDirs[i] ?? 0),
+          directionLabel: degreesToLabel(data.windDirs[i] ?? 0),
+        })),
       }
     }
 

@@ -185,13 +185,15 @@ export function buildConditionsData(
     scoreLabel: scoreLabel(currentScore),
     bestWindow,
     wind,
-    windHourly: extendedHourly.map(h => ({
-      hour: h.hour,
-      speed: h.windSpeed,
-      gusts: h.windGust,
-      direction: h.directionDeg,
-      directionLabel: h.windDirection,
-    })),
+    windHourly: marine?.windHourly?.length
+      ? marine.windHourly
+      : extendedHourly.map(h => ({
+          hour: h.hour,
+          speed: h.windSpeed,
+          gusts: h.windGust,
+          direction: h.directionDeg,
+          directionLabel: h.windDirection,
+        })),
     airHourly: extendedHourly.map(h => ({
       hour: h.hour,
       temp: h.temp,

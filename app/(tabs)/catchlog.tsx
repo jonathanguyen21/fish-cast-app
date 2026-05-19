@@ -76,7 +76,10 @@ function CatchCard({ entry, onDelete }: { entry: CatchEntry; onDelete: () => voi
       <View style={styles.catchStats}>
         {entry.weight != null && (
           <View style={styles.catchStat}>
-            <Text style={styles.catchStatValue}>{entry.weight} <Text style={styles.catchStatUnit}>lbs</Text></Text>
+            <Text style={styles.catchStatValue}>
+              {Math.floor(entry.weight)}<Text style={styles.catchStatUnit}> lbs </Text>
+              {Math.round((entry.weight % 1) * 16)}<Text style={styles.catchStatUnit}> oz</Text>
+            </Text>
           </View>
         )}
         {entry.length != null && (
@@ -98,7 +101,8 @@ function CatchCard({ entry, onDelete }: { entry: CatchEntry; onDelete: () => voi
 
 interface FormState {
   species: string
-  weight: string
+  weightLbs: string
+  weightOz: string
   length: string
   note: string
   score: string
@@ -110,7 +114,7 @@ export default function CatchLogScreen() {
   const { activeSpot } = useSpots()
   const [showModal, setShowModal] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const [form, setForm] = useState<FormState>({ species: '', weight: '', length: '', note: '', score: '' })
+  const [form, setForm] = useState<FormState>({ species: '', weightLbs: '', weightOz: '', length: '', note: '', score: '' })
   const [showSpeciesPicker, setShowSpeciesPicker] = useState(false)
 
   const today = useMemo(() => {
@@ -139,18 +143,26 @@ export default function CatchLogScreen() {
       Alert.alert('Species required', 'Please enter what you caught.')
       return
     }
+    const lbs = parseInt(form.weightLbs || '0', 10)
+    const oz = parseInt(form.weightOz || '0', 10)
+    const weight = (form.weightLbs || form.weightOz) ? lbs + oz / 16 : undefined
+    const score = form.score ? parseInt(form.score, 10) : undefined
+    if (score !== undefined && (score < 0 || score > 100)) {
+      Alert.alert('Invalid score', 'Score must be between 0 and 100.')
+      return
+    }
     addEntry({
       date: today,
       time: nowTime,
       spotId: activeSpot?.id ?? 'unknown',
       spotName: activeSpot?.name ?? 'Unknown Spot',
       species: form.species.trim(),
-      weight: form.weight ? parseFloat(form.weight) : undefined,
+      weight,
       length: form.length ? parseFloat(form.length) : undefined,
       note: form.note.trim() || undefined,
-      fishingScore: form.score ? parseInt(form.score, 10) : undefined,
+      fishingScore: score,
     })
-    setForm({ species: '', weight: '', length: '', note: '', score: '' })
+    setForm({ species: '', weightLbs: '', weightOz: '', length: '', note: '', score: '' })
     setShowModal(false)
   }
 
@@ -201,12 +213,12 @@ export default function CatchLogScreen() {
         onSuccess={() => { setShowAuthModal(false); setShowModal(true) }}
       />
 
-      <Modal visible={showModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowModal(false)}>
+      <Modal visible={showModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { setShowModal(false); setForm({ species: '', weightLbs: '', weightOz: '', length: '', note: '', score: '' }) }}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView style={styles.modal} contentContainerStyle={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Log a Catch</Text>
-              <TouchableOpacity onPress={() => setShowModal(false)} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <TouchableOpacity onPress={() => { setShowModal(false); setForm({ species: '', weightLbs: '', weightOz: '', length: '', note: '', score: '' }) }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <Ionicons name="close" size={18} color={Colors.textSecondary} />
                 <Text style={styles.modalClose}>Cancel</Text>
               </TouchableOpacity>
@@ -243,41 +255,55 @@ export default function CatchLogScreen() {
               </View>
             )}
 
+            <Text style={styles.fieldLabel}>Weight</Text>
             <View style={styles.row}>
               <View style={styles.halfField}>
-                <Text style={styles.fieldLabel}>Weight (lbs)</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="e.g. 4.5"
+                  placeholder="lbs"
                   placeholderTextColor={Colors.textTertiary}
-                  keyboardType="decimal-pad"
-                  value={form.weight}
-                  onChangeText={v => setForm(f => ({ ...f, weight: v }))}
+                  keyboardType="number-pad"
+                  value={form.weightLbs}
+                  onChangeText={v => setForm(f => ({ ...f, weightLbs: v.replace(/[^0-9]/g, '') }))}
                 />
               </View>
               <View style={styles.halfField}>
-                <Text style={styles.fieldLabel}>Length (in)</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="e.g. 18"
+                  placeholder="oz (0–15)"
                   placeholderTextColor={Colors.textTertiary}
-                  keyboardType="decimal-pad"
-                  value={form.length}
-                  onChangeText={v => setForm(f => ({ ...f, length: v }))}
+                  keyboardType="number-pad"
+                  value={form.weightOz}
+                  onChangeText={v => {
+                    const digits = v.replace(/[^0-9]/g, '')
+                    const n = parseInt(digits || '0', 10)
+                    setForm(f => ({ ...f, weightOz: n > 15 ? '15' : digits }))
+                  }}
                 />
               </View>
             </View>
 
             <View style={styles.row}>
               <View style={styles.halfField}>
-                <Text style={styles.fieldLabel}>Fishing Score (0–100)</Text>
+                <Text style={styles.fieldLabel}>Length (in)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. 18.5"
+                  placeholderTextColor={Colors.textTertiary}
+                  keyboardType="decimal-pad"
+                  value={form.length}
+                  onChangeText={v => setForm(f => ({ ...f, length: v.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1') }))}
+                />
+              </View>
+              <View style={styles.halfField}>
+                <Text style={styles.fieldLabel}>Score (0–100)</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. 72"
                   placeholderTextColor={Colors.textTertiary}
                   keyboardType="number-pad"
                   value={form.score}
-                  onChangeText={v => setForm(f => ({ ...f, score: v }))}
+                  onChangeText={v => setForm(f => ({ ...f, score: v.replace(/[^0-9]/g, '') }))}
                 />
               </View>
             </View>
