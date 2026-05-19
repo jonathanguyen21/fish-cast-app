@@ -27,10 +27,16 @@ const statusColor: Record<SpeciesScore['status'], string> = {
   'Inactive': Colors.textTertiary,
 }
 
+const FAKE_SCORE_POOL = [82, 65, 48, 74, 58, 71, 55, 79, 63, 45]
+function lockedBadgeColor(id: string): string {
+  const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
+  return scoreColor(FAKE_SCORE_POOL[hash % FAKE_SCORE_POOL.length])
+}
+
 export function SpeciesCard({ speciesScore, hourly, isPro, onPress }: Props) {
   const { species, score, status } = speciesScore
   const isLocked = species.tier === 'pro' && !isPro
-  const color = scoreColor(score)
+  const color = isLocked ? lockedBadgeColor(species.id) : scoreColor(score)
   const window = hourly ? bestWindowSummary(hourly) : null
 
   return (

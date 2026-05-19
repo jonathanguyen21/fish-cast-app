@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import {
-  ScrollView, View, Text, StyleSheet,
+  ScrollView, View, Text, StyleSheet, TouchableOpacity,
   RefreshControl,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
@@ -70,9 +70,10 @@ export default function SpeciesScreen() {
     return map
   }, [scoredSpecies, activeSpot, conditions])
 
-  const activeSpecies = scoredSpecies
-    .filter(ss => isPro || ss.species.tier === 'free')
-    .map(ss => ss.species)
+  const freeSpecies = scoredSpecies.filter(ss => ss.species.tier === 'free')
+  const activeScoredSpecies = isPro ? scoredSpecies : freeSpecies
+  const visibleSpecies = isPro ? scoredSpecies : freeSpecies.slice(0, 2)
+  const lockedCount = isPro ? 0 : scoredSpecies.length - visibleSpecies.length
 
   if (!activeSpot) {
     return (
@@ -105,9 +106,10 @@ export default function SpeciesScreen() {
         {conditions ? (
           <>
             <ActiveRightNow
-              species={activeSpecies}
+              scoredSpecies={activeScoredSpecies}
               hourlyByMap={scoredHourlyByMap}
               currentHour={currentHour}
+              maxRows={2}
               onPressSpecies={(id) => {
                 const ss = scoredSpecies.find(s => s.species.id === id)
                 if (!ss) return
@@ -117,18 +119,23 @@ export default function SpeciesScreen() {
 
             <View style={styles.section}>
               <Text style={Typography.sectionTitle}>All Species</Text>
-              {scoredSpecies.map(ss => (
+              {visibleSpecies.map(ss => (
                 <SpeciesCard
                   key={ss.species.id}
                   speciesScore={ss}
                   hourly={scoredHourlyByMap[ss.species.id]}
                   isPro={isPro}
-                  onPress={() => {
-                    if (ss.species.tier === 'pro' && !isPro) return
-                    router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss), hourlyData: JSON.stringify(scoredHourlyByMap[ss.species.id] ?? []) } })
-                  }}
+                  onPress={() => router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss), hourlyData: JSON.stringify(scoredHourlyByMap[ss.species.id] ?? []) } })
+                  }
                 />
               ))}
+              {lockedCount > 0 && (
+                <TouchableOpacity style={styles.upgradeTeaser} onPress={() => router.push('/settings' as never)}>
+                  <Ionicons name="lock-closed" size={14} color={Colors.accent} />
+                  <Text style={styles.upgradeTeaserText}>{lockedCount} more species unlocked with Pro</Text>
+                  <Ionicons name="chevron-forward" size={14} color={Colors.accent} />
+                </TouchableOpacity>
+              )}
             </View>
           </>
         ) : (
@@ -167,6 +174,12 @@ const styles = StyleSheet.create({
   scoreBadgeText: { fontSize: 14, fontWeight: '700' },
   content: { paddingBottom: Spacing.xl },
   section: { marginHorizontal: Spacing.screenPad, marginBottom: Spacing.md },
+  upgradeTeaser: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    backgroundColor: Colors.accent + '15', borderRadius: Spacing.cardRadius,
+    padding: Spacing.md, marginTop: Spacing.xs,
+  },
+  upgradeTeaserText: { flex: 1, fontSize: 14, color: Colors.accent, fontWeight: '600' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.sm },
   emptyText: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center', marginTop: Spacing.sm },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center' },

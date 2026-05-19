@@ -1,16 +1,17 @@
-import React from 'react'
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native'
+import React, { useState } from 'react'
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import { useSpots } from '../../hooks/useSpots'
 import { useConditions } from '../../hooks/useConditions'
+import { SwipeableRow } from '../../features/common/SwipeableRow'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from '../../features/score/scoringEngine'
 import type { Spot } from '../../types/spot'
 
-function SpotRow({ spot, isActive, onPress, onDelete }: {
-  spot: Spot; isActive: boolean; onPress: () => void; onDelete: () => void
+function SpotRow({ spot, isActive, onPress, onDelete, onEdit }: {
+  spot: Spot; isActive: boolean; onPress: () => void; onDelete: () => void; onEdit: () => void
 }) {
   const todayStr = new Date().toISOString().slice(0, 10)
   const { data } = useConditions(spot, todayStr)
@@ -21,9 +22,10 @@ function SpotRow({ spot, isActive, onPress, onDelete }: {
     <TouchableOpacity
       style={[styles.row, isActive && styles.activeRow]}
       onPress={onPress}
-      onLongPress={() => Alert.alert('Delete Spot', `Remove "${spot.name}"?`, [
-        { text: 'Cancel', style: 'cancel' },
+      onLongPress={() => Alert.alert(spot.name, undefined, [
+        { text: 'Rename', onPress: onEdit },
         { text: 'Delete', style: 'destructive', onPress: onDelete },
+        { text: 'Cancel', style: 'cancel' },
       ])}
     >
       {isActive && <View style={styles.activeIndicator} />}
@@ -47,6 +49,9 @@ function SpotRow({ spot, isActive, onPress, onDelete }: {
           </Text>
         </View>
       </View>
+      <TouchableOpacity onPress={onEdit} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={styles.editBtn}>
+        <Ionicons name="pencil-outline" size={15} color={Colors.textTertiary} />
+      </TouchableOpacity>
       {score !== null && (
         <View style={[styles.scoreBadge, { borderColor: color, backgroundColor: color + '18' }]}>
           <Text style={[styles.scoreText, { color }]}>{score}</Text>
@@ -58,7 +63,21 @@ function SpotRow({ spot, isActive, onPress, onDelete }: {
 
 export default function SpotsScreen() {
   const router = useRouter()
-  const { spots, activeSpotId, setActiveSpot, removeSpot } = useSpots()
+  const { spots, activeSpotId, setActiveSpot, removeSpot, updateSpot } = useSpots()
+  const [editingSpot, setEditingSpot] = useState<Spot | null>(null)
+  const [editName, setEditName] = useState('')
+
+  function openEdit(spot: Spot) {
+    setEditingSpot(spot)
+    setEditName(spot.name)
+  }
+
+  function saveEdit() {
+    if (editingSpot && editName.trim()) {
+      updateSpot(editingSpot.id, { name: editName.trim() })
+    }
+    setEditingSpot(null)
+  }
 
   return (
     <View style={styles.screen}>
@@ -78,20 +97,46 @@ export default function SpotsScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <SpotRow
-            spot={item}
-            isActive={item.id === activeSpotId}
-            onPress={() => {
-              setActiveSpot(item.id)
-              router.push('/(tabs)/')
-            }}
-            onDelete={() => removeSpot(item.id)}
-          />
+          <SwipeableRow onDelete={() => removeSpot(item.id)}>
+            <SpotRow
+              spot={item}
+              isActive={item.id === activeSpotId}
+              onPress={() => { setActiveSpot(item.id); router.push('/(tabs)/') }}
+              onDelete={() => removeSpot(item.id)}
+              onEdit={() => openEdit(item)}
+            />
+          </SwipeableRow>
         )}
       />
       <TouchableOpacity style={styles.fab} onPress={() => router.push('/spot/new')}>
         <Ionicons name="add" size={28} color={Colors.background} />
       </TouchableOpacity>
+
+      <Modal visible={!!editingSpot} animationType="fade" transparent onRequestClose={() => setEditingSpot(null)}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={styles.renameCard}>
+            <Text style={styles.renameTitle}>Rename Spot</Text>
+            <TextInput
+              style={styles.renameInput}
+              value={editName}
+              onChangeText={setEditName}
+              autoFocus
+              selectTextOnFocus
+              placeholderTextColor={Colors.textTertiary}
+              returnKeyType="done"
+              onSubmitEditing={saveEdit}
+            />
+            <View style={styles.renameActions}>
+              <TouchableOpacity style={styles.renameCancel} onPress={() => setEditingSpot(null)}>
+                <Text style={styles.renameCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.renameSave} onPress={saveEdit}>
+                <Text style={styles.renameSaveText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   )
 }
@@ -153,4 +198,29 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', elevation: 4,
     shadowColor: Colors.accent, shadowOpacity: 0.4, shadowRadius: 8, shadowOffset: { width: 0, height: 3 },
   },
+  editBtn: { padding: 4, marginLeft: 4 },
+  modalOverlay: {
+    flex: 1, backgroundColor: '#00000080',
+    alignItems: 'center', justifyContent: 'center', padding: Spacing.lg,
+  },
+  renameCard: {
+    backgroundColor: Colors.card, borderRadius: Spacing.cardRadius,
+    padding: Spacing.lg, width: '100%',
+  },
+  renameTitle: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary, marginBottom: Spacing.md },
+  renameInput: {
+    backgroundColor: Colors.surface, borderRadius: 10, padding: Spacing.md,
+    fontSize: 16, color: Colors.textPrimary,
+  },
+  renameActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md },
+  renameCancel: {
+    flex: 1, padding: Spacing.md, borderRadius: 10,
+    backgroundColor: Colors.surface, alignItems: 'center',
+  },
+  renameCancelText: { fontSize: 15, color: Colors.textSecondary, fontWeight: '600' },
+  renameSave: {
+    flex: 1, padding: Spacing.md, borderRadius: 10,
+    backgroundColor: Colors.accent, alignItems: 'center',
+  },
+  renameSaveText: { fontSize: 15, color: Colors.background, fontWeight: '700' },
 })

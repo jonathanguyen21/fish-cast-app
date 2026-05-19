@@ -6,10 +6,10 @@ import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
 import { scoreColor } from '../score/scoringEngine'
 import { describeBestWindow, type SpeciesHourlyScore } from './speciesHourlyScoring'
-import type { Species } from '../../types/species'
+import type { SpeciesScore } from '../../types/species'
 
 interface Props {
-  species: Species[]
+  scoredSpecies: SpeciesScore[]
   hourlyByMap: Record<string, SpeciesHourlyScore[]>
   currentHour: number
   onPressSpecies: (id: string) => void
@@ -33,18 +33,19 @@ function hintLabel(hourly: SpeciesHourlyScore[], currentHour: number): string {
   }
 }
 
-export function ActiveRightNow({ species, hourlyByMap, currentHour, onPressSpecies, maxRows = 3, onSeeAll }: Props) {
+export function ActiveRightNow({ scoredSpecies, hourlyByMap, currentHour, onPressSpecies, maxRows = 3, onSeeAll }: Props) {
   const rows = useMemo(() => {
-    return species
-      .map(sp => {
-        const hourly = hourlyByMap[sp.id] ?? []
+    return scoredSpecies
+      .map(ss => {
+        const hourly = hourlyByMap[ss.species.id] ?? []
         const currentEntry = hourly.find(e => e.hour === currentHour)
         const currentScore = currentEntry?.score ?? 0
-        return { species: sp, hourly, currentScore }
+        const displayScore = currentScore > 0 ? currentScore : ss.score
+        return { species: ss.species, hourly, currentScore, displayScore }
       })
-      .sort((a, b) => b.currentScore - a.currentScore)
+      .sort((a, b) => b.displayScore - a.displayScore)
       .slice(0, maxRows)
-  }, [species, hourlyByMap, currentHour, maxRows])
+  }, [scoredSpecies, hourlyByMap, currentHour, maxRows])
 
   if (rows.length === 0) return null
 
@@ -59,7 +60,7 @@ export function ActiveRightNow({ species, hourlyByMap, currentHour, onPressSpeci
       <View style={styles.card}>
         {rows.map((row, idx) => {
           const isInactive = row.currentScore === 0
-          const color = isInactive ? Colors.textTertiary : scoreColor(row.currentScore)
+          const color = scoreColor(row.displayScore)
           return (
             <TouchableOpacity
               key={row.species.id}
@@ -73,7 +74,7 @@ export function ActiveRightNow({ species, hourlyByMap, currentHour, onPressSpeci
               </Text>
               <View style={[styles.badge, { backgroundColor: color + '22', borderColor: color }]}>
                 <Text style={[styles.badgeScore, { color }]}>
-                  {isInactive ? '—' : row.currentScore}
+                  {row.displayScore}
                 </Text>
               </View>
             </TouchableOpacity>

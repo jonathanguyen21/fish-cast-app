@@ -5,6 +5,21 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!
 
+// Node.js < 22 has no native WebSocket. Provide a no-op stub so Supabase's
+// Realtime client initialises without throwing. Realtime is unused in this app.
+const WS: typeof WebSocket = typeof globalThis.WebSocket !== 'undefined'
+  ? globalThis.WebSocket
+  : (class NoopWS {
+      static CONNECTING = 0; static OPEN = 1; static CLOSING = 2; static CLOSED = 3
+      readyState = 3
+      constructor(_: string) {}
+      close() {}
+      send() {}
+      addEventListener() {}
+      removeEventListener() {}
+      dispatchEvent() { return true }
+    } as unknown as typeof WebSocket)
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: AsyncStorage,
@@ -12,4 +27,5 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: false,
   },
+  realtime: { transport: WS },
 })

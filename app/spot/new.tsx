@@ -25,6 +25,7 @@ export default function AddSpotScreen() {
   const { spots, addSpot } = useSpots()
   const isPro = useSettingsStore(s => s.isPro)
   const mapRef = useRef<MapView>(null)
+  const scrollRef = useRef<ScrollView>(null)
 
   const [name, setName] = useState('')
   const [type, setType] = useState<SpotType>('saltwater')
@@ -32,6 +33,7 @@ export default function AddSpotScreen() {
   const [isSaving, setIsSaving] = useState(false)
   const [stations, setStations] = useState<NearbyStation[]>([])
   const [loadingStations, setLoadingStations] = useState(false)
+  const [quickAddName, setQuickAddName] = useState<string | null>(null)
   const allPopularSpots = Object.values(POPULAR_SPOTS).flat()
 
   const isFreeAndHasSpot = !isPro && spots.length >= 1
@@ -74,17 +76,15 @@ export default function AddSpotScreen() {
   function handleMapPress(e: MapPressEvent) {
     const { latitude, longitude } = e.nativeEvent.coordinate
     setCoords({ lat: latitude, lng: longitude })
-    if (!name) {
-      // Auto-suggest nearest station name; fall back to coordinates if none loaded
-      const nearest = stations.length > 0
-        ? stations.reduce((best, s) => {
-            const d = (s.lat - latitude) ** 2 + (s.lng - longitude) ** 2
-            const bd = (best.lat - latitude) ** 2 + (best.lng - longitude) ** 2
-            return d < bd ? s : best
-          })
-        : null
-      setName(nearest ? nearest.name : `Spot at ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`)
-    }
+    setQuickAddName(null)
+    const nearest = stations.length > 0
+      ? stations.reduce((best, s) => {
+          const d = (s.lat - latitude) ** 2 + (s.lng - longitude) ** 2
+          const bd = (best.lat - latitude) ** 2 + (best.lng - longitude) ** 2
+          return d < bd ? s : best
+        })
+      : null
+    setName(nearest ? nearest.name : `Spot at ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`)
   }
 
   function handleStationPress(station: NearbyStation) {
@@ -134,7 +134,7 @@ export default function AddSpotScreen() {
   }
 
   return (
-    <ScrollView style={styles.screen} keyboardShouldPersistTaps="handled">
+    <ScrollView ref={scrollRef} style={styles.screen} keyboardShouldPersistTaps="handled">
       <MapView
         ref={mapRef}
         style={styles.map}
@@ -171,10 +171,12 @@ export default function AddSpotScreen() {
               setName(spot.name)
               setType(spot.type)
               setCoords({ lat: spot.lat, lng: spot.lng })
+              setQuickAddName(spot.name)
               mapRef.current?.animateToRegion({
                 latitude: spot.lat, longitude: spot.lng,
                 latitudeDelta: 0.15, longitudeDelta: 0.15,
               }, 400)
+              setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 450)
             }}
           >
             <View style={styles.markerPopular} />
@@ -183,6 +185,15 @@ export default function AddSpotScreen() {
       </MapView>
 
       <View style={styles.form}>
+        {quickAddName && (
+          <View style={styles.quickAddBanner}>
+            <Ionicons name="location" size={16} color={Colors.accent} />
+            <Text style={styles.quickAddText} numberOfLines={1}>{quickAddName} selected</Text>
+            <TouchableOpacity onPress={() => { setQuickAddName(null); setName('') }}>
+              <Ionicons name="close-circle" size={18} color={Colors.textTertiary} />
+            </TouchableOpacity>
+          </View>
+        )}
         {loadingStations && (
           <View style={styles.stationRow}>
             <ActivityIndicator size="small" color={Colors.accent} />
@@ -289,4 +300,10 @@ const styles = StyleSheet.create({
     width: 12, height: 12, borderRadius: 6,
     backgroundColor: Colors.warning, borderWidth: 2, borderColor: '#fff',
   },
+  quickAddBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    backgroundColor: Colors.accent + '18', borderRadius: 10,
+    padding: Spacing.sm, marginBottom: Spacing.sm,
+  },
+  quickAddText: { flex: 1, fontSize: 14, color: Colors.accent, fontWeight: '600' },
 })

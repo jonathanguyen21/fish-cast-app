@@ -9,6 +9,7 @@ import { useCatchLog } from '../../hooks/useCatchLog'
 import { AuthModal } from '../../features/auth/AuthModal'
 import { useSpots } from '../../hooks/useSpots'
 import { scoreColor } from '../../features/score/scoringEngine'
+import { SwipeableRow } from '../../features/common/SwipeableRow'
 import type { CatchEntry } from '../../types/catchLog'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
@@ -62,40 +63,37 @@ function CatchStats({ entries }: { entries: CatchEntry[] }) {
 
 function CatchCard({ entry, onDelete }: { entry: CatchEntry; onDelete: () => void }) {
   return (
-    <View style={styles.catchCard}>
-      <View style={styles.catchHeader}>
-        <Text style={styles.catchSpecies}>{entry.species}</Text>
-        <TouchableOpacity onPress={() => Alert.alert('Delete', 'Remove this catch?', [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Delete', style: 'destructive', onPress: onDelete },
-        ])} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="trash-outline" size={16} color={Colors.textTertiary} />
-        </TouchableOpacity>
+    <SwipeableRow onDelete={onDelete}>
+      <View style={styles.catchCard}>
+        <View style={styles.catchHeader}>
+          <Text style={styles.catchSpecies}>{entry.species}</Text>
+          <Text style={styles.catchSpotInline}>{entry.spotName}</Text>
+        </View>
+        <Text style={styles.catchMeta}>{formatDate(entry.date)} at {entry.time}</Text>
+        <View style={styles.catchStats}>
+          {entry.weight != null && (
+            <View style={styles.catchStat}>
+              <Text style={styles.catchStatValue}>
+                {Math.floor(entry.weight)}<Text style={styles.catchStatUnit}> lbs </Text>
+                {Math.round((entry.weight % 1) * 16)}<Text style={styles.catchStatUnit}> oz</Text>
+              </Text>
+            </View>
+          )}
+          {entry.length != null && (
+            <View style={styles.catchStat}>
+              <Text style={styles.catchStatValue}>{entry.length} <Text style={styles.catchStatUnit}>in</Text></Text>
+            </View>
+          )}
+          {entry.fishingScore != null && (
+            <View style={styles.catchStat}>
+              <Text style={[styles.catchStatValue, { color: scoreColor(entry.fishingScore) }]}>{entry.fishingScore}</Text>
+              <Text style={styles.catchStatUnit}> score</Text>
+            </View>
+          )}
+        </View>
+        {entry.note ? <Text style={styles.catchNote}>{entry.note}</Text> : null}
       </View>
-      <Text style={styles.catchSpot}>{entry.spotName} · {formatDate(entry.date)} at {entry.time}</Text>
-      <View style={styles.catchStats}>
-        {entry.weight != null && (
-          <View style={styles.catchStat}>
-            <Text style={styles.catchStatValue}>
-              {Math.floor(entry.weight)}<Text style={styles.catchStatUnit}> lbs </Text>
-              {Math.round((entry.weight % 1) * 16)}<Text style={styles.catchStatUnit}> oz</Text>
-            </Text>
-          </View>
-        )}
-        {entry.length != null && (
-          <View style={styles.catchStat}>
-            <Text style={styles.catchStatValue}>{entry.length} <Text style={styles.catchStatUnit}>in</Text></Text>
-          </View>
-        )}
-        {entry.fishingScore != null && (
-          <View style={styles.catchStat}>
-            <Text style={[styles.catchStatValue, { color: scoreColor(entry.fishingScore) }]}>{entry.fishingScore}</Text>
-            <Text style={styles.catchStatUnit}> score</Text>
-          </View>
-        )}
-      </View>
-      {entry.note ? <Text style={styles.catchNote}>{entry.note}</Text> : null}
-    </View>
+    </SwipeableRow>
   )
 }
 
@@ -199,7 +197,9 @@ export default function CatchLogScreen() {
               <View key={date}>
                 <Text style={styles.dayLabel}>{formatDate(date)}</Text>
                 {dayEntries.map(e => (
-                  <CatchCard key={e.id} entry={e} onDelete={() => deleteEntry(e.id)} />
+                  <View key={e.id} style={styles.catchCardWrap}>
+                    <CatchCard entry={e} onDelete={() => deleteEntry(e.id)} />
+                  </View>
                 ))}
               </View>
             ))}
@@ -352,12 +352,15 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20, maxWidth: 280 },
   dayLabel: { fontSize: 13, fontWeight: '600', color: Colors.textTertiary, marginTop: Spacing.md, marginBottom: Spacing.xs },
+  catchCardWrap: { marginBottom: Spacing.sm },
   catchCard: {
     backgroundColor: Colors.card, borderRadius: Spacing.cardRadius,
-    padding: Spacing.md, marginBottom: Spacing.sm,
+    padding: Spacing.md,
   },
-  catchHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  catchSpecies: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary },
+  catchHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
+  catchSpecies: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary, flex: 1 },
+  catchSpotInline: { fontSize: 12, color: Colors.textTertiary },
+  catchMeta: { fontSize: 12, color: Colors.textTertiary, marginBottom: 8 },
   catchSpot: { fontSize: 12, color: Colors.textTertiary, marginBottom: 8 },
   catchStats: { flexDirection: 'row', gap: Spacing.md, marginBottom: 4 },
   catchStat: { flexDirection: 'row', alignItems: 'baseline' },

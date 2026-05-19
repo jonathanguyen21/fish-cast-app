@@ -64,6 +64,7 @@ export default function SettingsScreen() {
   const session = useAuthStore(s => s.session)
   const signOut = useAuthStore(s => s.signOut)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [openFeatureAfterAuth, setOpenFeatureAfterAuth] = useState(false)
 
   const { activeSpot } = useSpots()
   const speciesForRegion = activeSpot ? getSpeciesForRegion(activeSpot.lat, activeSpot.lng) : []
@@ -207,7 +208,10 @@ export default function SettingsScreen() {
 
       <Text style={[Typography.sectionTitle, styles.sectionSpacer]}>Feedback</Text>
       <View style={styles.card}>
-        <TouchableOpacity style={styles.feedbackRow} onPress={() => setShowFeatureModal(true)}>
+        <TouchableOpacity style={styles.feedbackRow} onPress={() => {
+          if (!session) { setOpenFeatureAfterAuth(true); setShowAuthModal(true) }
+          else setShowFeatureModal(true)
+        }}>
           <Ionicons name="bulb-outline" size={20} color={Colors.accent} />
           <View style={styles.feedbackText}>
             <Text style={styles.feedbackTitle}>Request a Feature</Text>
@@ -263,8 +267,11 @@ export default function SettingsScreen() {
 
       <AuthModal
         visible={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onSuccess={() => setShowAuthModal(false)}
+        onClose={() => { setShowAuthModal(false); setOpenFeatureAfterAuth(false) }}
+        onSuccess={() => {
+          setShowAuthModal(false)
+          if (openFeatureAfterAuth) { setOpenFeatureAfterAuth(false); setShowFeatureModal(true) }
+        }}
       />
 
       <Modal visible={showFeatureModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowFeatureModal(false)}>

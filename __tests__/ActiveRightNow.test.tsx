@@ -1,34 +1,33 @@
 import React from 'react'
 import { render, fireEvent } from '@testing-library/react-native'
 import { ActiveRightNow } from '../features/species/ActiveRightNow'
-import type { Species } from '../types/species'
+import type { Species, SpeciesScore } from '../types/species'
 import type { SpeciesHourlyScore } from '../features/species/speciesHourlyScoring'
 
-const mockSpecies: Species[] = [
-  {
-    id: 'sp_a', common_name: 'Striped Bass', scientific_name: 'X', region: 'west_coast',
-    type: 'saltwater', tier: 'free',
-    months_present: [1,2,3,4,5,6,7,8,9,10,11,12], months_peak: [6],
-    water_temp_f: { min: 50, max: 70, peak_min: 55, peak_max: 65 },
-    preferred_tide: 'incoming', preferred_time_of_day: ['dawn','morning'],
-    migration_notes: '', tips: '',
-  },
-  {
-    id: 'sp_b', common_name: 'Halibut', scientific_name: 'Y', region: 'west_coast',
-    type: 'saltwater', tier: 'free',
-    months_present: [1,2,3,4,5,6,7,8,9,10,11,12], months_peak: [6],
-    water_temp_f: { min: 50, max: 70, peak_min: 55, peak_max: 65 },
-    preferred_tide: 'any', preferred_time_of_day: ['afternoon'],
-    migration_notes: '', tips: '',
-  },
-  {
-    id: 'sp_c', common_name: 'Rockfish', scientific_name: 'Z', region: 'west_coast',
-    type: 'saltwater', tier: 'free',
-    months_present: [1,2,3,4,5,6,7,8,9,10,11,12], months_peak: [6],
-    water_temp_f: { min: 50, max: 70, peak_min: 55, peak_max: 65 },
-    preferred_tide: 'any', preferred_time_of_day: ['morning'],
-    migration_notes: '', tips: '',
-  },
+const baseSpecies = (id: string, name: string): Species => ({
+  id, common_name: name, scientific_name: 'X', region: 'west_coast',
+  type: 'saltwater', tier: 'free',
+  months_present: [1,2,3,4,5,6,7,8,9,10,11,12], months_peak: [6],
+  water_temp_f: { min: 50, max: 70, peak_min: 55, peak_max: 65 },
+  preferred_tide: 'incoming', preferred_time_of_day: ['dawn', 'morning'],
+  migration_notes: '', tips: '',
+})
+
+function makeScore(id: string, name: string, score = 70): SpeciesScore {
+  return {
+    species: baseSpecies(id, name),
+    score,
+    status: 'Active',
+    waterTempMatch: 'Peak range',
+    tideMatch: 'Incoming (preferred)',
+    timeMatch: 'Dawn (prime time)',
+  }
+}
+
+const mockScoredSpecies: SpeciesScore[] = [
+  makeScore('sp_a', 'Striped Bass', 70),
+  makeScore('sp_b', 'Halibut', 65),
+  makeScore('sp_c', 'Rockfish', 60),
 ]
 
 function mkHourly(peakHour: number, peakScore: number): SpeciesHourlyScore[] {
@@ -53,7 +52,7 @@ describe('ActiveRightNow', () => {
     }
     const { getByText } = render(
       <ActiveRightNow
-        species={mockSpecies.slice(0, 2)}
+        scoredSpecies={mockScoredSpecies.slice(0, 2)}
         hourlyByMap={hourlyByMap}
         currentHour={12}
         onPressSpecies={() => {}}
@@ -66,7 +65,7 @@ describe('ActiveRightNow', () => {
   it('hides card when no species in season', () => {
     const { queryByText } = render(
       <ActiveRightNow
-        species={[]}
+        scoredSpecies={[]}
         hourlyByMap={{}}
         currentHour={12}
         onPressSpecies={() => {}}
@@ -79,7 +78,7 @@ describe('ActiveRightNow', () => {
     const zeros = Array.from({ length: 16 }, (_, i) => ({ hour: 5 + i, score: 0 }))
     const { queryByText, getByText } = render(
       <ActiveRightNow
-        species={mockSpecies.slice(0, 2)}
+        scoredSpecies={mockScoredSpecies.slice(0, 2)}
         hourlyByMap={{ sp_a: zeros, sp_b: zeros }}
         currentHour={12}
         onPressSpecies={() => {}}
@@ -95,7 +94,7 @@ describe('ActiveRightNow', () => {
     const onPress = jest.fn()
     const { getByTestId } = render(
       <ActiveRightNow
-        species={mockSpecies.slice(0, 2)}
+        scoredSpecies={mockScoredSpecies.slice(0, 2)}
         hourlyByMap={{ sp_a: mkHourly(12, 90), sp_b: mkHourly(17, 80) }}
         currentHour={12}
         onPressSpecies={onPress}
@@ -108,7 +107,7 @@ describe('ActiveRightNow', () => {
   it('respects maxRows prop and shows only that many rows', () => {
     const { queryByText } = render(
       <ActiveRightNow
-        species={mockSpecies}
+        scoredSpecies={mockScoredSpecies}
         hourlyByMap={allActive}
         currentHour={12}
         onPressSpecies={() => {}}
@@ -124,7 +123,7 @@ describe('ActiveRightNow', () => {
   it('shows "See all species" button when onSeeAll is provided', () => {
     const { getByText } = render(
       <ActiveRightNow
-        species={mockSpecies.slice(0, 2)}
+        scoredSpecies={mockScoredSpecies.slice(0, 2)}
         hourlyByMap={allActive}
         currentHour={12}
         onPressSpecies={() => {}}
@@ -137,7 +136,7 @@ describe('ActiveRightNow', () => {
   it('hides "See all species" button when onSeeAll is not provided', () => {
     const { queryByText } = render(
       <ActiveRightNow
-        species={mockSpecies.slice(0, 2)}
+        scoredSpecies={mockScoredSpecies.slice(0, 2)}
         hourlyByMap={allActive}
         currentHour={12}
         onPressSpecies={() => {}}
@@ -150,7 +149,7 @@ describe('ActiveRightNow', () => {
     const onSeeAll = jest.fn()
     const { getByText } = render(
       <ActiveRightNow
-        species={mockSpecies.slice(0, 2)}
+        scoredSpecies={mockScoredSpecies.slice(0, 2)}
         hourlyByMap={allActive}
         currentHour={12}
         onPressSpecies={() => {}}
@@ -161,16 +160,17 @@ describe('ActiveRightNow', () => {
     expect(onSeeAll).toHaveBeenCalled()
   })
 
-  it('shows dash score badge for inactive species', () => {
+  it('shows overall score badge for inactive species (no hourly activity)', () => {
     const zeros = Array.from({ length: 16 }, (_, i) => ({ hour: 5 + i, score: 0 }))
+    const scored = makeScore('sp_a', 'Striped Bass', 72)
     const { getByText } = render(
       <ActiveRightNow
-        species={mockSpecies.slice(0, 1)}
+        scoredSpecies={[scored]}
         hourlyByMap={{ sp_a: zeros }}
         currentHour={12}
         onPressSpecies={() => {}}
       />
     )
-    expect(getByText('—')).toBeTruthy()
+    expect(getByText('72')).toBeTruthy()
   })
 })

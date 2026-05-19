@@ -11,6 +11,7 @@ interface SpotsState {
   removeSpot: (id: string) => void
   setActiveSpot: (id: string) => void
   setSpots: (spots: Spot[]) => void
+  updateSpot: (id: string, partial: Partial<Omit<Spot, 'id'>>) => void
   clear: () => void
 }
 
@@ -45,6 +46,13 @@ export const useSpotsStore = create<SpotsState>()(
         activeSpotId: id,
         activeSpot: state.spots.find(s => s.id === id) ?? null,
       })),
+      updateSpot: (id, partial) => set(state => {
+        const spots = state.spots.map(s => s.id === id ? { ...s, ...partial } : s)
+        return {
+          spots,
+          activeSpot: spots.find(s => s.id === state.activeSpotId) ?? null,
+        }
+      }),
       setSpots: (spots) => set(state => {
         const activeSpotId = spots.some(s => s.id === state.activeSpotId)
           ? state.activeSpotId

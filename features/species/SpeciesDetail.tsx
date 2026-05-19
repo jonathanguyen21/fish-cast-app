@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from '../score/scoringEngine'
@@ -31,9 +32,10 @@ const statusColor: Record<SpeciesScore['status'], string> = {
 export function SpeciesDetail({ speciesScore, hourly, onUpgrade }: Props) {
   const { species, score, status, waterTempMatch, tideMatch, timeMatch } = speciesScore
   const badgeColor = scoreColor(score)
+  const insets = useSafeAreaInsets()
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}>
       <View style={styles.headerRow}>
         <View style={styles.headerText}>
           <Text style={styles.name}>{species.common_name}</Text>

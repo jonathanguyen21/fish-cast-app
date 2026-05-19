@@ -14,7 +14,7 @@ interface Props {
 }
 
 const CHART_HEIGHT = 140
-const PADDING = { top: 20, bottom: 40, left: 28, right: 8 }
+const PADDING = { top: 20, bottom: 44, left: 28, right: 8 }
 
 function curvePath(points: { x: number; y: number }[]): string {
   if (points.length < 2) return ''
@@ -121,36 +121,31 @@ export function TideChart({ tide, currentHour }: Props) {
             stroke={Colors.accent} strokeWidth={1.5} strokeDasharray="4 2" />
           <Circle cx={nowX} cy={nowY} r={4} fill={Colors.accent} />
 
-          {/* Tide event tick marks */}
+          {/* Tide event markers */}
           {tide.events.map((ev, idx) => {
             const evHour = parseEventHour(ev.time)
-            const ex = Math.max(PADDING.left + 20, Math.min(PADDING.left + chartW - 20, toX(evHour)))
+            const ex = Math.max(PADDING.left + 22, Math.min(PADDING.left + chartW - 22, toX(evHour)))
             const symbolColor = ev.type === 'high' ? Colors.accent : Colors.textSecondary
-            const ey = baseline + 7
+            // ▲ for high (apex at baseline), ▼ for low (apex below baseline)
             const triPath = ev.type === 'high'
-              ? `M ${ex} ${ey - 5} L ${ex - 4} ${ey + 1} L ${ex + 4} ${ey + 1} Z`
-              : `M ${ex - 4} ${ey - 5} L ${ex + 4} ${ey - 5} L ${ex} ${ey + 1} Z`
+              ? `M ${ex} ${baseline} L ${ex - 7} ${baseline + 12} L ${ex + 7} ${baseline + 12} Z`
+              : `M ${ex - 7} ${baseline + 2} L ${ex + 7} ${baseline + 2} L ${ex} ${baseline + 14} Z`
 
             const prevHours = tide.events.slice(0, idx).map(e => parseEventHour(e.time))
-            const tooClose = prevHours.some(ph => Math.abs(toX(ph) - ex) < 30)
+            const tooClose = prevHours.some(ph => Math.abs(toX(ph) - ex) < 32)
 
             return (
               <G key={`${ev.type}-${idx}`} testID={`tide-tick-${ev.type}-${idx}`}>
-                <Line
-                  x1={ex} y1={baseline}
-                  x2={ex} y2={baseline + 5}
-                  stroke={symbolColor} strokeWidth={1.5}
-                />
                 <Path d={triPath} fill={symbolColor} />
                 <SvgText
-                  x={ex} y={baseline + 22}
-                  fill={Colors.textSecondary} fontSize={8} textAnchor="middle"
+                  x={ex} y={baseline + 24}
+                  fill={symbolColor} fontSize={8} fontWeight="600" textAnchor="middle"
                 >
                   {fmtHeight(ev.height)}{heightUnit}
                 </SvgText>
                 {!tooClose && (
                   <SvgText
-                    x={ex} y={baseline + 32}
+                    x={ex} y={baseline + 34}
                     fill={Colors.textTertiary} fontSize={7} textAnchor="middle"
                   >
                     {ev.time}
