@@ -17,7 +17,6 @@ interface Props {
 
 const BAR_MAX_HEIGHT = 80
 const BAR_WIDTH = 32
-const THRESHOLD_Y = BAR_MAX_HEIGHT - (70 / 100) * BAR_MAX_HEIGHT
 
 function parseHourNum(hourLabel: string): number {
   const m = hourLabel.match(/^(\d+)(AM|PM)$/i)
@@ -89,7 +88,6 @@ export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUp
                   ? <View style={styles.nowChip}><Text style={styles.nowChipText}>NOW</Text></View>
                   : <View style={styles.nowChipPlaceholder} />}
                 <View style={styles.barTrack}>
-                  <View style={styles.thresholdLine} />
                   <View style={[
                     styles.bar,
                     { height: barHeight, backgroundColor: color, opacity: isPeak || isNow ? 1 : 0.6 },
@@ -191,7 +189,6 @@ const styles = StyleSheet.create({
   nowChip: { backgroundColor: Colors.accent, borderRadius: 6, paddingHorizontal: 4, paddingVertical: 1, marginBottom: 2 },
   nowChipText: { fontSize: 8, color: Colors.background, fontWeight: '700' },
   nowChipPlaceholder: { height: 14, marginBottom: 2 },
-  thresholdLine: { position: 'absolute', bottom: THRESHOLD_Y, left: 0, width: BAR_WIDTH, height: 1, backgroundColor: Colors.success + '40' },
   hourLabel: { fontSize: 10, color: Colors.textTertiary, marginTop: 4 },
   hourLabelPeak: { color: Colors.textSecondary, fontWeight: '600' },
   scoreLabel: { fontSize: 10, color: Colors.textTertiary, fontWeight: '600', height: 14 },
