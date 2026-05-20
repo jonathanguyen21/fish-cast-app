@@ -14,6 +14,7 @@ interface SettingsState {
   alertThreshold: number
   alertsEnabled: boolean
   isPro: boolean
+  onboardingComplete: boolean
   speciesAlerts: Record<string, SpeciesAlert>
   setTempUnit: (u: 'F' | 'C') => void
   setSpeedUnit: (u: 'mph' | 'kts') => void
@@ -21,6 +22,7 @@ interface SettingsState {
   setAlertThreshold: (n: number) => void
   setAlertsEnabled: (v: boolean) => void
   setIsPro: (v: boolean) => void
+  setOnboardingComplete: () => void
   setSpeciesAlert: (speciesId: string, alert: Partial<SpeciesAlert>) => void
   clearSpeciesAlert: (speciesId: string) => void
   setAll: (s: Partial<Pick<SettingsState, 'tempUnit' | 'speedUnit' | 'lengthUnit' | 'alertThreshold' | 'alertsEnabled' | 'isPro' | 'speciesAlerts'>>) => void
@@ -35,6 +37,7 @@ export const useSettingsStore = create<SettingsState>()(
       alertThreshold: 70,
       alertsEnabled: false,
       isPro: false,
+      onboardingComplete: false,
       speciesAlerts: {},
       setTempUnit: (tempUnit) => set({ tempUnit }),
       setSpeedUnit: (speedUnit) => set({ speedUnit }),
@@ -42,6 +45,7 @@ export const useSettingsStore = create<SettingsState>()(
       setAlertThreshold: (alertThreshold) => set({ alertThreshold }),
       setAlertsEnabled: (alertsEnabled) => set({ alertsEnabled }),
       setIsPro: (isPro) => set({ isPro }),
+      setOnboardingComplete: () => set({ onboardingComplete: true }),
       setSpeciesAlert: (speciesId, partial) => {
         const existing = get().speciesAlerts[speciesId]
         const merged: SpeciesAlert = {

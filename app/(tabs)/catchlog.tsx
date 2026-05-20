@@ -108,7 +108,7 @@ interface FormState {
 
 export default function CatchLogScreen() {
   const insets = useSafeAreaInsets()
-  const { entries, addEntry, deleteEntry, isSignedIn } = useCatchLog()
+  const { entries, addEntry, deleteEntry, isSignedIn, isLocal } = useCatchLog()
   const { activeSpot } = useSpots()
   const [showModal, setShowModal] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -129,11 +129,7 @@ export default function CatchLogScreen() {
   }, [showModal])
 
   function handleLogCatchPress() {
-    if (!isSignedIn) {
-      setShowAuthModal(true)
-    } else {
-      setShowModal(true)
-    }
+    setShowModal(true)
   }
 
   function handleAdd() {
@@ -182,6 +178,14 @@ export default function CatchLogScreen() {
           <Text style={styles.addButtonText}>Log Catch</Text>
         </TouchableOpacity>
       </View>
+
+      {isLocal && (
+        <TouchableOpacity style={styles.syncBanner} onPress={() => setShowAuthModal(true)} activeOpacity={0.8}>
+          <Ionicons name="cloud-outline" size={14} color={Colors.accent} />
+          <Text style={styles.syncBannerText}>Sign in to sync catches across devices</Text>
+          <Ionicons name="chevron-forward" size={12} color={Colors.accent} />
+        </TouchableOpacity>
+      )}
 
       <ScrollView contentContainerStyle={styles.content}>
         {entries.length === 0 ? (
@@ -347,6 +351,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 4,
   },
   addButtonText: { fontSize: 14, fontWeight: '700', color: Colors.background },
+  syncBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    marginHorizontal: Spacing.screenPad, marginBottom: Spacing.sm,
+    backgroundColor: Colors.accent + '18',
+    borderRadius: 10, paddingHorizontal: Spacing.md, paddingVertical: 10,
+    borderWidth: 1, borderColor: Colors.accent + '40',
+  },
+  syncBannerText: { flex: 1, fontSize: 13, color: Colors.accent },
   content: { paddingHorizontal: Spacing.screenPad, paddingBottom: Spacing.xl },
   empty: { alignItems: 'center', marginTop: 80, gap: Spacing.sm },
   emptyText: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },

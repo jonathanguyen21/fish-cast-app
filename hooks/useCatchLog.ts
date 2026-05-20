@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Alert } from 'react-native'
 import { useAuthStore } from '../store/authStore'
+import { useLocalCatchLogStore } from '../store/localCatchLogStore'
 import { fetchCatches, addCatch, deleteCatch } from '../services/catchLogService'
 import type { CatchEntry } from '../types/catchLog'
 
@@ -8,6 +9,8 @@ export function useCatchLog() {
   const session = useAuthStore(s => s.session)
   const userId = session?.user.id ?? null
   const queryClient = useQueryClient()
+
+  const localStore = useLocalCatchLogStore()
 
   const query = useQuery({
     queryKey: ['catches', userId],
@@ -29,12 +32,25 @@ export function useCatchLog() {
     onError: () => Alert.alert('Error', 'Could not delete catch. Please try again.'),
   })
 
+  if (!userId) {
+    return {
+      entries: localStore.entries,
+      isLoading: false,
+      isError: false,
+      addEntry: localStore.addEntry,
+      deleteEntry: localStore.deleteEntry,
+      isSignedIn: false,
+      isLocal: true,
+    }
+  }
+
   return {
     entries: query.data ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
     addEntry: addMutation.mutate,
     deleteEntry: deleteMutation.mutate,
-    isSignedIn: !!userId,
+    isSignedIn: true,
+    isLocal: false,
   }
 }
