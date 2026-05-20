@@ -74,3 +74,27 @@ export async function deleteCatch(id: string): Promise<void> {
 
   if (error) throw error
 }
+
+export async function migrateCatches(
+  userId: string,
+  entries: Omit<CatchEntry, 'id'>[]
+): Promise<void> {
+  if (entries.length === 0) return
+  const { error } = await supabase
+    .from('catch_entries')
+    .insert(
+      entries.map(e => ({
+        user_id: userId,
+        date: e.date,
+        time: e.time,
+        spot_id: e.spotId,
+        spot_name: e.spotName,
+        species: e.species,
+        weight: e.weight ?? null,
+        length: e.length ?? null,
+        note: e.note ?? null,
+        fishing_score: e.fishingScore ?? null,
+      }))
+    )
+  if (error) throw error
+}

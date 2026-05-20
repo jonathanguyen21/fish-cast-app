@@ -5,11 +5,15 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useQueryClient } from '@tanstack/react-query'
 import { useCatchLog } from '../../hooks/useCatchLog'
 import { AuthModal } from '../../features/auth/AuthModal'
 import { useSpots } from '../../hooks/useSpots'
 import { scoreColor } from '../../features/score/scoringEngine'
 import { SwipeableRow } from '../../features/common/SwipeableRow'
+import { useLocalCatchLogStore } from '../../store/localCatchLogStore'
+import { useAuthStore } from '../../store/authStore'
+import { migrateCatches } from '../../services/catchLogService'
 import type { CatchEntry } from '../../types/catchLog'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
@@ -110,6 +114,7 @@ export default function CatchLogScreen() {
   const insets = useSafeAreaInsets()
   const { entries, addEntry, deleteEntry, isSignedIn, isLocal } = useCatchLog()
   const { activeSpot } = useSpots()
+  const queryClient = useQueryClient()
   const [showModal, setShowModal] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [form, setForm] = useState<FormState>({ species: '', weightLbs: '', weightOz: '', length: '', note: '', score: '' })
@@ -130,6 +135,36 @@ export default function CatchLogScreen() {
 
   function handleLogCatchPress() {
     setShowModal(true)
+  }
+
+  function handleAuthSuccess() {
+    setShowAuthModal(false)
+    const session = useAuthStore.getState().session
+    const localEntries = useLocalCatchLogStore.getState().entries
+    if (!session || localEntries.length === 0) return
+    const count = localEntries.length
+    Alert.alert(
+      'Sync Local Catches',
+      `You have ${count} local catch${count === 1 ? '' : 'es'}. Sync them to your account?`,
+      [
+        { text: 'Skip', style: 'cancel' },
+        {
+          text: 'Sync',
+          onPress: async () => {
+            try {
+              await migrateCatches(
+                session.user.id,
+                localEntries.map(({ id: _id, ...rest }) => rest)
+              )
+              useLocalCatchLogStore.getState().clearAll()
+              queryClient.invalidateQueries({ queryKey: ['catches', session.user.id] })
+            } catch {
+              Alert.alert('Sync Failed', 'Could not sync catches. They are still saved locally.')
+            }
+          },
+        },
+      ]
+    )
   }
 
   function handleAdd() {
@@ -214,7 +249,7 @@ export default function CatchLogScreen() {
       <AuthModal
         visible={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        onSuccess={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
       />
 
       <Modal visible={showModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { setShowModal(false); setForm({ species: '', weightLbs: '', weightOz: '', length: '', note: '', score: '' }) }}>

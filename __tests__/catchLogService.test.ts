@@ -1,4 +1,4 @@
-import { fetchCatches, addCatch, deleteCatch } from '../services/catchLogService'
+import { fetchCatches, addCatch, deleteCatch, migrateCatches } from '../services/catchLogService'
 
 const mockSelect = jest.fn()
 const mockInsert = jest.fn()
@@ -76,5 +76,39 @@ describe('catchLogService', () => {
       eq: jest.fn().mockResolvedValue({ error: new Error('delete failed') }),
     })
     await expect(deleteCatch('abc-123')).rejects.toThrow('delete failed')
+  })
+
+  it('migrateCatches resolves without calling insert when entries is empty', async () => {
+    await migrateCatches('user-1', [])
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  it('migrateCatches calls insert with correct mapped rows', async () => {
+    mockInsert.mockResolvedValue({ error: null })
+    await migrateCatches('user-1', [
+      {
+        date: '2026-05-18', time: '08:00',
+        spotId: 'spot_1', spotName: 'Bodega Bay',
+        species: 'Halibut', weight: 4.5, length: 22,
+        note: 'morning bite', fishingScore: 78,
+      },
+    ])
+    expect(mockInsert).toHaveBeenCalledWith([
+      expect.objectContaining({
+        user_id: 'user-1',
+        species: 'Halibut',
+        spot_id: 'spot_1',
+        fishing_score: 78,
+      }),
+    ])
+  })
+
+  it('migrateCatches throws on supabase error', async () => {
+    mockInsert.mockResolvedValue({ error: new Error('insert failed') })
+    await expect(
+      migrateCatches('user-1', [
+        { date: '2026-05-18', time: '08:00', spotId: 's', spotName: 'S', species: 'Bass' },
+      ])
+    ).rejects.toThrow('insert failed')
   })
 })
