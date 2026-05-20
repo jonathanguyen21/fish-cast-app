@@ -214,7 +214,7 @@ export default function CatchLogScreen() {
       <AuthModal
         visible={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        onSuccess={() => { setShowAuthModal(false); setShowModal(true) }}
+        onSuccess={() => setShowAuthModal(false)}
       />
 
       <Modal visible={showModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { setShowModal(false); setForm({ species: '', weightLbs: '', weightOz: '', length: '', note: '', score: '' }) }}>

@@ -19,8 +19,9 @@ type IoniconName = keyof typeof import('@expo/vector-icons').Ionicons.glyphMap
 
 const PRO_FEATURES: { icon: IoniconName; text: string }[] = [
   { icon: 'calendar-outline', text: '7-day fishing forecast' },
-  { icon: 'bar-chart-outline', text: 'Hourly score breakdown' },
-  { icon: 'fish-outline', text: 'Full species library' },
+  { icon: 'fish-outline', text: 'Full species library & bite alerts' },
+  { icon: 'calendar-number-outline', text: '30-day calendar date selection' },
+  { icon: 'notifications-outline', text: 'Species-specific score alerts' },
 ]
 
 function Row({ iconName, label, children }: { iconName: IoniconName; label: string; children: React.ReactNode }) {
