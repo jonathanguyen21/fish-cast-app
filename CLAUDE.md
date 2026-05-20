@@ -4,7 +4,7 @@
 
 React Native / Expo fishing forecast app. Combines NOAA tide/water/wind/pressure data, NWS weather, Open-Meteo marine swell, and local solunar calculations into a 0–100 fishing score. Shows what species are active at the user's saved spot right now, an hourly score timeline, tide chart, conditions grid, and a 7-day forecast strip.
 
-**Current state: Phase B1 complete.** All screens use live API data. No mock data in production paths.
+**Current state: Pre-release sprint complete.** All screens use live API data. Supabase auth + catch log sync. Local catch log for unauthenticated users with migration-on-sign-in. 3-step onboarding. Full species data for all regions. Background fetch for score alerts. 374 tests, 37 suites.
 
 ---
 
@@ -18,7 +18,10 @@ React Native / Expo fishing forecast app. Combines NOAA tide/water/wind/pressure
 - **react-native-svg** — tide bezier chart, score bars
 - **suncalc** — local moon/sun calculations (no network)
 - **TypeScript strict mode** throughout
-- **Jest + React Native Testing Library** — 69 tests, 12 suites
+- **Jest + React Native Testing Library** — 374 tests, 37 suites
+- **expo-background-fetch + expo-task-manager** — hourly score alert background task
+- **Supabase** — auth (email/password), catch log cloud sync, spot sync, feature requests
+- **AsyncStorage** — local catch log (no auth), spots, settings, TanStack Query cache
 
 ---
 
@@ -42,7 +45,13 @@ services/
   marineService.ts         Open-Meteo marine swell → SwellData | null
   solunarService.ts        suncalc moon/sun → SolunarData (local, no network)
   scoringService.ts        buildConditionsData() — wires all sources into ConditionsData
-  forecastService.ts       Phase B2 stub (throws — not yet implemented)
+  forecastService.ts       NWS 7-day gridpoints forecast → DayForecast[]
+  notificationService.ts   maybeScheduleFishingAlert() — fires push notification when score ≥ threshold
+  backgroundFetchService.ts FISHING_ALERT_TASK — hourly background fetch task, registerFishingAlertTask()
+  catchLogService.ts       fetchCatches, addCatch, deleteCatch, migrateCatches (Supabase)
+  spotsService.ts          fetchSpots, saveAllSpots (Supabase)
+  settingsService.ts       settingsFromMetadata, saveSettings (Supabase user metadata)
+  featureRequestService.ts submitFeatureRequest (Supabase)
 
 hooks/
   useConditions.ts         4 parallel TanStack Queries → ConditionsData | null
@@ -52,31 +61,42 @@ hooks/
 features/
   score/
     scoringEngine.ts       Pure scoring algorithm (ScoringInputs → 0–100)
-    ScoreDisplay.tsx       Animated score dial
-    ScoreTimeline.tsx      Hourly bar chart (5AM–8PM)
+    ScoreDisplay.tsx       Animated score dial + breakdown panel (expandable)
+    ScoreTimeline.tsx      Hourly bar chart (5AM–8PM) + table view toggle
   tide/
     tideUtils.ts           Phase detection, hoursFromTurn, height formatting
-    TideChart.tsx          SVG bezier tide curve
+    TideChart.tsx          SVG bezier tide curve + Y-axis labels + NOW marker
   wind/WindDisplay.tsx     Animated direction arrow
   conditions/
-    ConditionsGrid.tsx     6-cell grid
+    ConditionsGrid.tsx     6-cell grid (Pressure → Moon → Swell → Sky → Air → Sun)
     PressureCard.tsx       Pressure + trend arrow
-    MoonCard.tsx           Moon phase + solunar periods
+    MoonCard.tsx           Moon phase + abbreviated label + solunar period hint
+    conditionsSummary.ts   Plain-English conditions summary
   species/
     speciesScoring.ts      Score a species against conditions
     SpeciesCard.tsx        Row with score badge + Pro lock
-    SpeciesDetail.tsx      Full detail view
+    SpeciesDetail.tsx      Full detail view + month bar chart
   forecast/ForecastStrip.tsx  7-day strip (Pro gate)
+  common/
+    SkeletonLoader.tsx     Skeleton loading placeholders
+    SwipeableRow.tsx       Swipe-to-delete UI
+    OnboardingModal.tsx    3-step first-launch onboarding (score, solunar, spots)
+  auth/AuthModal.tsx       Email/password sign-in / sign-up modal
 
 store/
   spotsStore.ts            spots[], activeSpot, AsyncStorage persisted
-  settingsStore.ts         units, alertThreshold, isPro
+  settingsStore.ts         units, alertThreshold, isPro, onboardingComplete
+  authStore.ts             Supabase session, signIn/signUp/signOut
+  localCatchLogStore.ts    Local catch entries, AsyncStorage persisted (no auth)
 
 data/
   species/
-    westCoast.ts           15 species (fully built out)
-    northeast/southeast/freshwater.ts  Stubs (empty arrays)
+    westCoast.ts           15 species (6 free, 9 pro)
+    northeast.ts           13 species (6 free, 7 pro — striped bass, bluefish, fluke, etc.)
+    southeast.ts           13 species (6 free, 7 pro — redfish, snook, tarpon, etc.)
+    freshwater.ts          13 species (6 free, 7 pro — bass, trout, walleye, etc.)
     index.ts               getSpeciesForRegion(), detectRegion()
+  defaultSpots.ts          SEED_SPOTS (3 auto-seeded), POPULAR_SPOTS catalog (40+ spots)
 
 types/
   conditions.ts            ConditionsData, TideData, WindData, PressureData,
@@ -255,9 +275,24 @@ await browser.close()
 
 ---
 
-## What's Next (Phase B2 / C)
+## What's Next (Phase C / Release)
 
-- **Phase B2:** `useForecast` / `forecastService.ts` — 7-day forecast from NWS daily gridpoints (now implemented)
-- **Phase C:** Push notifications (background fetch at user's alert threshold), Pro subscription (RevenueCat), species data for northeast/southeast regions
+- **Background fetch for push notifications** — `expo-background-fetch` + `expo-task-manager` are installed; need `BackgroundFetch.registerTaskAsync()` wired to `maybeScheduleFishingAlert`
+- **Pro subscription (RevenueCat)** — Settings shows "Coming Soon"; need `react-native-purchases` integration
+- **App Store assets** — Custom fishing-themed icon and splash screen (currently using Expo defaults)
+- **Error tracking** — Sentry or similar (no crash reporting currently)
+- **Catch log migration** — When user signs in with local catches, offer to sync them to cloud
 
-`forecastService.ts` is implemented. `useForecast.ts` uses real TanStack Query.
+## Key Implementation Notes
+
+**Catch log:** Non-authenticated users get `localCatchLogStore` (AsyncStorage). Authenticated users get Supabase. The hook (`useCatchLog.ts`) switches transparently based on `session?.user.id`.
+
+**Onboarding:** `OnboardingModal` shown when `settingsStore.onboardingComplete === false`. 3 steps: score explanation, solunar, add spot. `setOnboardingComplete()` persists via AsyncStorage.
+
+**Species tiers:** `tier: 'free'` species always shown. `tier: 'pro'` species shown only when `isPro === true`. Free users see 2 free species + upgrade teaser on species tab.
+
+**Pro gates:**
+- ForecastStrip: completely hidden for non-Pro (upgrade card shown instead)
+- DayCalendar: days beyond 7 shown with lock icon for non-Pro
+- Species library: only 2 free species listed + locked count teaser
+- Species alerts: toggle disabled for non-Pro in SpeciesAlertsSection
