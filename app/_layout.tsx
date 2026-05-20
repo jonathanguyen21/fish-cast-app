@@ -21,6 +21,7 @@ import { detectRegion } from '../data/species'
 import { fetchSpots, saveAllSpots } from '../services/spotsService'
 import { settingsFromMetadata, saveSettings } from '../services/settingsService'
 import { useSettingsStore } from '../store/settingsStore'
+import { registerFishingAlertTask } from '../services/backgroundFetchService'
 
 export { ErrorBoundary } from 'expo-router'
 
@@ -106,6 +107,10 @@ export default function RootLayout() {
       saveSettings(state).catch(() => {})
     })
   }, [userId])
+
+  useEffect(() => {
+    registerFishingAlertTask().catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (hasSeeded.current || spots.length > 0) return
