@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
 import { scoreColor } from '../score/scoringEngine'
+import { getDailySolunar } from '../../services/solunarService'
 import type { DayForecast } from '../../types/conditions'
 
 interface Props {
@@ -13,6 +14,14 @@ interface Props {
   isLoading?: boolean
   isError?: boolean
   onUpgrade: () => void
+  lat?: number
+  lng?: number
+}
+
+function moonIcon(phase: number): keyof typeof Ionicons.glyphMap {
+  if (phase < 0.08 || phase > 0.92) return 'ellipse-outline'
+  if (phase > 0.42 && phase < 0.58) return 'moon'
+  return 'moon-outline'
 }
 
 type IoniconName = keyof typeof Ionicons.glyphMap
@@ -33,7 +42,16 @@ const SKY_COLOR: Record<string, string> = {
   'heavy-rain': Colors.danger,
 }
 
-export function ForecastStrip({ forecast, isPro, isLoading, isError, onUpgrade }: Props) {
+export function ForecastStrip({ forecast, isPro, isLoading, isError, onUpgrade, lat, lng }: Props) {
+  const solunarByDate = useMemo(() => {
+    if (!lat || !lng || !forecast) return {}
+    const map: Record<string, ReturnType<typeof getDailySolunar>> = {}
+    for (const d of forecast) {
+      const date = new Date(d.date + 'T12:00:00')
+      map[d.date] = getDailySolunar(lat, lng, date)
+    }
+    return map
+  }, [lat, lng, forecast])
   if (!isPro) {
     return (
       <View style={styles.container}>
@@ -94,6 +112,7 @@ export function ForecastStrip({ forecast, isPro, isLoading, isError, onUpgrade }
           const iconName: IoniconName = day.skyIcon ? (SKY_ICON[day.skyIcon] ?? 'partly-sunny-outline') : 'partly-sunny-outline'
           const iconColor = day.skyIcon ? (SKY_COLOR[day.skyIcon] ?? Colors.textSecondary) : Colors.textSecondary
           const isBest = day.peakScore === maxScore && maxScore >= 60
+          const sol = solunarByDate[day.date]
           return (
             <View key={day.date} style={[styles.dayCard, isBest && styles.dayCardBest]}>
               {isBest && (
@@ -112,6 +131,12 @@ export function ForecastStrip({ forecast, isPro, isLoading, isError, onUpgrade }
               <Text style={styles.window} numberOfLines={1}>
                 {day.peakWindow.start.replace(' AM', 'a').replace(' PM', 'p')}–{day.peakWindow.end.replace(' AM', 'a').replace(' PM', 'p')}
               </Text>
+              {sol && (
+                <View style={styles.solRow}>
+                  <Ionicons name={moonIcon(sol.phase)} size={10} color={Colors.textTertiary} />
+                  <Text style={styles.solRating}>{sol.rating}</Text>
+                </View>
+              )}
             </View>
           )
         })}
@@ -145,6 +170,8 @@ const styles = StyleSheet.create({
   scoreText: { fontSize: 15, fontWeight: '700' },
   rain: { fontSize: 10, color: Colors.ocean, marginBottom: 2 },
   window: { fontSize: 9, color: Colors.textTertiary, marginTop: 2 },
+  solRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 3 },
+  solRating: { fontSize: 9, color: Colors.textTertiary, fontWeight: '600' },
   upgradeCard: { backgroundColor: Colors.card, borderRadius: Spacing.cardRadius, padding: Spacing.md, alignItems: 'center' },
   upgradeTitle: { fontSize: 15, fontWeight: '600', color: Colors.accent },
   upgradeSub: { fontSize: 12, color: Colors.textSecondary, marginTop: 4 },
