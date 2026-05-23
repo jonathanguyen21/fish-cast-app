@@ -31,6 +31,7 @@ import { useRouter } from 'expo-router'
 import { ScoreCardSkeleton, TimelineSkeleton, QuickStatsSkeleton, ConditionsGridSkeleton } from '../../features/common/SkeletonLoader'
 import { buildConditionsSummary } from '../../features/conditions/conditionsSummary'
 import { FishingIntelCard } from '../../features/conditions/FishingIntelCard'
+import { DayPlanStrip } from '../../features/score/DayPlanStrip'
 import { maybeScheduleFishingAlert } from '../../services/notificationService'
 import { useCatchLogStore } from '../../store/catchLogStore'
 
@@ -340,6 +341,7 @@ export default function ForecastScreen() {
               <Text style={styles.summaryText}>{buildConditionsSummary(conditions)}</Text>
             </View>
             <FishingIntelCard conditions={conditions} />
+            <DayPlanStrip hourlyScores={conditions.hourlyScores} />
             {(() => {
               if (!forecast || conditions.fishingScore >= 65) return null
               const today = localDateKey(new Date())
