@@ -9,4 +9,5 @@ export interface Spot {
   type: SpotType
   stationId: string | null
   region: Region
+  notes?: string
 }

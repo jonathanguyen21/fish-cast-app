@@ -83,6 +83,9 @@ function SpotRow({ spot, isActive, onPress, onDelete, onEdit }: {
           </Text>
         </View>
         <SolunarMiniBar lat={spot.lat} lng={spot.lng} />
+        {spot.notes ? (
+          <Text style={styles.rowNotes} numberOfLines={1}>{spot.notes}</Text>
+        ) : null}
       </View>
       <TouchableOpacity onPress={onEdit} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={styles.editBtn}>
         <Ionicons name="pencil-outline" size={15} color={Colors.textTertiary} />
@@ -101,15 +104,17 @@ export default function SpotsScreen() {
   const { spots, activeSpotId, setActiveSpot, removeSpot, updateSpot } = useSpots()
   const [editingSpot, setEditingSpot] = useState<Spot | null>(null)
   const [editName, setEditName] = useState('')
+  const [editNotes, setEditNotes] = useState('')
 
   function openEdit(spot: Spot) {
     setEditingSpot(spot)
     setEditName(spot.name)
+    setEditNotes(spot.notes ?? '')
   }
 
   function saveEdit() {
     if (editingSpot && editName.trim()) {
-      updateSpot(editingSpot.id, { name: editName.trim() })
+      updateSpot(editingSpot.id, { name: editName.trim(), notes: editNotes.trim() || undefined })
     }
     setEditingSpot(null)
   }
@@ -150,7 +155,8 @@ export default function SpotsScreen() {
       <Modal visible={!!editingSpot} animationType="fade" transparent onRequestClose={() => setEditingSpot(null)}>
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.renameCard}>
-            <Text style={styles.renameTitle}>Rename Spot</Text>
+            <Text style={styles.renameTitle}>Edit Spot</Text>
+            <Text style={styles.renameFieldLabel}>Name</Text>
             <TextInput
               style={styles.renameInput}
               value={editName}
@@ -158,6 +164,17 @@ export default function SpotsScreen() {
               autoFocus
               selectTextOnFocus
               placeholderTextColor={Colors.textTertiary}
+              returnKeyType="next"
+            />
+            <Text style={styles.renameFieldLabel}>Notes</Text>
+            <TextInput
+              style={[styles.renameInput, styles.notesInput]}
+              value={editNotes}
+              onChangeText={setEditNotes}
+              placeholder="Good at low tide near rocks, try live bait..."
+              placeholderTextColor={Colors.textTertiary}
+              multiline
+              numberOfLines={3}
               returnKeyType="done"
               onSubmitEditing={saveEdit}
             />
@@ -243,10 +260,13 @@ const styles = StyleSheet.create({
     padding: Spacing.lg, width: '100%',
   },
   renameTitle: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary, marginBottom: Spacing.md },
+  renameFieldLabel: { fontSize: 11, fontWeight: '600', color: Colors.textTertiary, marginBottom: 4, marginTop: Spacing.sm },
   renameInput: {
     backgroundColor: Colors.surface, borderRadius: 10, padding: Spacing.md,
     fontSize: 16, color: Colors.textPrimary,
   },
+  notesInput: { minHeight: 72, textAlignVertical: 'top', fontSize: 14 },
+  rowNotes: { fontSize: 11, color: Colors.textTertiary, marginTop: 3, fontStyle: 'italic' },
   renameActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md },
   renameCancel: {
     flex: 1, padding: Spacing.md, borderRadius: 10,
