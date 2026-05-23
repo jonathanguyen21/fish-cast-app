@@ -339,6 +339,7 @@ export default function ForecastScreen() {
               label={conditions.scoreLabel}
               bestWindow={conditions.bestWindow}
               breakdown={conditions.scoreBreakdown}
+              spotName={activeSpot.name}
             />
             {solunarNow && (
               <View style={[styles.solunarBanner, solunarNow.type === 'major' && styles.solunarBannerMajor]}>

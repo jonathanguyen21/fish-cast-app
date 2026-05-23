@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, LayoutAnimation, type DimensionValue } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, LayoutAnimation, Alert, type DimensionValue } from 'react-native'
 import Animated, { useSharedValue, useAnimatedProps, withTiming, Easing } from 'react-native-reanimated'
 import { Svg, Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from './scoringEngine'
+import { scheduleWindowReminder } from '../../services/notificationService'
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
@@ -55,6 +56,7 @@ interface Props {
     waterTemp: number
     sky: number
   }
+  spotName?: string
 }
 
 type IoniconName = keyof typeof Ionicons.glyphMap
@@ -68,7 +70,18 @@ const FACTORS: { key: keyof NonNullable<Props['breakdown']>; icon: IoniconName; 
   { key: 'sky',       icon: 'cloud-outline',          label: 'Sky',        max: 10 },
 ]
 
-export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
+export function ScoreDisplay({ score, label, bestWindow, breakdown, spotName }: Props) {
+  const [reminderSet, setReminderSet] = useState(false)
+
+  async function handleSetReminder() {
+    const success = await scheduleWindowReminder(spotName ?? 'your spot', bestWindow.start, bestWindow.end, bestWindow.score)
+    if (success) {
+      setReminderSet(true)
+      Alert.alert('Reminder Set', `You'll be notified 30 minutes before the best window opens at ${bestWindow.start}.`)
+    } else {
+      Alert.alert('Can\'t Set Reminder', 'The best window has already passed, or notification permissions are required.')
+    }
+  }
   const gradientId = useRef(`scoreGrad-${Math.random().toString(36).slice(2)}`).current
   const animatedOffset = useSharedValue(CIRCUMFERENCE)
   const [expanded, setExpanded] = useState(false)
@@ -157,6 +170,26 @@ export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
         ) : null
       })()}
 
+      {(() => {
+        const nowMins = new Date().getHours() * 60 + new Date().getMinutes()
+        const startMins = parseTimeToMinutes(bestWindow.start)
+        const isUpcoming = startMins > nowMins
+        return isUpcoming && !reminderSet ? (
+          <TouchableOpacity
+            style={styles.reminderBtn}
+            onPress={handleSetReminder}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="alarm-outline" size={11} color={Colors.textTertiary} />
+            <Text style={styles.reminderBtnText}>Remind me 30min before</Text>
+          </TouchableOpacity>
+        ) : reminderSet ? (
+          <View style={styles.reminderSet}>
+            <Ionicons name="checkmark-circle" size={11} color={Colors.success} />
+            <Text style={[styles.reminderBtnText, { color: Colors.success }]}>Reminder set</Text>
+          </View>
+        ) : null
+      })()}
       <Text style={styles.tapHint}>{expanded ? 'Tap to collapse' : 'Tap to see score breakdown'}</Text>
 
       {expanded && breakdown && (
@@ -266,6 +299,24 @@ const styles = StyleSheet.create({
   countdownText: {
     fontSize: 11,
     fontWeight: '600',
+  },
+  reminderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  reminderSet: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 3,
+  },
+  reminderBtnText: {
+    fontSize: 10,
+    color: Colors.textTertiary,
   },
   tapHint: {
     fontSize: 11,
