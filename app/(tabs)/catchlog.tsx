@@ -240,6 +240,7 @@ export default function CatchLogScreen() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [form, setForm] = useState<FormState>({ species: '', weightLbs: '', weightOz: '', length: '', note: '', score: '' })
   const [showSpeciesPicker, setShowSpeciesPicker] = useState(false)
+  const [logView, setLogView] = useState<'date' | 'spot'>('date')
 
   const today = useMemo(() => {
     const d = new Date()
@@ -325,6 +326,15 @@ export default function CatchLogScreen() {
     return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]))
   }, [entries])
 
+  const groupedBySpot = useMemo(() => {
+    const map: Record<string, { spotName: string; entries: CatchEntry[] }> = {}
+    for (const e of entries) {
+      if (!map[e.spotId]) map[e.spotId] = { spotName: e.spotName, entries: [] }
+      map[e.spotId].entries.push(e)
+    }
+    return Object.values(map).sort((a, b) => b.entries.length - a.entries.length)
+  }, [entries])
+
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
@@ -334,6 +344,24 @@ export default function CatchLogScreen() {
           <Text style={styles.addButtonText}>Log Catch</Text>
         </TouchableOpacity>
       </View>
+      {entries.length > 0 && (
+        <View style={styles.viewToggleRow}>
+          <TouchableOpacity
+            style={[styles.viewToggleBtn, logView === 'date' && styles.viewToggleActive]}
+            onPress={() => setLogView('date')}
+          >
+            <Ionicons name="calendar-outline" size={12} color={logView === 'date' ? Colors.accent : Colors.textTertiary} />
+            <Text style={[styles.viewToggleText, logView === 'date' && styles.viewToggleTextActive]}>By Date</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.viewToggleBtn, logView === 'spot' && styles.viewToggleActive]}
+            onPress={() => setLogView('spot')}
+          >
+            <Ionicons name="location-outline" size={12} color={logView === 'spot' ? Colors.accent : Colors.textTertiary} />
+            <Text style={[styles.viewToggleText, logView === 'spot' && styles.viewToggleTextActive]}>By Spot</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {isLocal && (
         <TouchableOpacity style={styles.syncBanner} onPress={() => setShowAuthModal(true)} activeOpacity={0.8}>
@@ -350,6 +378,52 @@ export default function CatchLogScreen() {
             <Text style={styles.emptyText}>No catches logged yet</Text>
             <Text style={styles.emptyHint}>Tap "Log Catch" after a successful trip to track your catches over time.</Text>
           </View>
+        ) : logView === 'spot' ? (
+          <>
+            {entries.length >= 1 && <CatchStats entries={entries} />}
+            {groupedBySpot.map(({ spotName, entries: spotEntries }) => {
+              const withScore = spotEntries.filter(e => e.fishingScore != null)
+              const avgScore = withScore.length
+                ? Math.round(withScore.reduce((s, e) => s + e.fishingScore!, 0) / withScore.length)
+                : null
+              const speciesCounts: Record<string, number> = {}
+              spotEntries.forEach(e => { speciesCounts[e.species] = (speciesCounts[e.species] ?? 0) + 1 })
+              const topSpecies = Object.entries(speciesCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+              return (
+                <View key={spotName} style={styles.spotGroupCard}>
+                  <View style={styles.spotGroupHeader}>
+                    <Ionicons name="location" size={14} color={Colors.accent} />
+                    <Text style={styles.spotGroupName} numberOfLines={1}>{spotName}</Text>
+                    <View style={styles.spotGroupBadge}>
+                      <Text style={styles.spotGroupCount}>{spotEntries.length} catch{spotEntries.length !== 1 ? 'es' : ''}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.spotGroupStats}>
+                    {avgScore !== null && (
+                      <View style={styles.spotStat}>
+                        <Text style={[styles.spotStatValue, { color: scoreColor(avgScore) }]}>{avgScore}</Text>
+                        <Text style={styles.spotStatLabel}>avg score</Text>
+                      </View>
+                    )}
+                    {topSpecies && (
+                      <View style={styles.spotStat}>
+                        <Text style={styles.spotStatValue} numberOfLines={1}>{topSpecies}</Text>
+                        <Text style={styles.spotStatLabel}>top species</Text>
+                      </View>
+                    )}
+                  </View>
+                  {spotEntries.slice(0, 2).map(e => (
+                    <View key={e.id} style={styles.catchCardWrap}>
+                      <CatchCard entry={e} onDelete={() => deleteEntry(e.id)} />
+                    </View>
+                  ))}
+                  {spotEntries.length > 2 && (
+                    <Text style={styles.spotMoreText}>+{spotEntries.length - 2} more catch{spotEntries.length - 2 !== 1 ? 'es' : ''}</Text>
+                  )}
+                </View>
+              )
+            })}
+          </>
         ) : (
           <>
             {entries.length >= 1 && <CatchStats entries={entries} />}
@@ -519,6 +593,41 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', marginTop: 80, gap: Spacing.sm },
   emptyText: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20, maxWidth: 280 },
+  viewToggleRow: {
+    flexDirection: 'row', gap: 6,
+    paddingHorizontal: Spacing.screenPad, marginBottom: Spacing.sm,
+  },
+  viewToggleBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 16, backgroundColor: Colors.card,
+    borderWidth: 1, borderColor: Colors.card,
+  },
+  viewToggleActive: { borderColor: Colors.accent + '55', backgroundColor: Colors.accent + '15' },
+  viewToggleText: { fontSize: 12, color: Colors.textTertiary, fontWeight: '600' },
+  viewToggleTextActive: { color: Colors.accent },
+  spotGroupCard: {
+    backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
+    marginBottom: Spacing.md, padding: Spacing.md,
+  },
+  spotGroupHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  spotGroupName: { flex: 1, fontSize: 15, fontWeight: '700', color: Colors.textPrimary },
+  spotGroupBadge: {
+    backgroundColor: Colors.accent + '22', borderRadius: 10,
+    paddingHorizontal: 8, paddingVertical: 2,
+  },
+  spotGroupCount: { fontSize: 11, color: Colors.accent, fontWeight: '600' },
+  spotGroupStats: {
+    flexDirection: 'row', gap: Spacing.lg, marginBottom: 10,
+    paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: Colors.card,
+  },
+  spotStat: { alignItems: 'flex-start' },
+  spotStatValue: { fontSize: 15, fontWeight: '700', color: Colors.textPrimary },
+  spotStatLabel: { fontSize: 10, color: Colors.textTertiary, marginTop: 1 },
+  spotMoreText: {
+    fontSize: 12, color: Colors.textTertiary, textAlign: 'center',
+    paddingTop: 4,
+  },
   dayLabel: { fontSize: 13, fontWeight: '600', color: Colors.textTertiary, marginTop: Spacing.md, marginBottom: Spacing.xs },
   catchCardWrap: { marginBottom: Spacing.sm },
   catchCard: {
