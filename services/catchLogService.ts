@@ -66,6 +66,20 @@ export async function addCatch(
   return rowToEntry(data as DbRow)
 }
 
+export async function updateCatch(
+  id: string,
+  patch: Partial<Omit<CatchEntry, 'id'>>
+): Promise<void> {
+  const updates: Record<string, unknown> = {}
+  if (patch.species !== undefined) updates.species = patch.species
+  if (patch.weight !== undefined) updates.weight = patch.weight ?? null
+  if (patch.length !== undefined) updates.length = patch.length ?? null
+  if (patch.note !== undefined) updates.note = patch.note ?? null
+  if (patch.fishingScore !== undefined) updates.fishing_score = patch.fishingScore ?? null
+  const { error } = await supabase.from('catch_entries').update(updates).eq('id', id)
+  if (error) throw error
+}
+
 export async function deleteCatch(id: string): Promise<void> {
   const { error } = await supabase
     .from('catch_entries')

@@ -6,6 +6,7 @@ import type { CatchEntry } from '../types/catchLog'
 interface LocalCatchLogState {
   entries: CatchEntry[]
   addEntry: (entry: Omit<CatchEntry, 'id'>) => void
+  updateEntry: (id: string, patch: Partial<Omit<CatchEntry, 'id'>>) => void
   deleteEntry: (id: string) => void
   clearAll: () => void
 }
@@ -19,6 +20,9 @@ export const useLocalCatchLogStore = create<LocalCatchLogState>()(
           { ...entry, id: `local-${Date.now()}-${Math.random().toString(36).slice(2)}` },
           ...state.entries,
         ],
+      })),
+      updateEntry: (id, patch) => set(state => ({
+        entries: state.entries.map(e => e.id === id ? { ...e, ...patch } : e),
       })),
       deleteEntry: (id) => set(state => ({
         entries: state.entries.filter(e => e.id !== id),

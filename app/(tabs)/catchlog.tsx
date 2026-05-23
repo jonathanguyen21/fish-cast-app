@@ -242,38 +242,43 @@ function CatchStats({ entries }: { entries: CatchEntry[] }) {
   )
 }
 
-function CatchCard({ entry, onDelete }: { entry: CatchEntry; onDelete: () => void }) {
+function CatchCard({ entry, onDelete, onEdit }: { entry: CatchEntry; onDelete: () => void; onEdit: () => void }) {
   return (
     <SwipeableRow onDelete={onDelete}>
-      <View style={styles.catchCard}>
-        <View style={styles.catchHeader}>
-          <Text style={styles.catchSpecies}>{entry.species}</Text>
-          <Text style={styles.catchSpotInline}>{entry.spotName}</Text>
+      <TouchableOpacity onPress={onEdit} activeOpacity={0.85}>
+        <View style={styles.catchCard}>
+          <View style={styles.catchHeader}>
+            <Text style={styles.catchSpecies}>{entry.species}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={styles.catchSpotInline}>{entry.spotName}</Text>
+              <Ionicons name="pencil-outline" size={11} color={Colors.textTertiary} />
+            </View>
+          </View>
+          <Text style={styles.catchMeta}>{formatDate(entry.date)} at {entry.time}</Text>
+          <View style={styles.catchStats}>
+            {entry.weight != null && (
+              <View style={styles.catchStat}>
+                <Text style={styles.catchStatValue}>
+                  {Math.floor(entry.weight)}<Text style={styles.catchStatUnit}> lbs </Text>
+                  {Math.round((entry.weight % 1) * 16)}<Text style={styles.catchStatUnit}> oz</Text>
+                </Text>
+              </View>
+            )}
+            {entry.length != null && (
+              <View style={styles.catchStat}>
+                <Text style={styles.catchStatValue}>{entry.length} <Text style={styles.catchStatUnit}>in</Text></Text>
+              </View>
+            )}
+            {entry.fishingScore != null && (
+              <View style={styles.catchStat}>
+                <Text style={[styles.catchStatValue, { color: scoreColor(entry.fishingScore) }]}>{entry.fishingScore}</Text>
+                <Text style={styles.catchStatUnit}> score</Text>
+              </View>
+            )}
+          </View>
+          {entry.note ? <Text style={styles.catchNote}>{entry.note}</Text> : null}
         </View>
-        <Text style={styles.catchMeta}>{formatDate(entry.date)} at {entry.time}</Text>
-        <View style={styles.catchStats}>
-          {entry.weight != null && (
-            <View style={styles.catchStat}>
-              <Text style={styles.catchStatValue}>
-                {Math.floor(entry.weight)}<Text style={styles.catchStatUnit}> lbs </Text>
-                {Math.round((entry.weight % 1) * 16)}<Text style={styles.catchStatUnit}> oz</Text>
-              </Text>
-            </View>
-          )}
-          {entry.length != null && (
-            <View style={styles.catchStat}>
-              <Text style={styles.catchStatValue}>{entry.length} <Text style={styles.catchStatUnit}>in</Text></Text>
-            </View>
-          )}
-          {entry.fishingScore != null && (
-            <View style={styles.catchStat}>
-              <Text style={[styles.catchStatValue, { color: scoreColor(entry.fishingScore) }]}>{entry.fishingScore}</Text>
-              <Text style={styles.catchStatUnit}> score</Text>
-            </View>
-          )}
-        </View>
-        {entry.note ? <Text style={styles.catchNote}>{entry.note}</Text> : null}
-      </View>
+      </TouchableOpacity>
     </SwipeableRow>
   )
 }
@@ -289,10 +294,11 @@ interface FormState {
 
 export default function CatchLogScreen() {
   const insets = useSafeAreaInsets()
-  const { entries, addEntry, deleteEntry, isSignedIn, isLocal } = useCatchLog()
+  const { entries, addEntry, updateEntry, deleteEntry, isSignedIn, isLocal } = useCatchLog()
   const { activeSpot } = useSpots()
   const queryClient = useQueryClient()
   const [showModal, setShowModal] = useState(false)
+  const [editEntry, setEditEntry] = useState<CatchEntry | null>(null)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [form, setForm] = useState<FormState>({ species: '', weightLbs: '', weightOz: '', length: '', note: '', score: '' })
   const [showSpeciesPicker, setShowSpeciesPicker] = useState(false)
@@ -371,6 +377,45 @@ export default function CatchLogScreen() {
     })
     setForm({ species: '', weightLbs: '', weightOz: '', length: '', note: '', score: '' })
     setShowModal(false)
+  }
+
+  function handleOpenEdit(entry: CatchEntry) {
+    const lbs = entry.weight != null ? Math.floor(entry.weight) : 0
+    const oz = entry.weight != null ? Math.round((entry.weight % 1) * 16) : 0
+    setEditEntry(entry)
+    setForm({
+      species: entry.species,
+      weightLbs: lbs > 0 ? String(lbs) : '',
+      weightOz: oz > 0 ? String(oz) : '',
+      length: entry.length != null ? String(entry.length) : '',
+      note: entry.note ?? '',
+      score: entry.fishingScore != null ? String(entry.fishingScore) : '',
+    })
+  }
+
+  function handleSaveEdit() {
+    if (!editEntry) return
+    if (!form.species.trim()) {
+      Alert.alert('Species required', 'Please enter what you caught.')
+      return
+    }
+    const lbs = parseInt(form.weightLbs || '0', 10)
+    const oz = parseInt(form.weightOz || '0', 10)
+    const weight = (form.weightLbs || form.weightOz) ? lbs + oz / 16 : undefined
+    const score = form.score ? parseInt(form.score, 10) : undefined
+    if (score !== undefined && (score < 0 || score > 100)) {
+      Alert.alert('Invalid score', 'Score must be between 0 and 100.')
+      return
+    }
+    updateEntry(editEntry.id, {
+      species: form.species.trim(),
+      weight,
+      length: form.length ? parseFloat(form.length) : undefined,
+      note: form.note.trim() || undefined,
+      fishingScore: score,
+    })
+    setEditEntry(null)
+    setForm({ species: '', weightLbs: '', weightOz: '', length: '', note: '', score: '' })
   }
 
   const grouped = useMemo(() => {
@@ -524,7 +569,7 @@ export default function CatchLogScreen() {
                   </View>
                   {spotEntries.slice(0, 2).map(e => (
                     <View key={e.id} style={styles.catchCardWrap}>
-                      <CatchCard entry={e} onDelete={() => deleteEntry(e.id)} />
+                      <CatchCard entry={e} onDelete={() => deleteEntry(e.id)} onEdit={() => handleOpenEdit(e)} />
                     </View>
                   ))}
                   {spotEntries.length > 2 && (
@@ -542,7 +587,7 @@ export default function CatchLogScreen() {
                 <Text style={styles.dayLabel}>{formatDate(date)}</Text>
                 {dayEntries.map(e => (
                   <View key={e.id} style={styles.catchCardWrap}>
-                    <CatchCard entry={e} onDelete={() => deleteEntry(e.id)} />
+                    <CatchCard entry={e} onDelete={() => deleteEntry(e.id)} onEdit={() => handleOpenEdit(e)} />
                   </View>
                 ))}
               </View>
@@ -670,6 +715,68 @@ export default function CatchLogScreen() {
 
             <TouchableOpacity style={styles.submitButton} onPress={handleAdd}>
               <Text style={styles.submitButtonText}>Save Catch</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal visible={editEntry !== null} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { setEditEntry(null); setForm({ species: '', weightLbs: '', weightOz: '', length: '', note: '', score: '' }) }}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView style={styles.modal} contentContainerStyle={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Catch</Text>
+              <TouchableOpacity onPress={() => { setEditEntry(null); setForm({ species: '', weightLbs: '', weightOz: '', length: '', note: '', score: '' }) }} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Ionicons name="close" size={18} color={Colors.textSecondary} />
+                <Text style={styles.modalClose}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.fieldLabel}>Species *</Text>
+            <TouchableOpacity style={styles.speciesInput} onPress={() => setShowSpeciesPicker(v => !v)}>
+              <Text style={form.species ? styles.speciesValue : styles.speciesPlaceholder}>
+                {form.species || 'What did you catch?'}
+              </Text>
+              <Ionicons name={showSpeciesPicker ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.textTertiary} />
+            </TouchableOpacity>
+            {showSpeciesPicker && (
+              <View style={styles.speciesList}>
+                {COMMON_SPECIES.map(sp => (
+                  <TouchableOpacity key={sp} style={styles.speciesOption} onPress={() => { setForm(f => ({ ...f, species: sp })); setShowSpeciesPicker(false) }}>
+                    <Text style={[styles.speciesOptionText, form.species === sp && { color: Colors.accent }]}>{sp}</Text>
+                  </TouchableOpacity>
+                ))}
+                <TextInput
+                  style={styles.speciesCustomInput}
+                  placeholder="Or type a custom species..."
+                  placeholderTextColor={Colors.textTertiary}
+                  value={COMMON_SPECIES.includes(form.species) ? '' : form.species}
+                  onChangeText={v => setForm(f => ({ ...f, species: v }))}
+                  onSubmitEditing={() => setShowSpeciesPicker(false)}
+                />
+              </View>
+            )}
+
+            <Text style={styles.fieldLabel}>Weight</Text>
+            <View style={styles.row}>
+              <View style={styles.halfField}>
+                <TextInput style={styles.input} placeholder="lbs" placeholderTextColor={Colors.textTertiary} keyboardType="number-pad" value={form.weightLbs} onChangeText={v => setForm(f => ({ ...f, weightLbs: v.replace(/[^0-9]/g, '') }))} />
+              </View>
+              <View style={styles.halfField}>
+                <TextInput style={styles.input} placeholder="oz" placeholderTextColor={Colors.textTertiary} keyboardType="number-pad" value={form.weightOz} onChangeText={v => setForm(f => ({ ...f, weightOz: v.replace(/[^0-9]/g, '') }))} />
+              </View>
+            </View>
+
+            <Text style={styles.fieldLabel}>Length (inches)</Text>
+            <TextInput style={styles.input} placeholder="e.g. 18.5" placeholderTextColor={Colors.textTertiary} keyboardType="decimal-pad" value={form.length} onChangeText={v => setForm(f => ({ ...f, length: v }))} />
+
+            <Text style={styles.fieldLabel}>Fishing Score (0–100)</Text>
+            <TextInput style={styles.input} placeholder="Optional — what was the score?" placeholderTextColor={Colors.textTertiary} keyboardType="number-pad" value={form.score} onChangeText={v => setForm(f => ({ ...f, score: v.replace(/[^0-9]/g, '') }))} />
+
+            <Text style={styles.fieldLabel}>Notes</Text>
+            <TextInput style={[styles.input, styles.noteInput]} placeholder="Bait used, depth, spot details..." placeholderTextColor={Colors.textTertiary} multiline numberOfLines={3} value={form.note} onChangeText={v => setForm(f => ({ ...f, note: v }))} />
+
+            <TouchableOpacity style={styles.submitButton} onPress={handleSaveEdit}>
+              <Text style={styles.submitButtonText}>Save Changes</Text>
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
