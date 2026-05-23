@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import {
   ScrollView, View, Text, StyleSheet, TouchableOpacity,
   RefreshControl,
@@ -70,10 +70,21 @@ export default function SpeciesScreen() {
     return map
   }, [scoredSpecies, activeSpot, conditions])
 
+  const [filter, setFilter] = useState<'active' | 'peak' | 'all'>('active')
+
   const freeSpecies = scoredSpecies.filter(ss => ss.species.tier === 'free')
   const activeScoredSpecies = isPro ? scoredSpecies : freeSpecies
-  const visibleSpecies = isPro ? scoredSpecies : freeSpecies.slice(0, 2)
+  const currentMonth = now.getMonth() + 1
+  const filteredSpecies = useMemo(() => {
+    const base = isPro ? scoredSpecies : freeSpecies
+    if (filter === 'active') return base.filter(ss => ss.score > 0)
+    if (filter === 'peak') return base.filter(ss => ss.species.months_peak.includes(currentMonth))
+    return base
+  }, [scoredSpecies, freeSpecies, filter, isPro, currentMonth])
+  const visibleSpecies = isPro ? filteredSpecies : filteredSpecies.slice(0, filter === 'all' ? 2 : filteredSpecies.length)
   const lockedCount = isPro ? 0 : scoredSpecies.length - visibleSpecies.length
+  const peakCount = scoredSpecies.filter(ss => ss.species.months_peak.includes(currentMonth)).length
+  const activeCount = scoredSpecies.filter(ss => ss.score > 0).length
 
   if (!activeSpot) {
     return (
@@ -97,6 +108,22 @@ export default function SpeciesScreen() {
           )}
         </View>
         <Text style={styles.subtitle}>{activeSpot.name}</Text>
+        {conditions && (
+          <View style={styles.seasonRow}>
+            <Text style={styles.seasonText}>{activeCount} active now · {peakCount} in peak season</Text>
+          </View>
+        )}
+        <View style={styles.filterRow}>
+          {([['active', 'Active Now'], ['peak', 'Peak Season'], ['all', 'All']] as const).map(([key, label]) => (
+            <TouchableOpacity
+              key={key}
+              style={[styles.filterTab, filter === key && styles.filterTabActive]}
+              onPress={() => setFilter(key)}
+            >
+              <Text style={[styles.filterTabText, filter === key && styles.filterTabTextActive]}>{label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
       <ScrollView
@@ -105,20 +132,32 @@ export default function SpeciesScreen() {
       >
         {conditions ? (
           <>
-            <ActiveRightNow
-              scoredSpecies={activeScoredSpecies}
-              hourlyByMap={scoredHourlyByMap}
-              currentHour={currentHour}
-              maxRows={2}
-              onPressSpecies={(id) => {
-                const ss = scoredSpecies.find(s => s.species.id === id)
-                if (!ss) return
-                router.push({ pathname: '/species/[id]', params: { id, data: JSON.stringify(ss), hourlyData: JSON.stringify(scoredHourlyByMap[id] ?? []) } })
-              }}
-            />
+            {filter === 'active' && (
+              <ActiveRightNow
+                scoredSpecies={activeScoredSpecies}
+                hourlyByMap={scoredHourlyByMap}
+                currentHour={currentHour}
+                maxRows={2}
+                onPressSpecies={(id) => {
+                  const ss = scoredSpecies.find(s => s.species.id === id)
+                  if (!ss) return
+                  router.push({ pathname: '/species/[id]', params: { id, data: JSON.stringify(ss), hourlyData: JSON.stringify(scoredHourlyByMap[id] ?? []) } })
+                }}
+              />
+            )}
 
             <View style={styles.section}>
-              <Text style={Typography.sectionTitle}>All Species</Text>
+              <Text style={Typography.sectionTitle}>
+                {filter === 'active' ? 'Active Species' : filter === 'peak' ? 'Peak Season' : 'All Species'}
+              </Text>
+              {visibleSpecies.length === 0 && (
+                <View style={styles.emptyFilter}>
+                  <Ionicons name="fish-outline" size={32} color={Colors.textTertiary} />
+                  <Text style={styles.emptyFilterText}>
+                    {filter === 'active' ? 'No species active right now' : 'No species in peak season this month'}
+                  </Text>
+                </View>
+              )}
               {visibleSpecies.map(ss => (
                 <SpeciesCard
                   key={ss.species.id}
@@ -173,6 +212,18 @@ const styles = StyleSheet.create({
   },
   scoreBadgeText: { fontSize: 14, fontWeight: '700' },
   content: { paddingBottom: Spacing.xl },
+  seasonRow: { marginTop: 4 },
+  seasonText: { fontSize: 12, color: Colors.textTertiary },
+  filterRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
+  filterTab: {
+    paddingHorizontal: 12, paddingVertical: 5,
+    borderRadius: 14, borderWidth: 1, borderColor: Colors.textTertiary + '40',
+  },
+  filterTabActive: { backgroundColor: Colors.accent + '20', borderColor: Colors.accent + '60' },
+  filterTabText: { fontSize: 12, color: Colors.textTertiary, fontWeight: '500' },
+  filterTabTextActive: { color: Colors.accent, fontWeight: '700' },
+  emptyFilter: { alignItems: 'center', padding: Spacing.xl, gap: Spacing.sm },
+  emptyFilterText: { fontSize: 13, color: Colors.textTertiary, textAlign: 'center' },
   section: { marginHorizontal: Spacing.screenPad, marginBottom: Spacing.md },
   upgradeTeaser: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
