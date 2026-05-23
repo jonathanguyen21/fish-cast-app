@@ -123,6 +123,7 @@ export default function SpeciesScreen() {
                   speciesScore={ss}
                   hourly={scoredHourlyByMap[ss.species.id]}
                   isPro={isPro}
+                  currentHour={currentHour}
                   onPress={() => {
                     if (ss.species.tier === 'pro' && !isPro) return
                     router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss), hourlyData: JSON.stringify(scoredHourlyByMap[ss.species.id] ?? []) } })

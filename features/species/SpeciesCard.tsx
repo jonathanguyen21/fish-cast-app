@@ -1,6 +1,7 @@
 import React from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import Svg, { Polyline, Rect } from 'react-native-svg'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from '../score/scoringEngine'
@@ -12,12 +13,34 @@ interface Props {
   hourly?: SpeciesHourlyScore[]
   isPro: boolean
   onPress: () => void
+  currentHour?: number
 }
 
 function formatHour(h: number): string {
   const period = h < 12 ? 'AM' : 'PM'
   const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h
   return `${displayH}${period}`
+}
+
+function ActivitySparkline({ hourly, currentHour }: { hourly: SpeciesHourlyScore[]; currentHour: number }) {
+  if (hourly.length < 2) return null
+  const W = 80, H = 20
+  const maxScore = Math.max(...hourly.map(h => h.score), 1)
+  const points = hourly.map((h, i) => {
+    const x = (i / (hourly.length - 1)) * W
+    const y = H - (h.score / maxScore) * H
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  }).join(' ')
+  const nowIdx = hourly.findIndex(h => h.hour === currentHour)
+  const nowX = nowIdx >= 0 ? (nowIdx / (hourly.length - 1)) * W : null
+  return (
+    <Svg width={W} height={H}>
+      {nowX !== null && (
+        <Rect x={nowX - 0.5} y={0} width={1} height={H} fill={Colors.accent} fillOpacity={0.4} />
+      )}
+      <Polyline points={points} fill="none" stroke={Colors.ocean} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  )
 }
 
 const statusColor: Record<SpeciesScore['status'], string> = {
@@ -27,7 +50,7 @@ const statusColor: Record<SpeciesScore['status'], string> = {
   'Inactive': Colors.textTertiary,
 }
 
-export function SpeciesCard({ speciesScore, hourly, isPro, onPress }: Props) {
+export function SpeciesCard({ speciesScore, hourly, isPro, onPress, currentHour }: Props) {
   const { species, score, status } = speciesScore
   const isLocked = species.tier === 'pro' && !isPro
   const color = scoreColor(score)
@@ -62,6 +85,13 @@ export function SpeciesCard({ speciesScore, hourly, isPro, onPress }: Props) {
           <Ionicons name="chevron-forward" size={12} color={Colors.accent} />
         </View>
       )}
+      {!isLocked && hourly && hourly.length >= 2 && currentHour !== undefined && (
+        <View style={styles.sparklineRow}>
+          <Text style={styles.sparklineLabel}>5AM</Text>
+          <ActivitySparkline hourly={hourly} currentHour={currentHour} />
+          <Text style={styles.sparklineLabel}>8PM</Text>
+        </View>
+      )}
     </TouchableOpacity>
   )
 }
@@ -85,4 +115,10 @@ const styles = StyleSheet.create({
   upgradeHintRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: Spacing.xs },
   upgradeHint: { fontSize: 12, color: Colors.accent },
   bestWindow: { fontSize: 11, color: Colors.textTertiary, marginTop: 1 },
+  sparklineRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    marginTop: 6, paddingTop: 6,
+    borderTopWidth: 1, borderTopColor: Colors.surface,
+  },
+  sparklineLabel: { fontSize: 9, color: Colors.textTertiary, width: 24 },
 })
