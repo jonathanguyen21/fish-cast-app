@@ -75,4 +75,39 @@ describe('localCatchLogStore', () => {
     expect(entry.note).toBe('On a jig near the rocks')
     expect(entry.fishingScore).toBe(73)
   })
+
+  it('updates an existing entry by id', () => {
+    useLocalCatchLogStore.getState().addEntry(BASE_ENTRY)
+    const id = useLocalCatchLogStore.getState().entries[0].id
+    useLocalCatchLogStore.getState().updateEntry(id, { species: 'Rockfish', weight: 3.5 })
+    const entry = useLocalCatchLogStore.getState().entries[0]
+    expect(entry.species).toBe('Rockfish')
+    expect(entry.weight).toBe(3.5)
+    expect(entry.id).toBe(id)
+    expect(entry.spotName).toBe('Bodega Bay') // unchanged fields preserved
+  })
+
+  it('updateEntry ignores unknown id', () => {
+    useLocalCatchLogStore.getState().addEntry(BASE_ENTRY)
+    useLocalCatchLogStore.getState().updateEntry('nonexistent', { species: 'Ghost Fish' })
+    expect(useLocalCatchLogStore.getState().entries[0].species).toBe('Striped Bass')
+  })
+
+  it('updateEntry does not change other entries', () => {
+    useLocalCatchLogStore.getState().addEntry({ ...BASE_ENTRY, species: 'First' })
+    useLocalCatchLogStore.getState().addEntry({ ...BASE_ENTRY, species: 'Second' })
+    const entries = useLocalCatchLogStore.getState().entries
+    const firstId = entries[1].id // entries are prepended, so index 1 is "First"
+    useLocalCatchLogStore.getState().updateEntry(firstId, { species: 'Updated' })
+    const updated = useLocalCatchLogStore.getState().entries
+    expect(updated.find(e => e.id === firstId)?.species).toBe('Updated')
+    expect(updated[0].species).toBe('Second') // unchanged
+  })
+
+  it('updateEntry can clear optional fields by setting undefined', () => {
+    useLocalCatchLogStore.getState().addEntry({ ...BASE_ENTRY, note: 'Old note' })
+    const id = useLocalCatchLogStore.getState().entries[0].id
+    useLocalCatchLogStore.getState().updateEntry(id, { note: undefined })
+    expect(useLocalCatchLogStore.getState().entries[0].note).toBeUndefined()
+  })
 })
