@@ -16,6 +16,33 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 const GRAD_START = '#0077b6'
 const GRAD_END = '#48cae4'
 
+function parseTimeToMinutes(t: string): number {
+  const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i)
+  if (!m) return -1
+  let h = parseInt(m[1])
+  const min = parseInt(m[2])
+  if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12
+  if (m[3].toUpperCase() === 'AM' && h === 12) h = 0
+  return h * 60 + min
+}
+
+function windowStatus(start: string, end: string, nowMins: number): { text: string; accent: string } {
+  const s = parseTimeToMinutes(start)
+  const e = parseTimeToMinutes(end)
+  if (s < 0) return { text: '', accent: Colors.textTertiary }
+  if (nowMins < s) {
+    const diff = s - nowMins
+    const h = Math.floor(diff / 60), m = diff % 60
+    return { text: h > 0 ? `Opens in ${h}h ${m}m` : `Opens in ${m}m`, accent: Colors.accent }
+  }
+  if (e > 0 && nowMins <= e) {
+    const diff = e - nowMins
+    const h = Math.floor(diff / 60), m = diff % 60
+    return { text: h > 0 ? `Active · ${h}h ${m}m left` : `Active · ${m}m left`, accent: Colors.success }
+  }
+  return { text: 'Window passed', accent: Colors.textTertiary }
+}
+
 interface Props {
   score: number
   label: string
@@ -45,6 +72,16 @@ export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
   const gradientId = useRef(`scoreGrad-${Math.random().toString(36).slice(2)}`).current
   const animatedOffset = useSharedValue(CIRCUMFERENCE)
   const [expanded, setExpanded] = useState(false)
+  const [nowMins, setNowMins] = useState(() => {
+    const n = new Date(); return n.getHours() * 60 + n.getMinutes()
+  })
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const n = new Date(); setNowMins(n.getHours() * 60 + n.getMinutes())
+    }, 60_000)
+    return () => clearInterval(id)
+  }, [])
 
   useEffect(() => {
     animatedOffset.value = withTiming(
@@ -110,6 +147,15 @@ export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
           <Text style={[styles.bestWindowScore, { color: scoreColor(bestWindow.score) }]}> · {bestWindow.score}</Text>
         </View>
       </View>
+      {(() => {
+        const { text, accent } = windowStatus(bestWindow.start, bestWindow.end, nowMins)
+        return text ? (
+          <View style={[styles.countdownPill, { borderColor: accent + '55', backgroundColor: accent + '18' }]}>
+            <Ionicons name="time-outline" size={11} color={accent} />
+            <Text style={[styles.countdownText, { color: accent }]}>{text}</Text>
+          </View>
+        ) : null
+      })()}
 
       <Text style={styles.tapHint}>{expanded ? 'Tap to collapse' : 'Tap to see score breakdown'}</Text>
 
@@ -206,6 +252,20 @@ const styles = StyleSheet.create({
   bestWindowScore: {
     fontSize: 12,
     color: Colors.textSecondary,
+  },
+  countdownPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginTop: 4,
+  },
+  countdownText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   tapHint: {
     fontSize: 11,

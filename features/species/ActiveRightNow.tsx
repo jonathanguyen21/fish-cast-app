@@ -6,6 +6,7 @@ import { Spacing } from '../../theme/spacing'
 import { Typography } from '../../theme/typography'
 import { scoreColor } from '../score/scoringEngine'
 import { describeBestWindow, type SpeciesHourlyScore } from './speciesHourlyScoring'
+import { MiniActivityChart } from './MiniActivityChart'
 import type { SpeciesScore } from '../../types/species'
 
 interface Props {
@@ -68,10 +69,15 @@ export function ActiveRightNow({ scoredSpecies, hourlyByMap, currentHour, onPres
               style={[styles.row, idx > 0 && styles.rowBorder, isInactive && styles.rowDim]}
               onPress={() => onPressSpecies(row.species.id)}
             >
-              <Text style={[styles.name, isInactive && styles.nameDim]}>{row.species.common_name}</Text>
-              <Text style={[styles.hint, isInactive && styles.hintDim]}>
-                {hintLabel(row.hourly, currentHour)}
-              </Text>
+              <View style={styles.nameHintCol}>
+                <Text style={[styles.name, isInactive && styles.nameDim]}>{row.species.common_name}</Text>
+                <View style={styles.chartRow}>
+                  <MiniActivityChart hourly={row.hourly} currentHour={currentHour} />
+                  <Text style={[styles.hint, isInactive && styles.hintDim]}>
+                    {hintLabel(row.hourly, currentHour)}
+                  </Text>
+                </View>
+              </View>
               <View style={[styles.badge, { backgroundColor: color + '22', borderColor: color }]}>
                 <Text style={[styles.badgeScore, { color }]}>
                   {row.displayScore}
@@ -103,9 +109,11 @@ const styles = StyleSheet.create({
   },
   rowBorder: { borderTopWidth: 1, borderTopColor: Colors.surface },
   rowDim: { opacity: 0.5 },
-  name: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary, flex: 1 },
+  nameHintCol: { flex: 1, gap: 3 },
+  chartRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  name: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   nameDim: { color: Colors.textSecondary },
-  hint: { fontSize: 12, color: Colors.textSecondary },
+  hint: { fontSize: 11, color: Colors.textSecondary },
   hintDim: { color: Colors.textTertiary },
   badge: {
     width: 36, height: 36, borderRadius: 18, borderWidth: 1.5,
