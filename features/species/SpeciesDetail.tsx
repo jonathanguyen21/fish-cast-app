@@ -6,6 +6,7 @@ import { Spacing } from '../../theme/spacing'
 import { scoreColor } from '../score/scoringEngine'
 import { bestWindowSummary, type SpeciesHourlyScore } from './speciesHourlyScoring'
 import { SpeciesHourlyChart } from './SpeciesHourlyChart'
+import { useCatchLogStore } from '../../store/catchLogStore'
 import type { SpeciesScore } from '../../types/species'
 
 interface Props {
@@ -32,6 +33,12 @@ const statusColor: Record<SpeciesScore['status'], string> = {
 export function SpeciesDetail({ speciesScore, hourly, onUpgrade }: Props) {
   const { species, score, status, waterTempMatch, tideMatch, timeMatch } = speciesScore
   const badgeColor = scoreColor(score)
+  const entries = useCatchLogStore(s => s.entries)
+  const speciesCatches = entries.filter(e => e.species.toLowerCase() === species.common_name.toLowerCase())
+  const bestWeight = speciesCatches.reduce<number | null>((best, e) =>
+    e.weight != null && (best === null || e.weight > best) ? e.weight : best, null)
+  const bestLength = speciesCatches.reduce<number | null>((best, e) =>
+    e.length != null && (best === null || e.length > best) ? e.length : best, null)
 
   return (
     <ScrollView style={styles.container}>
@@ -89,6 +96,30 @@ export function SpeciesDetail({ speciesScore, hourly, onUpgrade }: Props) {
             )
           })()}
           <SpeciesHourlyChart hourly={hourly} onUpgrade={onUpgrade} />
+        </>
+      )}
+
+      {speciesCatches.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>My Catches</Text>
+          <View style={styles.myCatchesRow}>
+            <View style={styles.myCatchStat}>
+              <Text style={styles.myCatchNum}>{speciesCatches.length}</Text>
+              <Text style={styles.myCatchLabel}>Logged</Text>
+            </View>
+            {bestWeight != null && (
+              <View style={[styles.myCatchStat, styles.myCatchStatBorder]}>
+                <Text style={styles.myCatchNum}>{bestWeight} <Text style={styles.myCatchUnit}>lbs</Text></Text>
+                <Text style={styles.myCatchLabel}>Best Weight</Text>
+              </View>
+            )}
+            {bestLength != null && (
+              <View style={[styles.myCatchStat, styles.myCatchStatBorder]}>
+                <Text style={styles.myCatchNum}>{bestLength} <Text style={styles.myCatchUnit}>in</Text></Text>
+                <Text style={styles.myCatchLabel}>Best Length</Text>
+              </View>
+            )}
+          </View>
         </>
       )}
 
@@ -150,5 +181,11 @@ const styles = StyleSheet.create({
   capitalize: { textTransform: 'capitalize' },
   tips: { fontSize: 14, color: Colors.textPrimary, lineHeight: 22 },
   tipsCard: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: Colors.surface, borderRadius: 10, padding: Spacing.md, marginBottom: 4 },
+  myCatchesRow: { flexDirection: 'row', backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius, overflow: 'hidden' },
+  myCatchStat: { flex: 1, padding: Spacing.md, alignItems: 'center' },
+  myCatchStatBorder: { borderLeftWidth: 1, borderLeftColor: Colors.background },
+  myCatchNum: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
+  myCatchUnit: { fontSize: 12, fontWeight: '400', color: Colors.textSecondary },
+  myCatchLabel: { fontSize: 10, color: Colors.textTertiary, marginTop: 2 },
   summary: { fontSize: 14, color: Colors.textPrimary, marginBottom: Spacing.sm },
 })
