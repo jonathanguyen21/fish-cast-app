@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Modal, Alert, KeyboardAvoidingView, Platform, Share,
 } from 'react-native'
+import Svg, { Rect, Text as SvgText, Line } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useCatchLogStore, type CatchEntry } from '../../store/catchLogStore'
@@ -57,6 +58,97 @@ function CatchStats({ entries }: { entries: CatchEntry[] }) {
           <Text style={styles.statLabel}>Top Species</Text>
         </View>
       )}
+    </View>
+  )
+}
+
+function PersonalBests({ entries }: { entries: CatchEntry[] }) {
+  const withWeight = entries.filter(e => e.weight != null)
+  const withLength = entries.filter(e => e.length != null)
+  if (withWeight.length === 0 && withLength.length === 0) return null
+
+  const heaviest = withWeight.reduce<CatchEntry | null>((best, e) =>
+    (!best || e.weight! > best.weight!) ? e : best, null)
+  const longest = withLength.reduce<CatchEntry | null>((best, e) =>
+    (!best || e.length! > best.length!) ? e : best, null)
+
+  return (
+    <View style={styles.bestsCard}>
+      <View style={styles.bestsHeader}>
+        <Ionicons name="trophy-outline" size={14} color={Colors.warning} />
+        <Text style={styles.bestsTitle}>Personal Bests</Text>
+      </View>
+      <View style={styles.bestsRow}>
+        {heaviest && (
+          <View style={styles.bestItem}>
+            <Text style={styles.bestValue}>{heaviest.weight} <Text style={styles.bestUnit}>lbs</Text></Text>
+            <Text style={styles.bestLabel} numberOfLines={1}>{heaviest.species}</Text>
+          </View>
+        )}
+        {longest && longest.id !== heaviest?.id && (
+          <View style={[styles.bestItem, { borderLeftWidth: heaviest ? 1 : 0, borderLeftColor: Colors.surface }]}>
+            <Text style={styles.bestValue}>{longest.length} <Text style={styles.bestUnit}>in</Text></Text>
+            <Text style={styles.bestLabel} numberOfLines={1}>{longest.species}</Text>
+          </View>
+        )}
+        {longest && longest.id === heaviest?.id && longest.length != null && (
+          <View style={[styles.bestItem, { borderLeftWidth: 1, borderLeftColor: Colors.surface }]}>
+            <Text style={styles.bestValue}>{longest.length} <Text style={styles.bestUnit}>in</Text></Text>
+            <Text style={styles.bestLabel} numberOfLines={1}>Same catch</Text>
+          </View>
+        )}
+      </View>
+    </View>
+  )
+}
+
+const SCORE_BUCKETS = [
+  { label: '0–39', min: 0, max: 39 },
+  { label: '40–54', min: 40, max: 54 },
+  { label: '55–69', min: 55, max: 69 },
+  { label: '70–84', min: 70, max: 84 },
+  { label: '85+', min: 85, max: 100 },
+]
+
+function ScoreCorrelation({ entries }: { entries: CatchEntry[] }) {
+  const withScore = entries.filter(e => e.fishingScore != null)
+  if (withScore.length < 3) return null
+
+  const bucketCounts = SCORE_BUCKETS.map(b =>
+    withScore.filter(e => e.fishingScore! >= b.min && e.fishingScore! <= b.max).length
+  )
+  const maxCount = Math.max(...bucketCounts, 1)
+  const barW = 40, barGap = 6, svgH = 64, labelH = 16
+
+  return (
+    <View style={styles.correlationCard}>
+      <View style={styles.bestsHeader}>
+        <Ionicons name="bar-chart-outline" size={14} color={Colors.accent} />
+        <Text style={styles.bestsTitle}>Catches by Score Range</Text>
+      </View>
+      <Svg width={(barW + barGap) * SCORE_BUCKETS.length} height={svgH + labelH}>
+        {SCORE_BUCKETS.map((b, i) => {
+          const count = bucketCounts[i]
+          const fillH = Math.max(4, (count / maxCount) * svgH)
+          const y = svgH - fillH
+          const x = i * (barW + barGap)
+          const fillColor = b.min >= 70 ? Colors.success : b.min >= 55 ? Colors.accent : b.min >= 40 ? Colors.warning : Colors.textTertiary
+          return (
+            <React.Fragment key={b.label}>
+              <Rect x={x} y={y} width={barW} height={fillH} rx={4} fill={fillColor} opacity={0.8} />
+              {count > 0 && (
+                <SvgText x={x + barW / 2} y={y - 3} textAnchor="middle" fontSize={10} fill={fillColor} fontWeight="700">
+                  {count}
+                </SvgText>
+              )}
+              <SvgText x={x + barW / 2} y={svgH + labelH - 2} textAnchor="middle" fontSize={8} fill={Colors.textTertiary}>
+                {b.label}
+              </SvgText>
+            </React.Fragment>
+          )
+        })}
+        <Line x1={0} y1={svgH} x2={(barW + barGap) * SCORE_BUCKETS.length} y2={svgH} stroke={Colors.surface} strokeWidth={1} />
+      </Svg>
     </View>
   )
 }
@@ -313,6 +405,8 @@ export default function CatchLogScreen() {
         ) : (
           <>
             {filteredEntries.length >= 3 && <CatchStats entries={filteredEntries} />}
+            <PersonalBests entries={filteredEntries} />
+            <ScoreCorrelation entries={filteredEntries} />
             {grouped.map(([date, dayEntries]) => (
               <View key={date}>
                 <Text style={styles.dayLabel}>{formatDate(date)}</Text>
@@ -545,4 +639,19 @@ const styles = StyleSheet.create({
     paddingVertical: 16, alignItems: 'center', marginTop: Spacing.lg,
   },
   submitButtonText: { fontSize: 16, fontWeight: '700', color: Colors.background },
+  bestsCard: {
+    backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
+    padding: Spacing.md, marginBottom: Spacing.sm,
+  },
+  bestsHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: Spacing.sm },
+  bestsTitle: { fontSize: 12, fontWeight: '600', color: Colors.textSecondary },
+  bestsRow: { flexDirection: 'row' },
+  bestItem: { flex: 1, paddingHorizontal: Spacing.sm, paddingLeft: 0 },
+  bestValue: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
+  bestUnit: { fontSize: 12, fontWeight: '400', color: Colors.textSecondary },
+  bestLabel: { fontSize: 11, color: Colors.textTertiary, marginTop: 2 },
+  correlationCard: {
+    backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
+    padding: Spacing.md, marginBottom: Spacing.sm,
+  },
 })
