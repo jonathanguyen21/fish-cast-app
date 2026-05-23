@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Modal, Alert, KeyboardAvoidingView, Platform,
+  TextInput, Modal, Alert, KeyboardAvoidingView, Platform, Share,
 } from 'react-native'
 import Svg, { Rect, Text as SvgText } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
@@ -405,6 +405,32 @@ export default function CatchLogScreen() {
     return count
   }, [grouped])
 
+  function handleShareLog() {
+    if (entries.length === 0) return
+    const speciesCounts: Record<string, number> = {}
+    entries.forEach(e => { speciesCounts[e.species] = (speciesCounts[e.species] ?? 0) + 1 })
+    const topSpecies = Object.entries(speciesCounts).sort((a, b) => b[1] - a[1]).slice(0, 3)
+    const lines: string[] = [
+      `🎣 My FishCast Catch Log`,
+      `${entries.length} catch${entries.length !== 1 ? 'es' : ''} logged`,
+      ``,
+      `Top species: ${topSpecies.map(([sp, n]) => `${sp} (${n})`).join(', ')}`,
+    ]
+    const withScore = entries.filter(e => e.fishingScore != null)
+    if (withScore.length >= 2) {
+      const avg = Math.round(withScore.reduce((s, e) => s + e.fishingScore!, 0) / withScore.length)
+      lines.push(`Average fishing score when I catch: ${avg}`)
+    }
+    const withWeight = entries.filter(e => e.weight != null)
+    if (withWeight.length > 0) {
+      const best = withWeight.reduce((b, e) => e.weight! > b.weight! ? e : b)
+      lines.push(`Personal best: ${best.species} at ${best.weight} lbs`)
+    }
+    if (streak >= 2) lines.push(`Current streak: ${streak} consecutive days 🔥`)
+    lines.push(``, `Powered by FishCast 🎣`)
+    Share.share({ message: lines.join('\n') })
+  }
+
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
@@ -416,10 +442,17 @@ export default function CatchLogScreen() {
             </View>
           )}
         </View>
-        <TouchableOpacity style={styles.addButton} onPress={handleLogCatchPress}>
-          <Ionicons name="add" size={16} color={Colors.background} />
-          <Text style={styles.addButtonText}>Log Catch</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          {entries.length > 0 && (
+            <TouchableOpacity style={styles.shareBtn} onPress={handleShareLog}>
+              <Ionicons name="share-outline" size={16} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.addButton} onPress={handleLogCatchPress}>
+            <Ionicons name="add" size={16} color={Colors.background} />
+            <Text style={styles.addButtonText}>Log Catch</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       {entries.length > 0 && (
         <View style={styles.viewToggleRow}>
@@ -652,6 +685,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.screenPad, paddingVertical: Spacing.md,
   },
   headerLeft: { flex: 1 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  shareBtn: {
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.card,
+    alignItems: 'center', justifyContent: 'center',
+  },
   title: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary },
   streakBadge: { marginTop: 2 },
   streakText: { fontSize: 12, fontWeight: '700', color: Colors.warning },
