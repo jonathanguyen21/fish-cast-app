@@ -296,6 +296,10 @@ export default function ForecastScreen() {
             {spots.length > 1 && <Ionicons name="chevron-down" size={16} color={Colors.textSecondary} />}
           </TouchableOpacity>
           <View style={styles.headerRight}>
+            <TouchableOpacity style={styles.logBtn} onPress={() => router.push('/detail/solunar-calendar' as any)}>
+              <Ionicons name="moon-outline" size={14} color={Colors.textSecondary} />
+              <Text style={[styles.logBtnText, { color: Colors.textSecondary }]}>Moon</Text>
+            </TouchableOpacity>
             {conditions && (
               <TouchableOpacity
                 style={styles.logBtn}

@@ -135,6 +135,10 @@ export default function RootLayout() {
           name="stats"
           options={{ title: 'My Stats', presentation: 'modal', headerShown: false }}
         />
+        <Stack.Screen
+          name="detail/solunar-calendar"
+          options={{ title: 'Solunar Calendar', presentation: 'modal', headerShown: false }}
+        />
       </Stack>
     </PersistQueryClientProvider>
     </AppErrorBoundary>
