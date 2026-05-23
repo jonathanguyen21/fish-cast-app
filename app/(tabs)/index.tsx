@@ -30,6 +30,7 @@ import { Typography } from '../../theme/typography'
 import { useRouter } from 'expo-router'
 import { ScoreCardSkeleton, TimelineSkeleton, QuickStatsSkeleton, ConditionsGridSkeleton } from '../../features/common/SkeletonLoader'
 import { buildConditionsSummary } from '../../features/conditions/conditionsSummary'
+import { FishingIntelCard } from '../../features/conditions/FishingIntelCard'
 import { maybeScheduleFishingAlert } from '../../services/notificationService'
 import { useCatchLogStore } from '../../store/catchLogStore'
 
@@ -338,6 +339,7 @@ export default function ForecastScreen() {
             <View style={[styles.summaryCard, { borderLeftColor: scoreColor(conditions.fishingScore) }]}>
               <Text style={styles.summaryText}>{buildConditionsSummary(conditions)}</Text>
             </View>
+            <FishingIntelCard conditions={conditions} />
             {(() => {
               if (!forecast || conditions.fishingScore >= 65) return null
               const today = localDateKey(new Date())
