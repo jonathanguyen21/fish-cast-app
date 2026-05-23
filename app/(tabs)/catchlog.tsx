@@ -303,6 +303,7 @@ export default function CatchLogScreen() {
   const [form, setForm] = useState<FormState>({ species: '', weightLbs: '', weightOz: '', length: '', note: '', score: '' })
   const [showSpeciesPicker, setShowSpeciesPicker] = useState(false)
   const [logView, setLogView] = useState<'date' | 'spot'>('date')
+  const [speciesFilter, setSpeciesFilter] = useState<string | null>(null)
 
   const today = useMemo(() => {
     const d = new Date()
@@ -418,23 +419,33 @@ export default function CatchLogScreen() {
     setForm({ species: '', weightLbs: '', weightOz: '', length: '', note: '', score: '' })
   }
 
+  const uniqueSpecies = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const e of entries) counts[e.species] = (counts[e.species] ?? 0) + 1
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([sp]) => sp)
+  }, [entries])
+
+  const filteredEntries = useMemo(() =>
+    speciesFilter ? entries.filter(e => e.species === speciesFilter) : entries
+  , [entries, speciesFilter])
+
   const grouped = useMemo(() => {
     const map: Record<string, CatchEntry[]> = {}
-    for (const e of entries) {
+    for (const e of filteredEntries) {
       if (!map[e.date]) map[e.date] = []
       map[e.date].push(e)
     }
     return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]))
-  }, [entries])
+  }, [filteredEntries])
 
   const groupedBySpot = useMemo(() => {
     const map: Record<string, { spotName: string; entries: CatchEntry[] }> = {}
-    for (const e of entries) {
+    for (const e of filteredEntries) {
       if (!map[e.spotId]) map[e.spotId] = { spotName: e.spotName, entries: [] }
       map[e.spotId].entries.push(e)
     }
     return Object.values(map).sort((a, b) => b.entries.length - a.entries.length)
-  }, [entries])
+  }, [filteredEntries])
 
   const streak = useMemo(() => {
     if (grouped.length === 0) return 0
@@ -518,6 +529,26 @@ export default function CatchLogScreen() {
         </View>
       )}
 
+      {uniqueSpecies.length >= 2 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+          <TouchableOpacity
+            style={[styles.filterPill, speciesFilter === null && styles.filterPillActive]}
+            onPress={() => setSpeciesFilter(null)}
+          >
+            <Text style={[styles.filterPillText, speciesFilter === null && styles.filterPillTextActive]}>All</Text>
+          </TouchableOpacity>
+          {uniqueSpecies.map(sp => (
+            <TouchableOpacity
+              key={sp}
+              style={[styles.filterPill, speciesFilter === sp && styles.filterPillActive]}
+              onPress={() => setSpeciesFilter(speciesFilter === sp ? null : sp)}
+            >
+              <Text style={[styles.filterPillText, speciesFilter === sp && styles.filterPillTextActive]} numberOfLines={1}>{sp}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
+
       {isLocal && (
         <TouchableOpacity style={styles.syncBanner} onPress={() => setShowAuthModal(true)} activeOpacity={0.8}>
           <Ionicons name="cloud-outline" size={14} color={Colors.accent} />
@@ -535,7 +566,7 @@ export default function CatchLogScreen() {
           </View>
         ) : logView === 'spot' ? (
           <>
-            {entries.length >= 1 && <CatchStats entries={entries} />}
+            {filteredEntries.length >= 1 && <CatchStats entries={filteredEntries} />}
             {groupedBySpot.map(({ spotName, entries: spotEntries }) => {
               const withScore = spotEntries.filter(e => e.fishingScore != null)
               const avgScore = withScore.length
@@ -581,7 +612,7 @@ export default function CatchLogScreen() {
           </>
         ) : (
           <>
-            {entries.length >= 1 && <CatchStats entries={entries} />}
+            {filteredEntries.length >= 1 && <CatchStats entries={filteredEntries} />}
             {grouped.map(([date, dayEntries]) => (
               <View key={date}>
                 <Text style={styles.dayLabel}>{formatDate(date)}</Text>
@@ -819,6 +850,16 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', marginTop: 80, gap: Spacing.sm },
   emptyText: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20, maxWidth: 280 },
+  filterRow: {
+    paddingHorizontal: Spacing.screenPad, paddingBottom: Spacing.sm, gap: 6,
+  },
+  filterPill: {
+    paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14,
+    backgroundColor: Colors.card, borderWidth: 1, borderColor: Colors.card,
+  },
+  filterPillActive: { borderColor: Colors.accent + '55', backgroundColor: Colors.accent + '15' },
+  filterPillText: { fontSize: 12, color: Colors.textTertiary, fontWeight: '600' },
+  filterPillTextActive: { color: Colors.accent },
   viewToggleRow: {
     flexDirection: 'row', gap: 6,
     paddingHorizontal: Spacing.screenPad, marginBottom: Spacing.sm,
