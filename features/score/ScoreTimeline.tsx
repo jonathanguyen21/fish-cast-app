@@ -8,11 +8,40 @@ import { scoreColor } from './scoringEngine'
 import { useSettingsStore } from '../../store/settingsStore'
 import type { HourlyScore, TidePhase } from '../../types/conditions'
 
+interface MoonPeriods {
+  major: { start: string; end: string }[]
+  minor: { start: string; end: string }[]
+}
+
 interface Props {
   hourlyScores: HourlyScore[]
   tidePhasesByHour?: Record<number, TidePhase>
   windHourly?: { hour: number; speed: number; directionLabel: string }[]
+  moonPeriods?: MoonPeriods
   onUpgrade?: () => void
+}
+
+function parseTimeToMins(t: string): number {
+  const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i)
+  if (!m) return -1
+  let h = parseInt(m[1])
+  const min = parseInt(m[2])
+  if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12
+  if (m[3].toUpperCase() === 'AM' && h === 12) h = 0
+  return h * 60 + min
+}
+
+function getMoonStatus(hourNum: number, periods?: MoonPeriods): 'major' | 'minor' | null {
+  if (!periods || hourNum < 0) return null
+  const hStart = hourNum * 60
+  const hEnd = hStart + 59
+  function overlaps(p: { start: string; end: string }) {
+    const s = parseTimeToMins(p.start), e = parseTimeToMins(p.end)
+    return s >= 0 && e >= 0 && hStart <= e && hEnd >= s
+  }
+  if (periods.major.some(overlaps)) return 'major'
+  if (periods.minor.some(overlaps)) return 'minor'
+  return null
 }
 
 const BAR_MAX_HEIGHT = 80
@@ -40,7 +69,7 @@ const TIDE_LABELS: Record<string, string> = {
   slack: 'Slack',
 }
 
-export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUpgrade }: Props) {
+export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, moonPeriods, onUpgrade }: Props) {
   const isPro = useSettingsStore(s => s.isPro)
   const speedUnit = useSettingsStore(s => s.speedUnit)
   const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart')
@@ -82,6 +111,8 @@ export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUp
             const isPeak = item.score === maxScore
             const isNow = item.hour === currentHourLabel
             const color = scoreColor(item.score)
+            const hourNum = parseHourNum(item.hour)
+            const moonStatus = getMoonStatus(hourNum, moonPeriods)
             return (
               <View key={item.hour} style={styles.barWrapper}>
                 <Text style={[styles.scoreLabel, isPeak && { color }]}>{item.score}</Text>
@@ -97,6 +128,12 @@ export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUp
                   ]} />
                 </View>
                 <Text style={[styles.hourLabel, isPeak && styles.hourLabelPeak]}>{item.hour}</Text>
+                {moonStatus === 'major' && (
+                  <Text style={styles.moonMajor}>◉</Text>
+                )}
+                {moonStatus === 'minor' && (
+                  <Text style={styles.moonMinor}>◎</Text>
+                )}
               </View>
             )
           })}
@@ -194,6 +231,8 @@ const styles = StyleSheet.create({
   thresholdLine: { position: 'absolute', bottom: THRESHOLD_Y, left: 0, width: BAR_WIDTH, height: 1, backgroundColor: Colors.success + '40' },
   hourLabel: { fontSize: 10, color: Colors.textTertiary, marginTop: 4 },
   hourLabelPeak: { color: Colors.textSecondary, fontWeight: '600' },
+  moonMajor: { fontSize: 9, color: Colors.accent, marginTop: 1, textAlign: 'center' },
+  moonMinor: { fontSize: 9, color: Colors.textTertiary, marginTop: 1, textAlign: 'center' },
   scoreLabel: { fontSize: 10, color: Colors.textTertiary, fontWeight: '600', height: 14 },
   // Table view
   tableContainer: { marginTop: 4 },

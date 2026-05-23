@@ -370,6 +370,7 @@ export default function ForecastScreen() {
               hourlyScores={conditions.hourlyScores}
               tidePhasesByHour={conditions.tide ? conditions.tidePhasesByHour : undefined}
               windHourly={conditions.windHourly}
+              moonPeriods={{ major: conditions.moon.majorPeriods, minor: conditions.moon.minorPeriods }}
               onUpgrade={() => router.push('/settings')}
             />
             <View style={styles.quickStats}>

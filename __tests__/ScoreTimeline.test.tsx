@@ -139,4 +139,35 @@ describe('ScoreTimeline', () => {
     fireEvent.press(getByTestId('timeline-chart-toggle'))
     expect(queryByText('Time')).toBeNull()
   })
+
+  it('renders major moon period marker on matching hour', () => {
+    // major period covers 7AM–8AM
+    const moonPeriods = {
+      major: [{ start: '7:00 AM', end: '8:00 AM' }],
+      minor: [],
+    }
+    const { getAllByText } = render(
+      <ScoreTimeline hourlyScores={SCORES} moonPeriods={moonPeriods} onUpgrade={() => {}} />
+    )
+    // Major period marker ◉ should appear for the 7AM and/or 8AM bar
+    expect(getAllByText('◉').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('renders minor moon period marker on matching hour', () => {
+    const moonPeriods = {
+      major: [],
+      minor: [{ start: '10:00 AM', end: '11:00 AM' }],
+    }
+    const { getAllByText } = render(
+      <ScoreTimeline hourlyScores={SCORES} moonPeriods={moonPeriods} onUpgrade={() => {}} />
+    )
+    expect(getAllByText('◎').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('renders without moonPeriods prop (no crash)', () => {
+    const { getByText } = render(
+      <ScoreTimeline hourlyScores={SCORES} onUpgrade={() => {}} />
+    )
+    expect(getByText("Today's Forecast")).toBeTruthy()
+  })
 })
