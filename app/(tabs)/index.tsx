@@ -64,6 +64,17 @@ function tideTurnCountdown(tide: { next: { type: string; time: string } }): stri
   return `${type} in ${diffH}h ${diffM}m`
 }
 
+function tideFlowLabel(curve: number[], currentHour: number): string | null {
+  if (curve.length < 2) return null
+  const curr = curve[Math.min(currentHour, curve.length - 1)] ?? 0
+  const next = curve[Math.min(currentHour + 1, curve.length - 1)] ?? curr
+  const rate = Math.abs(next - curr)
+  if (rate < 0.15) return 'Slack'
+  if (rate < 0.5) return `${rate.toFixed(1)} ft/hr`
+  if (rate < 1.0) return `${rate.toFixed(1)} ft/hr`
+  return `${rate.toFixed(1)} ft/hr`
+}
+
 function localDateKey(d: Date): string {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -349,6 +360,11 @@ export default function ForecastScreen() {
                     <Ionicons name={tidePhaseIcon(conditions.tide.phase)} size={10} color={conditions.tide.phase === 'incoming' ? Colors.ocean : Colors.textSecondary} />
                     <Text style={styles.quickSub} numberOfLines={1}>{tidePhaseText(conditions.tide.phase)}</Text>
                   </View>
+                  {tideFlowLabel(conditions.tide.hourlyCurve, currentHour) && (
+                    <Text style={styles.quickPeak} numberOfLines={1}>
+                      {tideFlowLabel(conditions.tide.hourlyCurve, currentHour)}
+                    </Text>
+                  )}
                   <Text style={styles.quickPeak} numberOfLines={1}>{tideTurnCountdown(conditions.tide)}</Text>
                 </View>
               )}
