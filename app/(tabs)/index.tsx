@@ -16,6 +16,7 @@ import { TideChart } from '../../features/tide/TideChart'
 import { WindDisplay } from '../../features/wind/WindDisplay'
 import { ConditionsGrid } from '../../features/conditions/ConditionsGrid'
 import { ActiveRightNow } from '../../features/species/ActiveRightNow'
+import { TopTargetCard } from '../../features/species/TopTargetCard'
 import { SolunarWeekStrip } from '../../features/solunar/SolunarWeekStrip'
 import { ForecastStrip } from '../../features/forecast/ForecastStrip'
 import { DayCalendar } from '../../features/calendar/DayCalendar'
@@ -409,6 +410,21 @@ export default function ForecastScreen() {
                 params: { data: JSON.stringify(conditions.sun) },
               })}
             />
+            {(() => {
+              const topSpec = scoredSpecies.find(ss => isPro || ss.species.tier === 'free')
+              if (!topSpec || topSpec.score === 0) return null
+              return (
+                <TopTargetCard
+                  topSpecies={topSpec}
+                  hourly={scoredHourlyByMap[topSpec.species.id] ?? []}
+                  currentHour={currentHour}
+                  onPress={() => router.push({
+                    pathname: '/species/[id]',
+                    params: { id: topSpec.species.id, data: JSON.stringify(topSpec), hourlyData: JSON.stringify(scoredHourlyByMap[topSpec.species.id] ?? []) },
+                  })}
+                />
+              )
+            })()}
             <ActiveRightNow
               scoredSpecies={scoredSpecies.filter(ss => isPro || ss.species.tier === 'free')}
               hourlyByMap={scoredHourlyByMap}
