@@ -48,10 +48,41 @@ const FACTORS: { key: keyof NonNullable<Props['breakdown']>; icon: IoniconName; 
     hint: r => r >= 0.9 ? 'Overcast — low light bite' : r >= 0.6 ? 'Partly cloudy — good' : r >= 0.3 ? 'Clear skies' : 'Heavy rain — cap applied' },
 ]
 
+export function parseWindowTime(t: string): number {
+  const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i)
+  if (!m) return -1
+  let h = parseInt(m[1])
+  const min = parseInt(m[2])
+  if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12
+  if (m[3].toUpperCase() === 'AM' && h === 12) h = 0
+  return h * 60 + min
+}
+
+export function windowCountdown(start: string, end: string): string | null {
+  const nowMins = new Date().getHours() * 60 + new Date().getMinutes()
+  const startMins = parseWindowTime(start)
+  const endMins = parseWindowTime(end)
+  if (startMins < 0) return null
+  if (nowMins >= startMins && nowMins <= endMins) return 'Open now'
+  if (nowMins > endMins) return null
+  const diff = startMins - nowMins
+  const h = Math.floor(diff / 60)
+  const m = diff % 60
+  if (h === 0) return `Opens in ${m}m`
+  if (m === 0) return `Opens in ${h}h`
+  return `Opens in ${h}h ${m}m`
+}
+
 export function ScoreDisplay({ score, label, bestWindow, secondWindow, breakdown }: Props) {
   const gradientId = useRef(`scoreGrad-${Math.random().toString(36).slice(2)}`).current
   const animatedOffset = useSharedValue(CIRCUMFERENCE)
   const [expanded, setExpanded] = useState(false)
+  const [, setTick] = useState(0)
+
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 60000)
+    return () => clearInterval(id)
+  }, [])
 
   useEffect(() => {
     animatedOffset.value = withTiming(
@@ -112,9 +143,21 @@ export function ScoreDisplay({ score, label, bestWindow, secondWindow, breakdown
 
       <View style={styles.bestWindowRow}>
         <Text style={styles.bestWindowLabel}>Best window</Text>
-        <View style={styles.bestWindowPill}>
-          <Text style={styles.bestWindowTime}>{bestWindow.start}–{bestWindow.end}</Text>
-          <Text style={[styles.bestWindowScore, { color: scoreColor(bestWindow.score) }]}> · {bestWindow.score}</Text>
+        <View style={{ alignItems: 'flex-end' }}>
+          <View style={styles.bestWindowPill}>
+            <Text style={styles.bestWindowTime}>{bestWindow.start}–{bestWindow.end}</Text>
+            <Text style={[styles.bestWindowScore, { color: scoreColor(bestWindow.score) }]}> · {bestWindow.score}</Text>
+          </View>
+          {(() => {
+            const cd = windowCountdown(bestWindow.start, bestWindow.end)
+            if (!cd) return null
+            const isNow = cd === 'Open now'
+            return (
+              <Text style={[styles.countdownText, isNow && { color: Colors.success, fontWeight: '700' }]}>
+                {isNow ? '● Open now' : cd}
+              </Text>
+            )
+          })()}
         </View>
       </View>
       {secondWindow && (
@@ -225,6 +268,11 @@ const styles = StyleSheet.create({
   bestWindowScore: {
     fontSize: 12,
     color: Colors.textSecondary,
+  },
+  countdownText: {
+    fontSize: 10,
+    color: Colors.textTertiary,
+    marginTop: 2,
   },
   tapHint: {
     fontSize: 11,

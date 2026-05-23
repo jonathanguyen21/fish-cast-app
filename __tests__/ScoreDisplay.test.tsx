@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react-native'
-import { ScoreDisplay } from '../features/score/ScoreDisplay'
+import { ScoreDisplay, windowCountdown } from '../features/score/ScoreDisplay'
 
 describe('ScoreDisplay', () => {
   const props = {
@@ -93,5 +93,39 @@ describe('ScoreDisplay', () => {
   it('does not show second window row when not provided', () => {
     render(<ScoreDisplay {...props} />)
     expect(screen.queryByText('Also good')).toBeNull()
+  })
+})
+
+describe('windowCountdown', () => {
+  beforeEach(() => {
+    jest.useFakeTimers()
+  })
+  afterEach(() => {
+    jest.useRealTimers()
+  })
+
+  it('returns "Opens in Xh Ym" when window is in the future', () => {
+    jest.setSystemTime(new Date('2026-05-23T08:00:00'))
+    expect(windowCountdown('2:00 PM', '5:00 PM')).toBe('Opens in 6h')
+  })
+
+  it('returns "Open now" when current time is within the window', () => {
+    jest.setSystemTime(new Date('2026-05-23T14:30:00'))
+    expect(windowCountdown('2:00 PM', '5:00 PM')).toBe('Open now')
+  })
+
+  it('returns null when window has already passed', () => {
+    jest.setSystemTime(new Date('2026-05-23T18:00:00'))
+    expect(windowCountdown('2:00 PM', '5:00 PM')).toBeNull()
+  })
+
+  it('returns "Opens in Ym" for sub-hour countdown', () => {
+    jest.setSystemTime(new Date('2026-05-23T13:40:00'))
+    expect(windowCountdown('2:00 PM', '5:00 PM')).toBe('Opens in 20m')
+  })
+
+  it('returns null for unparseable time string', () => {
+    jest.setSystemTime(new Date('2026-05-23T08:00:00'))
+    expect(windowCountdown('invalid', '5:00 PM')).toBeNull()
   })
 })

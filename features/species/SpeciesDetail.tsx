@@ -1,5 +1,6 @@
 import React from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from '../score/scoringEngine'
@@ -92,7 +93,10 @@ export function SpeciesDetail({ speciesScore, hourly, onUpgrade }: Props) {
       )}
 
       <Text style={styles.sectionTitle}>Fishing Tips</Text>
-      <Text style={styles.tips}>{species.tips}</Text>
+      <View style={styles.tipsCard}>
+        <Ionicons name="bulb-outline" size={14} color={Colors.warning} style={{ marginRight: 8, marginTop: 2, flexShrink: 0 }} />
+        <Text style={[styles.tips, { flex: 1 }]}>{species.tips}</Text>
+      </View>
 
       <Text style={styles.sectionTitle}>Migration Notes</Text>
       <Text style={styles.tips}>{species.migration_notes}</Text>
@@ -145,5 +149,6 @@ const styles = StyleSheet.create({
   matchSub: { fontSize: 11, color: Colors.textTertiary },
   capitalize: { textTransform: 'capitalize' },
   tips: { fontSize: 14, color: Colors.textPrimary, lineHeight: 22 },
+  tipsCard: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: Colors.surface, borderRadius: 10, padding: Spacing.md, marginBottom: 4 },
   summary: { fontSize: 14, color: Colors.textPrimary, marginBottom: Spacing.sm },
 })
