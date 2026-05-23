@@ -114,7 +114,14 @@ export default function SettingsScreen() {
         </Row>
         {alertsEnabled && (
           <View style={styles.sliderRow}>
-            <Text style={styles.sliderLabel}>Notify when score ≥ <Text style={styles.sliderValue}>{alertThreshold}</Text></Text>
+            <View style={styles.sliderLabelRow}>
+              <Text style={styles.sliderLabel}>Notify when score ≥ <Text style={styles.sliderValue}>{alertThreshold}</Text></Text>
+              <Text style={[styles.sliderScoreLabel, {
+                color: alertThreshold >= 85 ? Colors.success : alertThreshold >= 70 ? Colors.accent : alertThreshold >= 55 ? Colors.warning : Colors.textSecondary
+              }]}>
+                {alertThreshold >= 85 ? 'Drop everything' : alertThreshold >= 70 ? 'Great day' : alertThreshold >= 55 ? 'Decent' : 'Tough but possible'}
+              </Text>
+            </View>
             <Slider
               style={{ width: '100%' }}
               minimumValue={40} maximumValue={90} step={5}
@@ -302,8 +309,10 @@ const styles = StyleSheet.create({
   toggleText: { fontSize: 13, color: Colors.textSecondary },
   toggleTextActive: { color: Colors.accent, fontWeight: '600' },
   sliderRow: { padding: Spacing.md },
-  sliderLabel: { fontSize: 14, color: Colors.textSecondary, marginBottom: 4 },
+  sliderLabelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  sliderLabel: { fontSize: 14, color: Colors.textSecondary },
   sliderValue: { color: Colors.textPrimary, fontWeight: '700' },
+  sliderScoreLabel: { fontSize: 11, fontWeight: '600' },
   permButton: { padding: Spacing.md, backgroundColor: Colors.accent + '22', flexDirection: 'row', alignItems: 'center', gap: 6 },
   permText: { color: Colors.accent, fontSize: 14, fontWeight: '600' },
   permGrantedRow: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: Spacing.md },
