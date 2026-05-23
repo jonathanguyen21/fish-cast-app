@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Modal, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native'
+import Svg, { Rect, Text as SvgText } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useQueryClient } from '@tanstack/react-query'
@@ -28,6 +29,52 @@ const COMMON_SPECIES = [
 function formatDate(dateStr: string) {
   const d = new Date(dateStr + 'T12:00:00')
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+const SCORE_BUCKETS = [
+  { label: '0–39', min: 0, max: 39, color: '#e63946' },
+  { label: '40–59', min: 40, max: 59, color: '#f4a261' },
+  { label: '60–74', min: 60, max: 74, color: '#a8dadc' },
+  { label: '75–89', min: 75, max: 89, color: '#2ec4b6' },
+  { label: '90+', min: 90, max: 100, color: '#06d6a0' },
+]
+
+function ScoreDistributionChart({ entries }: { entries: CatchEntry[] }) {
+  const withScore = entries.filter(e => e.fishingScore != null)
+  if (withScore.length < 2) return null
+  const counts = SCORE_BUCKETS.map(b =>
+    withScore.filter(e => e.fishingScore! >= b.min && e.fishingScore! <= b.max).length
+  )
+  const maxCount = Math.max(...counts, 1)
+  const W = 280, BAR_H = 60, COL_W = W / SCORE_BUCKETS.length
+  return (
+    <View style={styles.distCard}>
+      <Text style={styles.distTitle}>Catches by Score Range</Text>
+      <Svg width={W} height={BAR_H + 28}>
+        {SCORE_BUCKETS.map((b, i) => {
+          const barH = Math.max((counts[i] / maxCount) * BAR_H, counts[i] > 0 ? 4 : 0)
+          const x = i * COL_W + 4
+          const barW = COL_W - 8
+          return (
+            <React.Fragment key={b.label}>
+              <Rect
+                x={x} y={BAR_H - barH} width={barW} height={barH}
+                rx={3} fill={counts[i] > 0 ? b.color : '#ffffff18'}
+              />
+              {counts[i] > 0 && (
+                <SvgText x={x + barW / 2} y={BAR_H - barH - 3} textAnchor="middle" fontSize={10} fill={b.color} fontWeight="700">
+                  {counts[i]}
+                </SvgText>
+              )}
+              <SvgText x={x + barW / 2} y={BAR_H + 14} textAnchor="middle" fontSize={9} fill="#8899aa">
+                {b.label}
+              </SvgText>
+            </React.Fragment>
+          )
+        })}
+      </Svg>
+    </View>
+  )
 }
 
 function CatchStats({ entries }: { entries: CatchEntry[] }) {
@@ -134,6 +181,7 @@ function CatchStats({ entries }: { entries: CatchEntry[] }) {
           </Text>
         </View>
       )}
+      <ScoreDistributionChart entries={entries} />
     </>
   )
 }
@@ -529,6 +577,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm,
   },
   insightText: { flex: 1, fontSize: 13, color: Colors.textSecondary, lineHeight: 18 },
+  distCard: {
+    backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
+    padding: Spacing.md, marginBottom: Spacing.md, alignItems: 'center',
+  },
+  distTitle: { fontSize: 12, fontWeight: '700', color: Colors.textTertiary, marginBottom: Spacing.sm },
   speciesList: {
     backgroundColor: Colors.card, borderRadius: 10, marginTop: 4,
     overflow: 'hidden',
