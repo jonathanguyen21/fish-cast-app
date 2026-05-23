@@ -1,11 +1,13 @@
 import React from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from '../score/scoringEngine'
 import { bestWindowSummary, type SpeciesHourlyScore } from './speciesHourlyScoring'
 import { SpeciesHourlyChart } from './SpeciesHourlyChart'
+import { useCatchLog } from '../../hooks/useCatchLog'
 import type { SpeciesScore } from '../../types/species'
 
 interface Props {
@@ -33,6 +35,19 @@ export function SpeciesDetail({ speciesScore, hourly, onUpgrade }: Props) {
   const { species, score, status, waterTempMatch, tideMatch, timeMatch } = speciesScore
   const badgeColor = scoreColor(score)
   const insets = useSafeAreaInsets()
+  const { entries } = useCatchLog()
+
+  const myCatches = entries.filter(e =>
+    e.species.toLowerCase() === species.common_name.toLowerCase()
+  )
+  const withWeight = myCatches.filter(e => e.weight != null)
+  const heaviest = withWeight.length
+    ? withWeight.reduce((a, b) => a.weight! > b.weight! ? a : b)
+    : null
+  const withLength = myCatches.filter(e => e.length != null)
+  const longest = withLength.length
+    ? withLength.reduce((a, b) => a.length! > b.length! ? a : b)
+    : null
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}>
@@ -93,6 +108,35 @@ export function SpeciesDetail({ speciesScore, hourly, onUpgrade }: Props) {
         </>
       )}
 
+      {myCatches.length > 0 && (
+        <View style={styles.myCatchCard}>
+          <View style={styles.myCatchHeader}>
+            <Ionicons name="trophy-outline" size={14} color={Colors.warning} />
+            <Text style={styles.myCatchTitle}>Your {species.common_name} History</Text>
+          </View>
+          <View style={styles.myCatchStats}>
+            <View style={styles.myCatchStat}>
+              <Text style={styles.myCatchValue}>{myCatches.length}</Text>
+              <Text style={styles.myCatchLabel}>catches</Text>
+            </View>
+            {heaviest && (
+              <View style={styles.myCatchStat}>
+                <Text style={styles.myCatchValue}>
+                  {Math.floor(heaviest.weight!)}<Text style={styles.myCatchUnit}> lbs {Math.round((heaviest.weight! % 1) * 16)} oz</Text>
+                </Text>
+                <Text style={styles.myCatchLabel}>heaviest</Text>
+              </View>
+            )}
+            {longest && (
+              <View style={styles.myCatchStat}>
+                <Text style={styles.myCatchValue}>{longest.length}<Text style={styles.myCatchUnit}> in</Text></Text>
+                <Text style={styles.myCatchLabel}>longest</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+
       <Text style={styles.sectionTitle}>Fishing Tips</Text>
       <Text style={styles.tips}>{species.tips}</Text>
 
@@ -148,4 +192,15 @@ const styles = StyleSheet.create({
   capitalize: { textTransform: 'capitalize' },
   tips: { fontSize: 14, color: Colors.textPrimary, lineHeight: 22 },
   summary: { fontSize: 14, color: Colors.textPrimary, marginBottom: Spacing.sm },
+  myCatchCard: {
+    backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
+    padding: Spacing.md, marginTop: Spacing.md, marginBottom: Spacing.sm,
+  },
+  myCatchHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: Spacing.sm },
+  myCatchTitle: { fontSize: 13, fontWeight: '700', color: Colors.warning },
+  myCatchStats: { flexDirection: 'row', gap: Spacing.lg },
+  myCatchStat: { alignItems: 'flex-start' },
+  myCatchValue: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
+  myCatchUnit: { fontSize: 12, fontWeight: '400', color: Colors.textSecondary },
+  myCatchLabel: { fontSize: 10, color: Colors.textTertiary, marginTop: 1 },
 })

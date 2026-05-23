@@ -1,10 +1,13 @@
 import React from 'react'
 import { render } from '@testing-library/react-native'
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SpeciesDetail } from '../features/species/SpeciesDetail'
 import { westCoastSpecies } from '../data/species/westCoast'
 import type { SpeciesScore } from '../types/species'
 import type { SpeciesHourlyScore } from '../features/species/speciesHourlyScoring'
+
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
 const species = westCoastSpecies.find(s => s.id === 'ca_halibut')!
 
@@ -27,85 +30,95 @@ function makeHourly(peakHour = 9, peakScore = 80): SpeciesHourlyScore[] {
   })
 }
 
+function wrap(ui: React.ReactElement) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+        {ui}
+      </SafeAreaInsetsContext.Provider>
+    </QueryClientProvider>
+  )
+}
+
 describe('SpeciesDetail', () => {
   it('shows species common name', () => {
-    const { getByText } = render(<SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 0, left: 0 }}><SpeciesDetail speciesScore={makeScore()} /></SafeAreaInsetsContext.Provider>)
+    const { getByText } = render(wrap(<SpeciesDetail speciesScore={makeScore()} />))
     expect(getByText(species.common_name)).toBeTruthy()
   })
 
   it('shows scientific name', () => {
-    const { getByText } = render(<SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 0, left: 0 }}><SpeciesDetail speciesScore={makeScore()} /></SafeAreaInsetsContext.Provider>)
+    const { getByText } = render(wrap(<SpeciesDetail speciesScore={makeScore()} />))
     expect(getByText(species.scientific_name)).toBeTruthy()
   })
 
   it('shows score badge', () => {
-    const { getByText } = render(<SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 0, left: 0 }}><SpeciesDetail speciesScore={makeScore({ score: 75 })} /></SafeAreaInsetsContext.Provider>)
+    const { getByText } = render(wrap(<SpeciesDetail speciesScore={makeScore({ score: 75 })} />))
     expect(getByText('75')).toBeTruthy()
   })
 
   it('shows status label', () => {
-    const { getByText } = render(<SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 0, left: 0 }}><SpeciesDetail speciesScore={makeScore()} /></SafeAreaInsetsContext.Provider>)
+    const { getByText } = render(wrap(<SpeciesDetail speciesScore={makeScore()} />))
     expect(getByText('Active')).toBeTruthy()
   })
 
   it('shows "Activity by Month" section title', () => {
-    const { getByText } = render(<SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 0, left: 0 }}><SpeciesDetail speciesScore={makeScore()} /></SafeAreaInsetsContext.Provider>)
+    const { getByText } = render(wrap(<SpeciesDetail speciesScore={makeScore()} />))
     expect(getByText('Activity by Month')).toBeTruthy()
   })
 
   it('shows all 12 month abbreviations', () => {
-    const { getByText } = render(<SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 0, left: 0 }}><SpeciesDetail speciesScore={makeScore()} /></SafeAreaInsetsContext.Provider>)
+    const { getByText } = render(wrap(<SpeciesDetail speciesScore={makeScore()} />))
     expect(getByText('Jan')).toBeTruthy()
     expect(getByText('Jun')).toBeTruthy()
     expect(getByText('Dec')).toBeTruthy()
   })
 
   it('shows current match labels', () => {
-    const { getAllByText } = render(<SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 0, left: 0 }}><SpeciesDetail speciesScore={makeScore()} /></SafeAreaInsetsContext.Provider>)
+    const { getAllByText } = render(wrap(<SpeciesDetail speciesScore={makeScore()} />))
     expect(getAllByText('Water Temp').length).toBeGreaterThanOrEqual(1)
     expect(getAllByText('Tide').length).toBeGreaterThanOrEqual(1)
     expect(getAllByText('Time of Day').length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows waterTempMatch value', () => {
-    const { getByText } = render(<SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 0, left: 0 }}><SpeciesDetail speciesScore={makeScore()} /></SafeAreaInsetsContext.Provider>)
+    const { getByText } = render(wrap(<SpeciesDetail speciesScore={makeScore()} />))
     expect(getByText('Peak range')).toBeTruthy()
   })
 
   it('shows tideMatch value', () => {
-    const { getByText } = render(<SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 0, left: 0 }}><SpeciesDetail speciesScore={makeScore()} /></SafeAreaInsetsContext.Provider>)
+    const { getByText } = render(wrap(<SpeciesDetail speciesScore={makeScore()} />))
     expect(getByText('Incoming (preferred)')).toBeTruthy()
   })
 
   it('shows "Fishing Tips" section', () => {
-    const { getByText } = render(<SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 0, left: 0 }}><SpeciesDetail speciesScore={makeScore()} /></SafeAreaInsetsContext.Provider>)
+    const { getByText } = render(wrap(<SpeciesDetail speciesScore={makeScore()} />))
     expect(getByText('Fishing Tips')).toBeTruthy()
   })
 
   it('shows "Migration Notes" section', () => {
-    const { getByText } = render(<SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 0, left: 0 }}><SpeciesDetail speciesScore={makeScore()} /></SafeAreaInsetsContext.Provider>)
+    const { getByText } = render(wrap(<SpeciesDetail speciesScore={makeScore()} />))
     expect(getByText('Migration Notes')).toBeTruthy()
   })
 
   it('shows preferred tide in conditions section', () => {
-    const { getAllByText } = render(<SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 0, left: 0 }}><SpeciesDetail speciesScore={makeScore()} /></SafeAreaInsetsContext.Provider>)
+    const { getAllByText } = render(wrap(<SpeciesDetail speciesScore={makeScore()} />))
     // species.preferred_tide = 'incoming'
     expect(getAllByText(/incoming/i).length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows best window summary when hourly data provided', () => {
-    const { getByText } = render(<SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 0, left: 0 }}><SpeciesDetail speciesScore={makeScore()} hourly={makeHourly()} /></SafeAreaInsetsContext.Provider>)
+    const { getByText } = render(wrap(<SpeciesDetail speciesScore={makeScore()} hourly={makeHourly()} />))
     expect(getByText(/Best window:/)).toBeTruthy()
   })
 
   it('hides best window when hourly is all zeros', () => {
     const zeros = Array.from({ length: 16 }, (_, i) => ({ hour: 5 + i, score: 0 }))
-    const { queryByText } = render(<SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 0, left: 0 }}><SpeciesDetail speciesScore={makeScore()} hourly={zeros} /></SafeAreaInsetsContext.Provider>)
+    const { queryByText } = render(wrap(<SpeciesDetail speciesScore={makeScore()} hourly={zeros} />))
     expect(queryByText(/Best window:/)).toBeNull()
   })
 
   it('renders without hourly data', () => {
-    const { getByText } = render(<SafeAreaInsetsContext.Provider value={{ top: 0, right: 0, bottom: 0, left: 0 }}><SpeciesDetail speciesScore={makeScore()} /></SafeAreaInsetsContext.Provider>)
+    const { getByText } = render(wrap(<SpeciesDetail speciesScore={makeScore()} />))
     expect(getByText(species.common_name)).toBeTruthy()
   })
 })
