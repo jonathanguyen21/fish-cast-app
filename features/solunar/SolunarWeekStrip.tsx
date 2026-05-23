@@ -1,13 +1,15 @@
-import React, { useMemo } from 'react'
-import { View, Text, StyleSheet, ScrollView } from 'react-native'
+import React, { useMemo, useState } from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { getDailySolunar } from '../../services/solunarService'
+import { SolunarCalendarModal } from './SolunarCalendarModal'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 
 interface Props {
   lat: number
   lng: number
+  onSelectDate?: (dateStr: string) => void
 }
 
 const DAY_ABBREVS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -32,7 +34,8 @@ function moonIcon(phase: number): keyof typeof Ionicons.glyphMap {
   return 'moon-outline'
 }
 
-export function SolunarWeekStrip({ lat, lng }: Props) {
+export function SolunarWeekStrip({ lat, lng, onSelectDate }: Props) {
+  const [calendarVisible, setCalendarVisible] = useState(false)
   const days = useMemo(() => {
     const today = new Date()
     return Array.from({ length: 7 }, (_, i) => {
@@ -49,11 +52,20 @@ export function SolunarWeekStrip({ lat, lng }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <SolunarCalendarModal
+        lat={lat}
+        lng={lng}
+        visible={calendarVisible}
+        onClose={() => setCalendarVisible(false)}
+        onSelectDate={onSelectDate}
+      />
+      <TouchableOpacity style={styles.header} onPress={() => setCalendarVisible(true)} activeOpacity={0.7}>
         <Ionicons name="moon-outline" size={13} color={Colors.textSecondary} />
         <Text style={styles.title}>Solunar Forecast</Text>
         <Text style={styles.subtitle}>7-day bite strength</Text>
-      </View>
+        <Ionicons name="calendar-outline" size={13} color={Colors.accent} />
+        <Text style={styles.calendarLink}>Month</Text>
+      </TouchableOpacity>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -125,6 +137,12 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 11,
     color: Colors.textTertiary,
+    flex: 1,
+  },
+  calendarLink: {
+    fontSize: 11,
+    color: Colors.accent,
+    fontWeight: '600',
   },
   strip: {
     paddingHorizontal: Spacing.sm,

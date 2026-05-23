@@ -423,7 +423,7 @@ export default function ForecastScreen() {
                 })
               }}
             />
-            <SolunarWeekStrip lat={activeSpot.lat} lng={activeSpot.lng} />
+            <SolunarWeekStrip lat={activeSpot.lat} lng={activeSpot.lng} onSelectDate={(d) => { setSelectedDate(d); setShowCalendar(false) }} />
             <ForecastStrip forecast={forecast} isPro={isPro} isLoading={forecastLoading} isError={forecastError} onUpgrade={() => router.push('/settings')} />
             {recentCatch && (
               <TouchableOpacity
