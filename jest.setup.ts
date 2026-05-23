@@ -24,6 +24,6 @@ jest.mock('react-native-svg', () => {
     default: View,
     Svg: View, Path: View, Circle: View, G: View, Defs: View,
     LinearGradient: View, Stop: View, Line: View, Text: View,
-    Rect: View, Polyline: View,
+    Rect: View, Polyline: View, Polygon: View, ClipPath: View,
   }
 })

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, LayoutAnimation, type DimensionValue } from 'react-native'
 import Animated, { useSharedValue, useAnimatedProps, withTiming, Easing } from 'react-native-reanimated'
-import { Svg, Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
+import { Svg, Circle, Defs, LinearGradient, Stop, Polygon, Line as SvgLine } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
@@ -47,6 +47,43 @@ const FACTORS: { key: keyof NonNullable<Props['breakdown']>; icon: IoniconName; 
   { key: 'sky',       icon: 'cloud-outline',          label: 'Sky',        max: 10,
     hint: r => r >= 0.9 ? 'Overcast — low light bite' : r >= 0.6 ? 'Partly cloudy — good' : r >= 0.3 ? 'Clear skies' : 'Heavy rain — cap applied' },
 ]
+
+function RadarChart({ breakdown }: { breakdown: NonNullable<Props['breakdown']> }) {
+  const R = 60, cx = 70, cy = 70
+  const factors = FACTORS
+  const n = factors.length
+  const angles = factors.map((_, i) => (i * 2 * Math.PI) / n - Math.PI / 2)
+
+  function point(ratio: number, idx: number): [number, number] {
+    const r = ratio * R
+    return [cx + r * Math.cos(angles[idx]), cy + r * Math.sin(angles[idx])]
+  }
+
+  const gridPoints = (scale: number) =>
+    angles.map((a) => `${cx + scale * R * Math.cos(a)},${cy + scale * R * Math.sin(a)}`).join(' ')
+
+  const dataPoints = factors.map((f, i) => {
+    const ratio = Math.min(breakdown[f.key] / f.max, 1)
+    const [x, y] = point(ratio, i)
+    return `${x},${y}`
+  }).join(' ')
+
+  return (
+    <Svg width={140} height={140} style={{ alignSelf: 'center', marginBottom: 8 }}>
+      {[0.25, 0.5, 0.75, 1].map(s => (
+        <Polygon key={s} points={gridPoints(s)} fill="none" stroke={Colors.surface} strokeWidth={1} />
+      ))}
+      {angles.map((a, i) => (
+        <SvgLine key={i}
+          x1={cx} y1={cy}
+          x2={cx + R * Math.cos(a)} y2={cy + R * Math.sin(a)}
+          stroke={Colors.surface} strokeWidth={1}
+        />
+      ))}
+      <Polygon points={dataPoints} fill={Colors.accent + '33'} stroke={Colors.accent} strokeWidth={1.5} strokeLinejoin="round" />
+    </Svg>
+  )
+}
 
 export function parseWindowTime(t: string): number {
   const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i)
@@ -174,6 +211,7 @@ export function ScoreDisplay({ score, label, bestWindow, secondWindow, breakdown
 
       {expanded && breakdown && (
         <View style={styles.breakdownPanel}>
+          <RadarChart breakdown={breakdown} />
           {FACTORS.map(({ key, icon, label: factorLabel, max, hint }) => {
             const pts = breakdown[key]
             const ratio = Math.min(pts / max, 1)
