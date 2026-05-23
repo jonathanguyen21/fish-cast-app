@@ -8,11 +8,37 @@ import { scoreColor } from './scoringEngine'
 import { useSettingsStore } from '../../store/settingsStore'
 import type { HourlyScore, TidePhase } from '../../types/conditions'
 
+type PeriodEntry = { start: string; end: string }
+
 interface Props {
   hourlyScores: HourlyScore[]
   tidePhasesByHour?: Record<number, TidePhase>
   windHourly?: { hour: number; speed: number; directionLabel: string }[]
+  moonPeriods?: { major: PeriodEntry[]; minor: PeriodEntry[] }
   onUpgrade?: () => void
+}
+
+function parsePeriodHour(t: string): number {
+  const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i)
+  if (!m) return -1
+  let h = parseInt(m[1])
+  if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12
+  if (m[3].toUpperCase() === 'AM' && h === 12) h = 0
+  return h
+}
+
+function periodTypeForHour(h: number, periods: { major: PeriodEntry[]; minor: PeriodEntry[] }): 'major' | 'minor' | null {
+  function inRange(entries: PeriodEntry[]): boolean {
+    for (const p of entries) {
+      const s = parsePeriodHour(p.start)
+      const e = parsePeriodHour(p.end)
+      if (s >= 0 && e >= 0 && h >= s && h <= e) return true
+    }
+    return false
+  }
+  if (inRange(periods.major)) return 'major'
+  if (inRange(periods.minor)) return 'minor'
+  return null
 }
 
 const BAR_MAX_HEIGHT = 80
@@ -39,7 +65,7 @@ const TIDE_LABELS: Record<string, string> = {
   slack: 'Slack',
 }
 
-export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUpgrade }: Props) {
+export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, moonPeriods, onUpgrade }: Props) {
   const isPro = useSettingsStore(s => s.isPro)
   const speedUnit = useSettingsStore(s => s.speedUnit)
   const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart')
@@ -81,6 +107,8 @@ export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUp
             const isPeak = item.score === maxScore
             const isNow = item.hour === currentHourLabel
             const color = scoreColor(item.score)
+            const hourNum = parseHourNum(item.hour)
+            const period = moonPeriods && hourNum >= 0 ? periodTypeForHour(hourNum, moonPeriods) : null
             return (
               <View key={item.hour} style={styles.barWrapper}>
                 <Text style={[styles.scoreLabel, isPeak && { color }]}>{item.score}</Text>
@@ -95,6 +123,9 @@ export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUp
                   ]} />
                 </View>
                 <Text style={[styles.hourLabel, isPeak && styles.hourLabelPeak]}>{item.hour}</Text>
+                {period && (
+                  <View style={[styles.periodDot, { backgroundColor: period === 'major' ? Colors.accent : Colors.textTertiary }]} />
+                )}
               </View>
             )
           })}
@@ -191,6 +222,7 @@ const styles = StyleSheet.create({
   nowChipPlaceholder: { height: 14, marginBottom: 2 },
   hourLabel: { fontSize: 10, color: Colors.textTertiary, marginTop: 4 },
   hourLabelPeak: { color: Colors.textSecondary, fontWeight: '600' },
+  periodDot: { width: 5, height: 5, borderRadius: 2.5, marginTop: 2 },
   scoreLabel: { fontSize: 10, color: Colors.textTertiary, fontWeight: '600', height: 14 },
   // Table view
   tableContainer: { marginTop: 4 },
