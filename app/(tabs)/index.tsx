@@ -32,6 +32,7 @@ import { useRouter } from 'expo-router'
 import { ScoreCardSkeleton, TimelineSkeleton, QuickStatsSkeleton, ConditionsGridSkeleton } from '../../features/common/SkeletonLoader'
 import { buildConditionsSummary } from '../../features/conditions/conditionsSummary'
 import { FishingIntelCard } from '../../features/conditions/FishingIntelCard'
+import { DayPlanStrip } from '../../features/score/DayPlanStrip'
 import { maybeScheduleFishingAlert } from '../../services/notificationService'
 import { useCatchLog } from '../../hooks/useCatchLog'
 
@@ -330,6 +331,7 @@ export default function ForecastScreen() {
               </View>
             )}
             <FishingIntelCard conditions={conditions} />
+            <DayPlanStrip hourlyScores={conditions.hourlyScores} />
             <ScoreTimeline
               hourlyScores={conditions.hourlyScores}
               tidePhasesByHour={conditions.tide ? conditions.tidePhasesByHour : undefined}
