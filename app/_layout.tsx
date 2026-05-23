@@ -131,6 +131,10 @@ export default function RootLayout() {
           name="detail/sun"
           options={{ title: 'Sun', presentation: 'modal', headerShown: false }}
         />
+        <Stack.Screen
+          name="stats"
+          options={{ title: 'My Stats', presentation: 'modal', headerShown: false }}
+        />
       </Stack>
     </PersistQueryClientProvider>
     </AppErrorBoundary>

@@ -6,6 +6,7 @@ import {
 import Svg, { Rect, Text as SvgText, Line } from 'react-native-svg'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
 import { useCatchLogStore, type CatchEntry } from '../../store/catchLogStore'
 import { useSpots } from '../../hooks/useSpots'
 import { scoreColor } from '../../features/score/scoringEngine'
@@ -264,6 +265,7 @@ export default function CatchLogScreen() {
   const insets = useSafeAreaInsets()
   const { entries, addEntry, updateEntry, deleteEntry, clearAll } = useCatchLogStore()
   const { activeSpot } = useSpots()
+  const router = useRouter()
   const [showModal, setShowModal] = useState(false)
   const [editEntry, setEditEntry] = useState<CatchEntry | null>(null)
   const [form, setForm] = useState<FormState>({ species: '', weight: '', length: '', note: '', score: '' })
@@ -408,6 +410,11 @@ export default function CatchLogScreen() {
           )}
         </View>
         <View style={styles.headerActions}>
+          {entries.length > 0 && (
+            <TouchableOpacity style={styles.shareBtn} onPress={() => router.push('/stats' as any)}>
+              <Ionicons name="bar-chart-outline" size={16} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          )}
           {entries.length > 0 && (
             <TouchableOpacity style={styles.shareBtn} onPress={handleShareLog}>
               <Ionicons name="share-outline" size={16} color={Colors.textSecondary} />
