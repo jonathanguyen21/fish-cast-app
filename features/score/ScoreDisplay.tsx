@@ -21,6 +21,7 @@ interface Props {
   label: string
   bestWindow: { start: string; end: string; score: number }
   secondWindow?: { start: string; end: string; score: number } | null
+  dateLabel?: string
   breakdown?: {
     pressure: number
     solunar: number
@@ -110,7 +111,7 @@ export function windowCountdown(start: string, end: string): string | null {
   return `Opens in ${h}h ${m}m`
 }
 
-export function ScoreDisplay({ score, label, bestWindow, secondWindow, breakdown }: Props) {
+export function ScoreDisplay({ score, label, bestWindow, secondWindow, dateLabel, breakdown }: Props) {
   const gradientId = useRef(`scoreGrad-${Math.random().toString(36).slice(2)}`).current
   const animatedOffset = useSharedValue(CIRCUMFERENCE)
   const [expanded, setExpanded] = useState(false)
@@ -179,7 +180,7 @@ export function ScoreDisplay({ score, label, bestWindow, secondWindow, breakdown
       <Text style={styles.scoreLabel} numberOfLines={2}>{label}</Text>
 
       <View style={styles.bestWindowRow}>
-        <Text style={styles.bestWindowLabel}>Best window</Text>
+        <Text style={styles.bestWindowLabel}>{dateLabel ? `${dateLabel} · Best window` : 'Best window'}</Text>
         <View style={{ alignItems: 'flex-end' }}>
           <View style={styles.bestWindowPill}>
             <Text style={styles.bestWindowTime}>{bestWindow.start}–{bestWindow.end}</Text>

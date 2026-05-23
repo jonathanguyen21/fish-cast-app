@@ -366,6 +366,7 @@ export default function ForecastScreen() {
               bestWindow={conditions.bestWindow}
               secondWindow={conditions.secondWindow}
               breakdown={conditions.scoreBreakdown}
+              dateLabel={selectedDate !== localDateKey(new Date()) ? formatDateChip(selectedDate) : undefined}
             />
             {solunarNow && (
               <View style={[styles.solunarBanner, solunarNow.type === 'major' && styles.solunarBannerMajor]}>
