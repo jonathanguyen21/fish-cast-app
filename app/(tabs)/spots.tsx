@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, KeyboardAvoidingView, Platform, Linking } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import { useSpots } from '../../hooks/useSpots'
@@ -9,6 +9,17 @@ import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from '../../features/score/scoringEngine'
 import type { Spot } from '../../types/spot'
+
+function openMaps(lat: number, lng: number, name: string) {
+  const label = encodeURIComponent(name)
+  const appleUrl = `maps://maps.apple.com/?daddr=${lat},${lng}&q=${label}`
+  const googleUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`
+  Alert.alert('Navigate to Spot', `Open directions to "${name}"?`, [
+    { text: 'Cancel', style: 'cancel' },
+    { text: 'Apple Maps', onPress: () => Linking.openURL(appleUrl).catch(() => Linking.openURL(googleUrl)) },
+    { text: 'Google Maps', onPress: () => Linking.openURL(googleUrl) },
+  ])
+}
 
 function SpotRow({ spot, isActive, onPress, onDelete, onEditNotes }: {
   spot: Spot; isActive: boolean; onPress: () => void; onDelete: () => void; onEditNotes: () => void
@@ -22,8 +33,9 @@ function SpotRow({ spot, isActive, onPress, onDelete, onEditNotes }: {
     <TouchableOpacity
       style={[styles.row, isActive && styles.activeRow]}
       onPress={onPress}
-      onLongPress={() => Alert.alert('Delete Spot', `Remove "${spot.name}"?`, [
+      onLongPress={() => Alert.alert(spot.name, 'What would you like to do?', [
         { text: 'Cancel', style: 'cancel' },
+        { text: 'Navigate', onPress: () => openMaps(spot.lat, spot.lng, spot.name) },
         { text: 'Edit Notes', onPress: onEditNotes },
         { text: 'Delete', style: 'destructive', onPress: onDelete },
       ])}
@@ -53,6 +65,9 @@ function SpotRow({ spot, isActive, onPress, onDelete, onEditNotes }: {
         ) : null}
       </View>
       <View style={styles.rowRight}>
+        <TouchableOpacity onPress={() => openMaps(spot.lat, spot.lng, spot.name)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Ionicons name="navigate-outline" size={15} color={Colors.textTertiary} />
+        </TouchableOpacity>
         <TouchableOpacity onPress={onEditNotes} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Ionicons name="create-outline" size={15} color={Colors.textTertiary} />
         </TouchableOpacity>
