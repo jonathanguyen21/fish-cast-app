@@ -21,6 +21,7 @@ interface CatchLogState {
   addEntry: (entry: Omit<CatchEntry, 'id'>) => void
   updateEntry: (id: string, patch: Partial<CatchEntry>) => void
   deleteEntry: (id: string) => void
+  clearAll: () => void
 }
 
 export const useCatchLogStore = create<CatchLogState>()(
@@ -39,6 +40,7 @@ export const useCatchLogStore = create<CatchLogState>()(
       deleteEntry: (id) => set((s) => ({
         entries: s.entries.filter(e => e.id !== id),
       })),
+      clearAll: () => set({ entries: [] }),
     }),
     {
       name: 'catch-log-store',

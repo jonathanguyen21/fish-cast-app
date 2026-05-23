@@ -112,7 +112,7 @@ interface FormState {
 
 export default function CatchLogScreen() {
   const insets = useSafeAreaInsets()
-  const { entries, addEntry, updateEntry, deleteEntry } = useCatchLogStore()
+  const { entries, addEntry, updateEntry, deleteEntry, clearAll } = useCatchLogStore()
   const { activeSpot } = useSpots()
   const [showModal, setShowModal] = useState(false)
   const [editEntry, setEditEntry] = useState<CatchEntry | null>(null)
@@ -261,6 +261,18 @@ export default function CatchLogScreen() {
           {entries.length > 0 && (
             <TouchableOpacity style={styles.shareBtn} onPress={handleShareLog}>
               <Ionicons name="share-outline" size={16} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+          {entries.length > 0 && (
+            <TouchableOpacity style={styles.shareBtn} onPress={() => Alert.alert(
+              'Clear All Catches',
+              `This will permanently delete all ${entries.length} catches. This cannot be undone.`,
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Clear All', style: 'destructive', onPress: clearAll },
+              ]
+            )}>
+              <Ionicons name="trash-outline" size={16} color={Colors.textSecondary} />
             </TouchableOpacity>
           )}
           <TouchableOpacity style={styles.addButton} onPress={() => { setEditEntry(null); setShowModal(true) }}>

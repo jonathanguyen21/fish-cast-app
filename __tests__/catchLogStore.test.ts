@@ -73,4 +73,28 @@ describe('catchLogStore', () => {
     expect(result.current.entries).toHaveLength(1)
     expect(result.current.entries[0].species).toBe('Halibut')
   })
+
+  it('clearAll removes all entries', () => {
+    const { result } = renderHook(() => useCatchLogStore())
+    act(() => { result.current.addEntry(BASE) })
+    act(() => { result.current.addEntry({ ...BASE, species: 'Rockfish' }) })
+    expect(result.current.entries).toHaveLength(2)
+    act(() => { result.current.clearAll() })
+    expect(result.current.entries).toHaveLength(0)
+  })
+
+  it('clearAll on empty store is a no-op', () => {
+    const { result } = renderHook(() => useCatchLogStore())
+    act(() => { result.current.clearAll() })
+    expect(result.current.entries).toHaveLength(0)
+  })
+
+  it('addEntry works after clearAll', () => {
+    const { result } = renderHook(() => useCatchLogStore())
+    act(() => { result.current.addEntry(BASE) })
+    act(() => { result.current.clearAll() })
+    act(() => { result.current.addEntry({ ...BASE, species: 'Striped Bass' }) })
+    expect(result.current.entries).toHaveLength(1)
+    expect(result.current.entries[0].species).toBe('Striped Bass')
+  })
 })
