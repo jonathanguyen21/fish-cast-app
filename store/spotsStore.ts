@@ -10,6 +10,7 @@ interface SpotsState {
   addSpot: (spot: Spot) => void
   removeSpot: (id: string) => void
   setActiveSpot: (id: string) => void
+  updateSpotNotes: (id: string, notes: string) => void
   clear: () => void
 }
 
@@ -44,6 +45,13 @@ export const useSpotsStore = create<SpotsState>()(
         activeSpotId: id,
         activeSpot: state.spots.find(s => s.id === id) ?? null,
       })),
+      updateSpotNotes: (id, notes) => set(state => {
+        const spots = state.spots.map(s => s.id === id ? { ...s, notes } : s)
+        return {
+          spots,
+          activeSpot: spots.find(s => s.id === state.activeSpotId) ?? null,
+        }
+      }),
       clear: () => set({ spots: [], activeSpotId: null, activeSpot: null }),
     }),
     {

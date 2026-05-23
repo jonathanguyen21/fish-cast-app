@@ -1,16 +1,17 @@
-import React from 'react'
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native'
+import React, { useState } from 'react'
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, TextInput, Modal, KeyboardAvoidingView, Platform } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import { useSpots } from '../../hooks/useSpots'
 import { useConditions } from '../../hooks/useConditions'
+import { useSpotsStore } from '../../store/spotsStore'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from '../../features/score/scoringEngine'
 import type { Spot } from '../../types/spot'
 
-function SpotRow({ spot, isActive, onPress, onDelete }: {
-  spot: Spot; isActive: boolean; onPress: () => void; onDelete: () => void
+function SpotRow({ spot, isActive, onPress, onDelete, onEditNotes }: {
+  spot: Spot; isActive: boolean; onPress: () => void; onDelete: () => void; onEditNotes: () => void
 }) {
   const todayStr = new Date().toISOString().slice(0, 10)
   const { data } = useConditions(spot, todayStr)
@@ -23,6 +24,7 @@ function SpotRow({ spot, isActive, onPress, onDelete }: {
       onPress={onPress}
       onLongPress={() => Alert.alert('Delete Spot', `Remove "${spot.name}"?`, [
         { text: 'Cancel', style: 'cancel' },
+        { text: 'Edit Notes', onPress: onEditNotes },
         { text: 'Delete', style: 'destructive', onPress: onDelete },
       ])}
     >
@@ -46,12 +48,20 @@ function SpotRow({ spot, isActive, onPress, onDelete }: {
             {spot.type === 'saltwater' ? 'Saltwater' : 'Freshwater'}
           </Text>
         </View>
+        {spot.notes ? (
+          <Text style={styles.spotNote} numberOfLines={1}>{spot.notes}</Text>
+        ) : null}
       </View>
-      {score !== null && (
-        <View style={[styles.scoreBadge, { borderColor: color, backgroundColor: color + '18' }]}>
-          <Text style={[styles.scoreText, { color }]}>{score}</Text>
-        </View>
-      )}
+      <View style={styles.rowRight}>
+        <TouchableOpacity onPress={onEditNotes} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Ionicons name="create-outline" size={15} color={Colors.textTertiary} />
+        </TouchableOpacity>
+        {score !== null && (
+          <View style={[styles.scoreBadge, { borderColor: color, backgroundColor: color + '18' }]}>
+            <Text style={[styles.scoreText, { color }]}>{score}</Text>
+          </View>
+        )}
+      </View>
     </TouchableOpacity>
   )
 }
@@ -59,6 +69,21 @@ function SpotRow({ spot, isActive, onPress, onDelete }: {
 export default function SpotsScreen() {
   const router = useRouter()
   const { spots, activeSpotId, setActiveSpot, removeSpot } = useSpots()
+  const updateSpotNotes = useSpotsStore(s => s.updateSpotNotes)
+  const [editingSpot, setEditingSpot] = useState<Spot | null>(null)
+  const [notesDraft, setNotesDraft] = useState('')
+
+  function openNotesModal(spot: Spot) {
+    setEditingSpot(spot)
+    setNotesDraft(spot.notes ?? '')
+  }
+
+  function saveNotes() {
+    if (editingSpot) {
+      updateSpotNotes(editingSpot.id, notesDraft.trim())
+    }
+    setEditingSpot(null)
+  }
 
   return (
     <View style={styles.screen}>
@@ -86,12 +111,45 @@ export default function SpotsScreen() {
               router.push('/(tabs)/')
             }}
             onDelete={() => removeSpot(item.id)}
+            onEditNotes={() => openNotesModal(item)}
           />
         )}
       />
       <TouchableOpacity style={styles.fab} onPress={() => router.push('/spot/new')}>
         <Ionicons name="add" size={28} color={Colors.background} />
       </TouchableOpacity>
+
+      <Modal
+        visible={editingSpot !== null}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setEditingSpot(null)}
+      >
+        <KeyboardAvoidingView style={styles.modalContainer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Spot Notes</Text>
+            <Text style={styles.modalSpotName}>{editingSpot?.name}</Text>
+          </View>
+          <TextInput
+            style={styles.notesInput}
+            placeholder="Add notes about this spot — best bait, depth, access tips..."
+            placeholderTextColor={Colors.textTertiary}
+            multiline
+            numberOfLines={6}
+            value={notesDraft}
+            onChangeText={setNotesDraft}
+            autoFocus
+          />
+          <View style={styles.modalActions}>
+            <TouchableOpacity style={styles.cancelBtn} onPress={() => setEditingSpot(null)}>
+              <Text style={styles.cancelBtnText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.saveBtn} onPress={saveNotes}>
+              <Text style={styles.saveBtnText}>Save Notes</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   )
 }
@@ -142,11 +200,37 @@ const styles = StyleSheet.create({
   activeBadgeText: { fontSize: 11, color: Colors.accent, fontWeight: '700' },
   rowMeta: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 },
   rowType: { fontSize: 11, fontWeight: '500' },
+  rowRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  spotNote: { fontSize: 11, color: Colors.textTertiary, marginTop: 3, fontStyle: 'italic' },
   scoreBadge: {
     width: 48, height: 48, borderRadius: 24, borderWidth: 1.5,
-    alignItems: 'center', justifyContent: 'center', marginLeft: Spacing.sm,
+    alignItems: 'center', justifyContent: 'center',
   },
   scoreText: { fontSize: 15, fontWeight: '700' },
+  modalContainer: {
+    flex: 1, backgroundColor: Colors.background, padding: Spacing.screenPad,
+  },
+  modalHeader: { marginBottom: Spacing.lg },
+  modalTitle: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
+  modalSpotName: { fontSize: 14, color: Colors.textSecondary, marginTop: 4 },
+  notesInput: {
+    backgroundColor: Colors.card, borderRadius: Spacing.cardRadius,
+    padding: Spacing.md, color: Colors.textPrimary, fontSize: 15,
+    textAlignVertical: 'top', minHeight: 140,
+  },
+  modalActions: {
+    flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.lg,
+  },
+  cancelBtn: {
+    flex: 1, paddingVertical: 14, borderRadius: Spacing.cardRadius,
+    backgroundColor: Colors.card, alignItems: 'center',
+  },
+  cancelBtnText: { fontSize: 15, fontWeight: '600', color: Colors.textSecondary },
+  saveBtn: {
+    flex: 2, paddingVertical: 14, borderRadius: Spacing.cardRadius,
+    backgroundColor: Colors.accent, alignItems: 'center',
+  },
+  saveBtnText: { fontSize: 15, fontWeight: '700', color: Colors.background },
   fab: {
     position: 'absolute', right: Spacing.screenPad, bottom: 28,
     width: 56, height: 56, borderRadius: 28, backgroundColor: Colors.accent,
