@@ -188,6 +188,23 @@ export default function ForecastScreen() {
     return catchEntries.find(e => e.spotId === activeSpot.id) ?? null
   }, [activeSpot?.id, catchEntries])
 
+  const spotInsight = useMemo(() => {
+    if (!activeSpot || !conditions || catchEntries.length < 2) return null
+    const spotCatches = catchEntries.filter(e => e.spotId === activeSpot.id)
+    if (spotCatches.length < 2) return null
+    const counts: Record<string, number> = {}
+    spotCatches.forEach(e => { counts[e.species] = (counts[e.species] ?? 0) + 1 })
+    const topSpecies = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
+    if (!topSpecies) return null
+    const catchesWithScore = spotCatches.filter(e => e.fishingScore != null)
+    const avgCatchScore = catchesWithScore.length
+      ? Math.round(catchesWithScore.reduce((s, e) => s + e.fishingScore!, 0) / catchesWithScore.length)
+      : null
+    const currentScore = conditions.fishingScore
+    const inRange = avgCatchScore != null && Math.abs(currentScore - avgCatchScore) <= 12
+    return { topSpecies: topSpecies[0], count: topSpecies[1], avgCatchScore, inRange }
+  }, [activeSpot?.id, catchEntries, conditions?.fishingScore])
+
   const solunarNow = useMemo(() => {
     if (!conditions) return null
     const nowMins = currentHour * 60 + now.getMinutes()
@@ -467,7 +484,26 @@ export default function ForecastScreen() {
               }}
             />
             <ForecastStrip forecast={forecast} isPro={isPro} isLoading={forecastLoading} isError={forecastError} onUpgrade={() => router.push('/settings')} />
-            {recentCatch && (
+            {spotInsight && (
+              <TouchableOpacity
+                style={[styles.recentCatchCard, spotInsight.inRange && { borderColor: Colors.success + '60', backgroundColor: Colors.success + '08' }]}
+                onPress={() => router.push('/(tabs)/catchlog')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="bulb-outline" size={16} color={spotInsight.inRange ? Colors.success : Colors.accent} />
+                <View style={styles.recentCatchInfo}>
+                  <Text style={styles.recentCatchTitle}>
+                    {spotInsight.inRange ? 'Conditions match your past catches' : `Your most-caught: ${spotInsight.topSpecies}`}
+                  </Text>
+                  <Text style={styles.recentCatchSub}>
+                    {spotInsight.topSpecies} · {spotInsight.count} {spotInsight.count === 1 ? 'catch' : 'catches'} here
+                    {spotInsight.avgCatchScore != null ? ` · avg score ${spotInsight.avgCatchScore}` : ''}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={14} color={Colors.textTertiary} />
+              </TouchableOpacity>
+            )}
+            {recentCatch && !spotInsight && (
               <TouchableOpacity
                 style={styles.recentCatchCard}
                 onPress={() => router.push('/(tabs)/catchlog')}
