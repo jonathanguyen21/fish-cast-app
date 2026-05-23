@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useCatchLogStore, type CatchEntry } from '../../store/catchLogStore'
 import { useSpots } from '../../hooks/useSpots'
+import { useConditions } from '../../hooks/useConditions'
 import { scoreColor } from '../../features/score/scoringEngine'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
@@ -266,6 +267,8 @@ export default function CatchLogScreen() {
   const { entries, addEntry, updateEntry, deleteEntry, clearAll } = useCatchLogStore()
   const { activeSpot } = useSpots()
   const router = useRouter()
+  const todayStr = useMemo(() => localDateKey(new Date()), [])
+  const { data: conditions } = useConditions(activeSpot, todayStr)
   const [showModal, setShowModal] = useState(false)
   const [editEntry, setEditEntry] = useState<CatchEntry | null>(null)
   const [form, setForm] = useState<FormState>({ species: '', weight: '', length: '', note: '', score: '' })
@@ -432,7 +435,11 @@ export default function CatchLogScreen() {
               <Ionicons name="trash-outline" size={16} color={Colors.textSecondary} />
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={styles.addButton} onPress={() => { setEditEntry(null); setShowModal(true) }}>
+          <TouchableOpacity style={styles.addButton} onPress={() => {
+            setEditEntry(null)
+            setForm(f => ({ ...f, score: conditions?.fishingScore != null ? String(conditions.fishingScore) : '' }))
+            setShowModal(true)
+          }}>
             <Ionicons name="add" size={16} color={Colors.background} />
             <Text style={styles.addButtonText}>Log Catch</Text>
           </TouchableOpacity>
@@ -562,7 +569,9 @@ export default function CatchLogScreen() {
 
             <View style={styles.row}>
               <View style={styles.halfField}>
-                <Text style={styles.fieldLabel}>Fishing Score (0–100)</Text>
+                <Text style={styles.fieldLabel}>
+                  Fishing Score (0–100){!editEntry && conditions?.fishingScore != null ? <Text style={{ color: Colors.accent }}> · auto-filled</Text> : ''}
+                </Text>
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. 72"
