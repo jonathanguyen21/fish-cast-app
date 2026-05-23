@@ -74,15 +74,6 @@ function waterTempNote(tempF: number): string {
   return 'Very hot'
 }
 
-function tideFlowLabel(curve: number[], currentHour: number): string | null {
-  if (curve.length < 2) return null
-  const curr = curve[Math.min(currentHour, curve.length - 1)] ?? 0
-  const next = curve[Math.min(currentHour + 1, curve.length - 1)] ?? curr
-  const rate = Math.abs(next - curr)
-  if (rate < 0.15) return null
-  return `${rate.toFixed(1)} ft/hr`
-}
-
 function localDateKey(d: Date): string {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
