@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Modal, Alert, KeyboardAvoidingView, Platform,
+  TextInput, Modal, Alert, KeyboardAvoidingView, Platform, Share,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -10,7 +10,6 @@ import { useSpots } from '../../hooks/useSpots'
 import { scoreColor } from '../../features/score/scoringEngine'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
-import { Typography } from '../../theme/typography'
 
 const COMMON_SPECIES = [
   'Bass', 'Striped Bass', 'Rockfish', 'Halibut', 'Salmon',
@@ -21,6 +20,10 @@ const COMMON_SPECIES = [
 function formatDate(dateStr: string) {
   const d = new Date(dateStr + 'T12:00:00')
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function localDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 function CatchStats({ entries }: { entries: CatchEntry[] }) {
@@ -58,17 +61,22 @@ function CatchStats({ entries }: { entries: CatchEntry[] }) {
   )
 }
 
-function CatchCard({ entry, onDelete }: { entry: CatchEntry; onDelete: () => void }) {
+function CatchCard({ entry, onDelete, onEdit }: { entry: CatchEntry; onDelete: () => void; onEdit: () => void }) {
   return (
     <View style={styles.catchCard}>
       <View style={styles.catchHeader}>
         <Text style={styles.catchSpecies}>{entry.species}</Text>
-        <TouchableOpacity onPress={() => Alert.alert('Delete', 'Remove this catch?', [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Delete', style: 'destructive', onPress: onDelete },
-        ])} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="trash-outline" size={16} color={Colors.textTertiary} />
-        </TouchableOpacity>
+        <View style={styles.catchActions}>
+          <TouchableOpacity onPress={onEdit} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="pencil-outline" size={15} color={Colors.textTertiary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => Alert.alert('Delete', 'Remove this catch?', [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Delete', style: 'destructive', onPress: onDelete },
+          ])} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="trash-outline" size={15} color={Colors.textTertiary} />
+          </TouchableOpacity>
+        </View>
       </View>
       <Text style={styles.catchSpot}>{entry.spotName} · {formatDate(entry.date)} at {entry.time}</Text>
       <View style={styles.catchStats}>
@@ -104,24 +112,54 @@ interface FormState {
 
 export default function CatchLogScreen() {
   const insets = useSafeAreaInsets()
-  const { entries, addEntry, deleteEntry } = useCatchLogStore()
+  const { entries, addEntry, updateEntry, deleteEntry } = useCatchLogStore()
   const { activeSpot } = useSpots()
   const [showModal, setShowModal] = useState(false)
+  const [editEntry, setEditEntry] = useState<CatchEntry | null>(null)
   const [form, setForm] = useState<FormState>({ species: '', weight: '', length: '', note: '', score: '' })
   const [showSpeciesPicker, setShowSpeciesPicker] = useState(false)
+  const [speciesFilter, setSpeciesFilter] = useState<string | null>(null)
 
-  const today = useMemo(() => {
-    const d = new Date()
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${y}-${m}-${day}`
-  }, [])
+  const today = useMemo(() => localDateKey(new Date()), [])
 
   const nowTime = useMemo(() => {
     const d = new Date()
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
   }, [showModal])
+
+  const uniqueSpecies = useMemo(() => {
+    const counts: Record<string, number> = {}
+    entries.forEach(e => { counts[e.species] = (counts[e.species] ?? 0) + 1 })
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([s]) => s)
+  }, [entries])
+
+  const filteredEntries = useMemo(() =>
+    speciesFilter ? entries.filter(e => e.species === speciesFilter) : entries,
+    [entries, speciesFilter]
+  )
+
+  const grouped = useMemo(() => {
+    const map: Record<string, CatchEntry[]> = {}
+    for (const e of filteredEntries) {
+      if (!map[e.date]) map[e.date] = []
+      map[e.date].push(e)
+    }
+    return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]))
+  }, [filteredEntries])
+
+  const streak = useMemo(() => {
+    if (grouped.length === 0) return 0
+    const dateSet = new Set(grouped.map(([d]) => d))
+    let count = 0
+    const cursor = new Date()
+    while (true) {
+      const key = localDateKey(cursor)
+      if (!dateSet.has(key)) break
+      count++
+      cursor.setDate(cursor.getDate() - 1)
+    }
+    return count
+  }, [grouped])
 
   function handleAdd() {
     if (!form.species.trim()) {
@@ -143,24 +181,115 @@ export default function CatchLogScreen() {
     setShowModal(false)
   }
 
-  const grouped = useMemo(() => {
-    const map: Record<string, CatchEntry[]> = {}
-    for (const e of entries) {
-      if (!map[e.date]) map[e.date] = []
-      map[e.date].push(e)
+  function handleOpenEdit(entry: CatchEntry) {
+    setEditEntry(entry)
+    setForm({
+      species: entry.species,
+      weight: entry.weight != null ? String(entry.weight) : '',
+      length: entry.length != null ? String(entry.length) : '',
+      note: entry.note ?? '',
+      score: entry.fishingScore != null ? String(entry.fishingScore) : '',
+    })
+    setShowSpeciesPicker(false)
+    setShowModal(true)
+  }
+
+  function handleSaveEdit() {
+    if (!editEntry) return
+    if (!form.species.trim()) {
+      Alert.alert('Species required', 'Please enter what you caught.')
+      return
     }
-    return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]))
-  }, [entries])
+    updateEntry(editEntry.id, {
+      species: form.species.trim(),
+      weight: form.weight ? parseFloat(form.weight) : undefined,
+      length: form.length ? parseFloat(form.length) : undefined,
+      note: form.note.trim() || undefined,
+      fishingScore: form.score ? parseInt(form.score, 10) : undefined,
+    })
+    setEditEntry(null)
+    setForm({ species: '', weight: '', length: '', note: '', score: '' })
+    setShowModal(false)
+  }
+
+  function handleCloseModal() {
+    setShowModal(false)
+    setEditEntry(null)
+    setForm({ species: '', weight: '', length: '', note: '', score: '' })
+  }
+
+  async function handleShareLog() {
+    const speciesCounts: Record<string, number> = {}
+    entries.forEach(e => { speciesCounts[e.species] = (speciesCounts[e.species] ?? 0) + 1 })
+    const topSpecies = Object.entries(speciesCounts).sort((a, b) => b[1] - a[1]).slice(0, 3)
+    const withScore = entries.filter(e => e.fishingScore != null)
+    const avgScore = withScore.length
+      ? Math.round(withScore.reduce((s, e) => s + e.fishingScore!, 0) / withScore.length)
+      : null
+    const best = entries.reduce<CatchEntry | null>((acc, e) => {
+      if (e.weight == null) return acc
+      if (!acc || (acc.weight ?? 0) < e.weight) return e
+      return acc
+    }, null)
+
+    const lines = [
+      '🎣 My FishCast Catch Log',
+      `${entries.length} catches logged`,
+      avgScore != null ? `Avg fishing score: ${avgScore}/100` : null,
+      best?.weight != null ? `Personal best: ${best.weight} lb ${best.species}` : null,
+      streak >= 2 ? `${streak}-day fishing streak 🔥` : null,
+      '',
+      'Top species:',
+      ...topSpecies.map(([sp, n]) => `  ${sp}: ${n} ${n === 1 ? 'catch' : 'catches'}`),
+    ].filter(Boolean).join('\n')
+
+    await Share.share({ message: lines })
+  }
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Catch Log</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => setShowModal(true)}>
-          <Ionicons name="add" size={16} color={Colors.background} />
-          <Text style={styles.addButtonText}>Log Catch</Text>
-        </TouchableOpacity>
+        <View style={styles.headerLeft}>
+          <Text style={styles.title}>Catch Log</Text>
+          {streak >= 2 && (
+            <View style={styles.streakBadge}>
+              <Text style={styles.streakText}>🔥 {streak}-day streak</Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.headerActions}>
+          {entries.length > 0 && (
+            <TouchableOpacity style={styles.shareBtn} onPress={handleShareLog}>
+              <Ionicons name="share-outline" size={16} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.addButton} onPress={() => { setEditEntry(null); setShowModal(true) }}>
+            <Ionicons name="add" size={16} color={Colors.background} />
+            <Text style={styles.addButtonText}>Log Catch</Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
+      {uniqueSpecies.length > 1 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}
+          style={styles.filterRow} contentContainerStyle={{ paddingHorizontal: Spacing.screenPad, gap: 8, flexDirection: 'row' }}>
+          <TouchableOpacity
+            style={[styles.filterPill, speciesFilter === null && styles.filterPillActive]}
+            onPress={() => setSpeciesFilter(null)}
+          >
+            <Text style={[styles.filterPillText, speciesFilter === null && styles.filterPillTextActive]}>All</Text>
+          </TouchableOpacity>
+          {uniqueSpecies.map(sp => (
+            <TouchableOpacity
+              key={sp}
+              style={[styles.filterPill, speciesFilter === sp && styles.filterPillActive]}
+              onPress={() => setSpeciesFilter(sp === speciesFilter ? null : sp)}
+            >
+              <Text style={[styles.filterPillText, speciesFilter === sp && styles.filterPillTextActive]}>{sp}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
 
       <ScrollView contentContainerStyle={styles.content}>
         {entries.length === 0 ? (
@@ -171,25 +300,33 @@ export default function CatchLogScreen() {
           </View>
         ) : (
           <>
-            {entries.length >= 3 && <CatchStats entries={entries} />}
+            {filteredEntries.length >= 3 && <CatchStats entries={filteredEntries} />}
             {grouped.map(([date, dayEntries]) => (
               <View key={date}>
                 <Text style={styles.dayLabel}>{formatDate(date)}</Text>
                 {dayEntries.map(e => (
-                  <CatchCard key={e.id} entry={e} onDelete={() => deleteEntry(e.id)} />
+                  <CatchCard
+                    key={e.id}
+                    entry={e}
+                    onDelete={() => deleteEntry(e.id)}
+                    onEdit={() => handleOpenEdit(e)}
+                  />
                 ))}
               </View>
             ))}
+            {filteredEntries.length === 0 && speciesFilter && (
+              <Text style={styles.emptyHint}>No {speciesFilter} catches yet.</Text>
+            )}
           </>
         )}
       </ScrollView>
 
-      <Modal visible={showModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowModal(false)}>
+      <Modal visible={showModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleCloseModal}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView style={styles.modal} contentContainerStyle={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Log a Catch</Text>
-              <TouchableOpacity onPress={() => setShowModal(false)} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Text style={styles.modalTitle}>{editEntry ? 'Edit Catch' : 'Log a Catch'}</Text>
+              <TouchableOpacity onPress={handleCloseModal} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <Ionicons name="close" size={18} color={Colors.textSecondary} />
                 <Text style={styles.modalClose}>Cancel</Text>
               </TouchableOpacity>
@@ -276,13 +413,15 @@ export default function CatchLogScreen() {
               onChangeText={v => setForm(f => ({ ...f, note: v }))}
             />
 
-            <View style={styles.spotRow}>
-              <Text style={styles.spotLabel}>Spot: </Text>
-              <Text style={styles.spotValue}>{activeSpot?.name ?? 'No active spot'}</Text>
-            </View>
+            {!editEntry && (
+              <View style={styles.spotRow}>
+                <Text style={styles.spotLabel}>Spot: </Text>
+                <Text style={styles.spotValue}>{activeSpot?.name ?? 'No active spot'}</Text>
+              </View>
+            )}
 
-            <TouchableOpacity style={styles.submitButton} onPress={handleAdd}>
-              <Text style={styles.submitButtonText}>Save Catch</Text>
+            <TouchableOpacity style={styles.submitButton} onPress={editEntry ? handleSaveEdit : handleAdd}>
+              <Text style={styles.submitButtonText}>{editEntry ? 'Save Changes' : 'Save Catch'}</Text>
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -297,13 +436,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.screenPad, paddingVertical: Spacing.md,
   },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   title: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary },
+  streakBadge: {
+    backgroundColor: Colors.warning + '22', borderRadius: 10,
+    paddingHorizontal: 8, paddingVertical: 3,
+    borderWidth: 1, borderColor: Colors.warning + '44',
+  },
+  streakText: { fontSize: 11, fontWeight: '700', color: Colors.warning },
+  shareBtn: {
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center',
+  },
   addButton: {
     backgroundColor: Colors.accent, borderRadius: 20,
     paddingHorizontal: Spacing.md, paddingVertical: 8,
     flexDirection: 'row', alignItems: 'center', gap: 4,
   },
   addButtonText: { fontSize: 14, fontWeight: '700', color: Colors.background },
+  filterRow: { maxHeight: 44, marginBottom: 4 },
+  filterPill: {
+    paddingHorizontal: 14, paddingVertical: 6,
+    borderRadius: 16, backgroundColor: Colors.surface,
+    borderWidth: 1, borderColor: Colors.card,
+  },
+  filterPillActive: { backgroundColor: Colors.accent + '22', borderColor: Colors.accent },
+  filterPillText: { fontSize: 13, color: Colors.textSecondary },
+  filterPillTextActive: { color: Colors.accent, fontWeight: '600' },
   content: { paddingHorizontal: Spacing.screenPad, paddingBottom: Spacing.xl },
   empty: { alignItems: 'center', marginTop: 80, gap: Spacing.sm },
   emptyText: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
@@ -314,6 +474,7 @@ const styles = StyleSheet.create({
     padding: Spacing.md, marginBottom: Spacing.sm,
   },
   catchHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  catchActions: { flexDirection: 'row', gap: 12 },
   catchSpecies: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary },
   catchSpot: { fontSize: 12, color: Colors.textTertiary, marginBottom: 8 },
   catchStats: { flexDirection: 'row', gap: Spacing.md, marginBottom: 4 },
