@@ -77,6 +77,61 @@ function ScoreDistributionChart({ entries }: { entries: CatchEntry[] }) {
   )
 }
 
+const TIME_SLOTS = [
+  { label: 'Dawn', hours: [5, 6, 7, 8], icon: 'sunny-outline' as const },
+  { label: 'Morning', hours: [9, 10, 11], icon: 'partly-sunny-outline' as const },
+  { label: 'Midday', hours: [12, 13, 14], icon: 'sunny' as const },
+  { label: 'Afternoon', hours: [15, 16, 17], icon: 'partly-sunny-outline' as const },
+  { label: 'Evening', hours: [18, 19, 20], icon: 'moon-outline' as const },
+  { label: 'Night', hours: [21, 22, 23, 0, 1, 2, 3, 4], icon: 'moon' as const },
+]
+
+function TimeOfDayChart({ entries }: { entries: CatchEntry[] }) {
+  const withTime = entries.filter(e => e.time)
+  if (withTime.length < 3) return null
+  const counts = TIME_SLOTS.map(slot => ({
+    ...slot,
+    count: withTime.filter(e => {
+      const h = parseInt(e.time!.split(':')[0], 10)
+      return slot.hours.includes(h)
+    }).length,
+  }))
+  const maxCount = Math.max(...counts.map(s => s.count), 1)
+  const best = counts.reduce((a, b) => a.count >= b.count ? a : b)
+  return (
+    <View style={styles.timeCard}>
+      <Text style={styles.distTitle}>Your Best Time to Fish</Text>
+      <View style={{ flexDirection: 'row', gap: 6, alignItems: 'flex-end', marginTop: 4 }}>
+        {counts.map(slot => {
+          const barH = Math.max((slot.count / maxCount) * 44, slot.count > 0 ? 4 : 0)
+          const isBest = slot.label === best.label && best.count > 0
+          return (
+            <View key={slot.label} style={{ flex: 1, alignItems: 'center', gap: 3 }}>
+              <Text style={{ fontSize: 9, color: isBest ? Colors.accent : Colors.textTertiary, fontWeight: isBest ? '700' : '400' }}>
+                {slot.count > 0 ? slot.count : ''}
+              </Text>
+              <View style={{ height: 44, justifyContent: 'flex-end', width: '100%' }}>
+                <View style={{
+                  height: barH, borderRadius: 3,
+                  backgroundColor: isBest ? Colors.accent : Colors.card,
+                  width: '100%',
+                }} />
+              </View>
+              <Ionicons name={slot.icon} size={10} color={isBest ? Colors.accent : Colors.textTertiary} />
+              <Text style={{ fontSize: 8, color: isBest ? Colors.accent : Colors.textTertiary, fontWeight: isBest ? '700' : '400' }}>
+                {slot.label}
+              </Text>
+            </View>
+          )
+        })}
+      </View>
+      {best.count > 0 && (
+        <Text style={styles.timeCardHint}>You catch most fish during {best.label.toLowerCase()} hours</Text>
+      )}
+    </View>
+  )
+}
+
 function CatchStats({ entries }: { entries: CatchEntry[] }) {
   const total = entries.length
   const withScore = entries.filter(e => e.fishingScore != null)
@@ -182,6 +237,7 @@ function CatchStats({ entries }: { entries: CatchEntry[] }) {
         </View>
       )}
       <ScoreDistributionChart entries={entries} />
+      <TimeOfDayChart entries={entries} />
     </>
   )
 }
@@ -691,6 +747,11 @@ const styles = StyleSheet.create({
     padding: Spacing.md, marginBottom: Spacing.md, alignItems: 'center',
   },
   distTitle: { fontSize: 12, fontWeight: '700', color: Colors.textTertiary, marginBottom: Spacing.sm },
+  timeCard: {
+    backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
+    padding: Spacing.md, marginBottom: Spacing.md,
+  },
+  timeCardHint: { fontSize: 11, color: Colors.textTertiary, marginTop: 6, textAlign: 'center' },
   speciesList: {
     backgroundColor: Colors.card, borderRadius: 10, marginTop: 4,
     overflow: 'hidden',
