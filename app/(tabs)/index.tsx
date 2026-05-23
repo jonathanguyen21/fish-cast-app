@@ -16,6 +16,7 @@ import { TideChart } from '../../features/tide/TideChart'
 import { WindDisplay } from '../../features/wind/WindDisplay'
 import { ConditionsGrid } from '../../features/conditions/ConditionsGrid'
 import { ActiveRightNow } from '../../features/species/ActiveRightNow'
+import { SolunarWeekStrip } from '../../features/solunar/SolunarWeekStrip'
 import { ForecastStrip } from '../../features/forecast/ForecastStrip'
 import { DayCalendar } from '../../features/calendar/DayCalendar'
 import { scoreSpecies } from '../../features/species/speciesScoring'
@@ -406,6 +407,7 @@ export default function ForecastScreen() {
                 })
               }}
             />
+            <SolunarWeekStrip lat={activeSpot.lat} lng={activeSpot.lng} />
             <ForecastStrip forecast={forecast} isPro={isPro} isLoading={forecastLoading} isError={forecastError} onUpgrade={() => router.push('/settings')} />
             {recentCatch && (
               <TouchableOpacity

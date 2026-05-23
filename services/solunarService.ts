@@ -10,6 +10,15 @@ export interface SolunarData {
   isMajorMoonDay: boolean
 }
 
+export interface DailySolunar {
+  rating: number
+  illumination: number
+  phase: number
+  phaseLabel: string
+  majorPeriods: { start: string; end: string }[]
+  isMajorDay: boolean
+}
+
 function formatTime(date: Date): string {
   const h = date.getHours()
   const m = date.getMinutes()
@@ -96,5 +105,55 @@ export function calculateSolunar(lat: number, lng: number, date: Date): SolunarD
     inMinorPeriod,
     withinHourOfPeriod,
     isMajorMoonDay,
+  }
+}
+
+export function getDailySolunar(lat: number, lng: number, date: Date): DailySolunar {
+  const noon = new Date(date)
+  noon.setHours(12, 0, 0, 0)
+
+  const moonTimes = getMoonTimes(noon, lat, lng)
+  const sunTimes = getTimes(noon, lat, lng)
+  const illum = getMoonIllumination(noon)
+
+  const majorCenters: Date[] = []
+  if (moonTimes.rise && !moonTimes.alwaysUp && !moonTimes.alwaysDown) majorCenters.push(moonTimes.rise)
+  if (moonTimes.set && !moonTimes.alwaysUp && !moonTimes.alwaysDown) majorCenters.push(moonTimes.set)
+
+  const isMajorDay = majorCenters.some(
+    c => Math.abs(c.getTime() - sunTimes.solarNoon.getTime()) <= 60 * 60 * 1000
+  )
+
+  const TWO_HRS = 2 * 60 * 60 * 1000
+  const ONE_HR = 60 * 60 * 1000
+  const sunrise = sunTimes.sunrise instanceof Date ? sunTimes.sunrise.getTime() : 0
+  const sunset = sunTimes.sunset instanceof Date ? sunTimes.sunset.getTime() : 0
+
+  // 0–100 solunar rating
+  let score = 10
+  // Moon phase peaks at new (phase≈0) and full (phase≈0.5)
+  score += Math.round(Math.abs(Math.cos(illum.phase * 2 * Math.PI)) * 25)
+  if (isMajorDay) score += 15
+  for (const c of majorCenters) {
+    const t = c.getTime()
+    if ((sunrise && Math.abs(t - sunrise) <= TWO_HRS) || (sunset && Math.abs(t - sunset) <= TWO_HRS)) {
+      score += 18
+    }
+  }
+  const minorCenters = findMinorCenters(lat, lng, noon)
+  for (const c of minorCenters) {
+    const t = c.getTime()
+    if ((sunrise && Math.abs(t - sunrise) <= ONE_HR) || (sunset && Math.abs(t - sunset) <= ONE_HR)) {
+      score += 8
+    }
+  }
+
+  return {
+    rating: Math.min(100, score),
+    illumination: Math.round(illum.fraction * 100),
+    phase: illum.phase,
+    phaseLabel: moonPhaseLabel(illum.phase),
+    majorPeriods: majorCenters.map(toPeriod),
+    isMajorDay,
   }
 }
