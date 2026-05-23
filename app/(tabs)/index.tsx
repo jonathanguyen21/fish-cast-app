@@ -348,6 +348,13 @@ export default function ForecastScreen() {
           <Ionicons name={showCalendar ? 'chevron-up' : 'chevron-down'} size={12} color={Colors.textTertiary} />
         </TouchableOpacity>
 
+        {activeSpot.notes ? (
+          <View style={styles.notesBar}>
+            <Ionicons name="document-text-outline" size={11} color={Colors.textTertiary} />
+            <Text style={styles.notesBarText} numberOfLines={1}>{activeSpot.notes}</Text>
+          </View>
+        ) : null}
+
         {showCalendar && (
           <DayCalendar
             selectedDate={selectedDate}
@@ -671,6 +678,11 @@ const styles = StyleSheet.create({
   },
   spotPickerRowActive: { backgroundColor: Colors.accent + '10' },
   spotPickerName: { flex: 1, fontSize: 14, color: Colors.textSecondary },
+  notesBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    marginHorizontal: Spacing.screenPad, marginBottom: 4,
+  },
+  notesBarText: { fontSize: 11, color: Colors.textTertiary, flex: 1, fontStyle: 'italic' },
   spotName: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
   logBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
