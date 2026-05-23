@@ -38,30 +38,103 @@ function CatchStats({ entries }: { entries: CatchEntry[] }) {
     : null
   const speciesCounts: Record<string, number> = {}
   entries.forEach(e => { speciesCounts[e.species] = (speciesCounts[e.species] ?? 0) + 1 })
+  const uniqueSpecies = Object.keys(speciesCounts).length
   const topSpecies = Object.entries(speciesCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
 
+  // Personal bests
+  const withWeight = entries.filter(e => e.weight != null)
+  const personalBest = withWeight.length
+    ? withWeight.reduce((best, e) => e.weight! > best.weight! ? e : best)
+    : null
+  const withLength = entries.filter(e => e.length != null)
+  const longestCatch = withLength.length
+    ? withLength.reduce((best, e) => e.length! > best.length! ? e : best)
+    : null
+
+  // Score correlation insight
+  const highScoreCatches = withScore.filter(e => e.fishingScore! >= 70).length
+  const scoreInsight = withScore.length >= 4
+    ? Math.round((highScoreCatches / withScore.length) * 100)
+    : null
+
   return (
-    <View style={styles.statsCard}>
-      <View style={styles.statItem}>
-        <Ionicons name="fish-outline" size={18} color={Colors.accent} />
-        <Text style={styles.statValue}>{total}</Text>
-        <Text style={styles.statLabel}>Catches</Text>
-      </View>
-      {avgScore !== null && (
+    <>
+      <View style={styles.statsCard}>
         <View style={styles.statItem}>
-          <Ionicons name="speedometer-outline" size={18} color={Colors.accent} />
-          <Text style={styles.statValue}>{avgScore}</Text>
-          <Text style={styles.statLabel}>Avg Score</Text>
+          <Ionicons name="fish-outline" size={18} color={Colors.accent} />
+          <Text style={styles.statValue}>{total}</Text>
+          <Text style={styles.statLabel}>Catches</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Ionicons name="leaf-outline" size={18} color={Colors.accent} />
+          <Text style={styles.statValue}>{uniqueSpecies}</Text>
+          <Text style={styles.statLabel}>Species</Text>
+        </View>
+        {avgScore !== null && (
+          <View style={styles.statItem}>
+            <Ionicons name="speedometer-outline" size={18} color={scoreColor(avgScore)} />
+            <Text style={[styles.statValue, { color: scoreColor(avgScore) }]}>{avgScore}</Text>
+            <Text style={styles.statLabel}>Avg Score</Text>
+          </View>
+        )}
+        {topSpecies && (
+          <View style={[styles.statItem, { flex: 1 }]}>
+            <Ionicons name="star-outline" size={18} color={Colors.accent} />
+            <Text style={styles.statValue} numberOfLines={1}>{topSpecies}</Text>
+            <Text style={styles.statLabel}>Top Species</Text>
+          </View>
+        )}
+      </View>
+
+      {(personalBest || longestCatch) && (
+        <View style={styles.personalBestCard}>
+          <Text style={styles.personalBestTitle}>Personal Bests</Text>
+          {personalBest && (
+            <View style={styles.personalBestRow}>
+              <Ionicons name="trophy-outline" size={14} color={Colors.warning} />
+              <Text style={styles.personalBestLabel}>Heaviest</Text>
+              <Text style={styles.personalBestValue} numberOfLines={1}>
+                {personalBest.species}
+                {'  '}
+                <Text style={styles.personalBestNum}>
+                  {(() => {
+                    const oz = Math.round((personalBest.weight! % 1) * 16)
+                    return oz > 0
+                      ? `${Math.floor(personalBest.weight!)} lbs ${oz} oz`
+                      : `${Math.floor(personalBest.weight!)} lbs`
+                  })()}
+                </Text>
+              </Text>
+            </View>
+          )}
+          {longestCatch && (
+            <View style={styles.personalBestRow}>
+              <Ionicons name="resize-outline" size={14} color={Colors.ocean} />
+              <Text style={styles.personalBestLabel}>Longest</Text>
+              <Text style={styles.personalBestValue} numberOfLines={1}>
+                {longestCatch.species}
+                {'  '}
+                <Text style={styles.personalBestNum}>{longestCatch.length} in</Text>
+              </Text>
+            </View>
+          )}
         </View>
       )}
-      {topSpecies && (
-        <View style={[styles.statItem, { flex: 1 }]}>
-          <Ionicons name="star-outline" size={18} color={Colors.accent} />
-          <Text style={styles.statValue} numberOfLines={1}>{topSpecies}</Text>
-          <Text style={styles.statLabel}>Top Species</Text>
+
+      {scoreInsight !== null && (
+        <View style={styles.insightCard}>
+          <Ionicons
+            name={scoreInsight >= 60 ? 'checkmark-circle' : 'information-circle-outline'}
+            size={16}
+            color={scoreInsight >= 60 ? Colors.success : Colors.textSecondary}
+          />
+          <Text style={styles.insightText}>
+            {scoreInsight}% of your logged catches were during a score of 70 or higher.
+            {scoreInsight >= 70 ? ' The score is working for you!' : ''}
+          </Text>
         </View>
       )}
-    </View>
+    </>
   )
 }
 
@@ -231,7 +304,7 @@ export default function CatchLogScreen() {
           </View>
         ) : (
           <>
-            {entries.length >= 3 && <CatchStats entries={entries} />}
+            {entries.length >= 1 && <CatchStats entries={entries} />}
             {grouped.map(([date, dayEntries]) => (
               <View key={date}>
                 <Text style={styles.dayLabel}>{formatDate(date)}</Text>
@@ -436,11 +509,26 @@ const styles = StyleSheet.create({
   speciesPlaceholder: { fontSize: 15, color: Colors.textTertiary },
   statsCard: {
     backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
-    padding: Spacing.md, marginBottom: Spacing.md, flexDirection: 'row', gap: Spacing.md,
+    padding: Spacing.md, marginBottom: Spacing.sm, flexDirection: 'row', gap: Spacing.md,
   },
   statItem: { alignItems: 'center', gap: 2 },
   statValue: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
   statLabel: { fontSize: 10, color: Colors.textTertiary },
+  personalBestCard: {
+    backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
+    padding: Spacing.md, marginBottom: Spacing.sm, gap: Spacing.sm,
+  },
+  personalBestTitle: { fontSize: 12, fontWeight: '700', color: Colors.textTertiary, marginBottom: 2 },
+  personalBestRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  personalBestLabel: { fontSize: 12, color: Colors.textSecondary, width: 52 },
+  personalBestValue: { flex: 1, fontSize: 13, color: Colors.textPrimary, fontWeight: '600' },
+  personalBestNum: { fontSize: 13, color: Colors.textSecondary, fontWeight: '400' },
+  insightCard: {
+    backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
+    padding: Spacing.md, marginBottom: Spacing.md,
+    flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm,
+  },
+  insightText: { flex: 1, fontSize: 13, color: Colors.textSecondary, lineHeight: 18 },
   speciesList: {
     backgroundColor: Colors.card, borderRadius: 10, marginTop: 4,
     overflow: 'hidden',
