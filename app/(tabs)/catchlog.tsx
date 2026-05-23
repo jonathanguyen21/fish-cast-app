@@ -391,10 +391,31 @@ export default function CatchLogScreen() {
     return Object.values(map).sort((a, b) => b.entries.length - a.entries.length)
   }, [entries])
 
+  const streak = useMemo(() => {
+    if (grouped.length === 0) return 0
+    const dateSet = new Set(grouped.map(([d]) => d))
+    let count = 0
+    const cursor = new Date()
+    while (true) {
+      const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`
+      if (!dateSet.has(key)) break
+      count++
+      cursor.setDate(cursor.getDate() - 1)
+    }
+    return count
+  }, [grouped])
+
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Catch Log</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.title}>Catch Log</Text>
+          {streak >= 2 && (
+            <View style={styles.streakBadge}>
+              <Text style={styles.streakText}>🔥 {streak}-day streak</Text>
+            </View>
+          )}
+        </View>
         <TouchableOpacity style={styles.addButton} onPress={handleLogCatchPress}>
           <Ionicons name="add" size={16} color={Colors.background} />
           <Text style={styles.addButtonText}>Log Catch</Text>
@@ -630,7 +651,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.screenPad, paddingVertical: Spacing.md,
   },
+  headerLeft: { flex: 1 },
   title: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary },
+  streakBadge: { marginTop: 2 },
+  streakText: { fontSize: 12, fontWeight: '700', color: Colors.warning },
   addButton: {
     backgroundColor: Colors.accent, borderRadius: 20,
     paddingHorizontal: Spacing.md, paddingVertical: 8,
