@@ -117,9 +117,10 @@ export default function ForecastScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const netInfo = useNetInfo()
-  const { activeSpot, spots } = useSpots()
+  const { activeSpot, spots, setActiveSpot } = useSpots()
   const [selectedDate, setSelectedDate] = useState<string>(() => localDateKey(new Date()))
   const [showCalendar, setShowCalendar] = useState(false)
+  const [showSpotPicker, setShowSpotPicker] = useState(false)
   const { data: conditions, isLoading, isError, refetch } = useConditions(activeSpot, selectedDate)
   const { data: forecast, isLoading: forecastLoading, isError: forecastError } = useForecast(activeSpot)
   const isPro = useSettingsStore(s => s.isPro)
@@ -280,11 +281,11 @@ export default function ForecastScreen() {
         <View style={[styles.header, { paddingTop: insets.top }]}>
           <TouchableOpacity
             style={styles.spotNameRow}
-            onPress={spots.length > 1 ? () => router.push('/spots') : undefined}
+            onPress={spots.length > 1 ? () => setShowSpotPicker(v => !v) : undefined}
             activeOpacity={spots.length > 1 ? 0.7 : 1}
           >
             <Text style={styles.spotName}>{activeSpot.name}</Text>
-            {spots.length > 1 && <Ionicons name="chevron-down" size={16} color={Colors.textSecondary} />}
+            {spots.length > 1 && <Ionicons name={showSpotPicker ? 'chevron-up' : 'chevron-down'} size={16} color={Colors.accent} />}
           </TouchableOpacity>
           <View style={styles.headerRight}>
             <TouchableOpacity style={styles.logBtn} onPress={() => router.push('/detail/solunar-calendar' as any)}>
@@ -308,6 +309,28 @@ export default function ForecastScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {showSpotPicker && spots.length > 1 && (
+          <View style={styles.spotPickerDropdown}>
+            {spots.map(sp => (
+              <TouchableOpacity
+                key={sp.id}
+                style={[styles.spotPickerRow, sp.id === activeSpot.id && styles.spotPickerRowActive]}
+                onPress={() => { setActiveSpot(sp.id); setShowSpotPicker(false) }}
+              >
+                <Ionicons
+                  name={sp.type === 'saltwater' ? 'water-outline' : 'leaf-outline'}
+                  size={13}
+                  color={sp.id === activeSpot.id ? Colors.accent : Colors.textTertiary}
+                />
+                <Text style={[styles.spotPickerName, sp.id === activeSpot.id && { color: Colors.accent, fontWeight: '700' }]}>
+                  {sp.name}
+                </Text>
+                {sp.id === activeSpot.id && <Ionicons name="checkmark" size={13} color={Colors.accent} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         <TouchableOpacity
           style={[styles.dateChip, showCalendar && styles.dateChipActive]}
@@ -619,6 +642,26 @@ const styles = StyleSheet.create({
   },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   spotNameRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4 },
+  spotPickerDropdown: {
+    marginHorizontal: Spacing.screenPad,
+    marginBottom: Spacing.xs,
+    backgroundColor: Colors.surface,
+    borderRadius: Spacing.cardRadius,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.accent + '30',
+  },
+  spotPickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.card,
+  },
+  spotPickerRowActive: { backgroundColor: Colors.accent + '10' },
+  spotPickerName: { flex: 1, fontSize: 14, color: Colors.textSecondary },
   spotName: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary },
   logBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
