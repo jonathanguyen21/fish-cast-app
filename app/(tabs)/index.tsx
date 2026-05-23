@@ -364,6 +364,30 @@ export default function ForecastScreen() {
                 </Text>
               </View>
             )}
+            {(() => {
+              if (!forecast || conditions.fishingScore >= 65) return null
+              const today = new Date().toISOString().slice(0, 10)
+              const upcoming = forecast.filter(d => d.date > today && d.peakScore >= 75).slice(0, 1)[0]
+              if (!upcoming) return null
+              return (
+                <TouchableOpacity
+                  style={styles.betterDayBanner}
+                  onPress={() => {}}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="trending-up-outline" size={14} color={Colors.success} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.betterDayTitle}>Better fishing {upcoming.dayLabel}</Text>
+                    <Text style={styles.betterDaySub}>
+                      Score {upcoming.peakScore} · Best window {upcoming.peakWindow.start}–{upcoming.peakWindow.end}
+                    </Text>
+                  </View>
+                  <View style={styles.betterDayScore}>
+                    <Text style={[styles.betterDayScoreNum, { color: Colors.success }]}>{upcoming.peakScore}</Text>
+                  </View>
+                </TouchableOpacity>
+              )
+            })()}
             <FishingIntelCard conditions={conditions} />
             <DayPlanStrip hourlyScores={conditions.hourlyScores} />
             <ScoreTimeline
@@ -562,6 +586,22 @@ const styles = StyleSheet.create({
     borderColor: Colors.danger + '50',
   },
   windWarningText: { fontSize: 12, color: Colors.danger, fontWeight: '500', flex: 1 },
+  betterDayBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    marginHorizontal: Spacing.screenPad, marginBottom: Spacing.sm,
+    backgroundColor: Colors.success + '15',
+    borderRadius: 10, paddingHorizontal: Spacing.md, paddingVertical: 10,
+    borderWidth: 1, borderColor: Colors.success + '40',
+  },
+  betterDayTitle: { fontSize: 13, fontWeight: '700', color: Colors.success },
+  betterDaySub: { fontSize: 11, color: Colors.textSecondary, marginTop: 1 },
+  betterDayScore: {
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: Colors.success + '22',
+    borderWidth: 1.5, borderColor: Colors.success + '60',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  betterDayScoreNum: { fontSize: 12, fontWeight: '800' },
   summaryCard: {
     marginHorizontal: Spacing.screenPad, marginBottom: Spacing.sm,
     backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
