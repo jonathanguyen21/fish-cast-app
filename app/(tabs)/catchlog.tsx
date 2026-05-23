@@ -27,6 +27,64 @@ function localDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+const HEATMAP_WEEKS = 8
+const CELL = 14
+const CELL_GAP = 2
+
+function CatchHeatmap({ entries }: { entries: CatchEntry[] }) {
+  const countsByDay = useMemo(() => {
+    const map: Record<string, number> = {}
+    entries.forEach(e => { map[e.date] = (map[e.date] ?? 0) + 1 })
+    return map
+  }, [entries])
+
+  if (Object.keys(countsByDay).length === 0) return null
+
+  const today = new Date()
+  const todayKey = localDateKey(today)
+  const cellTotal = HEATMAP_WEEKS * 7
+
+  const days: { key: string; count: number; isToday: boolean }[] = []
+  for (let i = cellTotal - 1; i >= 0; i--) {
+    const d = new Date(today)
+    d.setDate(d.getDate() - i)
+    const key = localDateKey(d)
+    days.push({ key, count: countsByDay[key] ?? 0, isToday: key === todayKey })
+  }
+
+  const maxCount = Math.max(...days.map(d => d.count), 1)
+  const totalCatches = days.reduce((s, d) => s + d.count, 0)
+  const activeDays = days.filter(d => d.count > 0).length
+
+  return (
+    <View style={styles.heatmapCard}>
+      <View style={styles.bestsHeader}>
+        <Ionicons name="calendar-outline" size={14} color={Colors.accent} />
+        <Text style={styles.bestsTitle}>Activity — Last {HEATMAP_WEEKS} Weeks</Text>
+        <Text style={styles.heatmapMeta}>{totalCatches} catches · {activeDays} days</Text>
+      </View>
+      <View style={styles.heatmapGrid}>
+        {days.map((day, i) => {
+          const intensity = day.count === 0 ? 0 : Math.max(0.2, day.count / maxCount)
+          const bg = day.count === 0
+            ? Colors.card
+            : Colors.accent + Math.round(intensity * 220).toString(16).padStart(2, '0')
+          return (
+            <View
+              key={`${day.key}-${i}`}
+              style={[
+                styles.heatCell,
+                { backgroundColor: bg },
+                day.isToday && { borderWidth: 1, borderColor: Colors.accent },
+              ]}
+            />
+          )
+        })}
+      </View>
+    </View>
+  )
+}
+
 function CatchStats({ entries }: { entries: CatchEntry[] }) {
   const total = entries.length
   const withScore = entries.filter(e => e.fishingScore != null)
@@ -395,6 +453,7 @@ export default function CatchLogScreen() {
         </ScrollView>
       )}
 
+      <CatchHeatmap entries={entries} />
       <ScrollView contentContainerStyle={styles.content}>
         {entries.length === 0 ? (
           <View style={styles.empty}>
@@ -653,5 +712,17 @@ const styles = StyleSheet.create({
   correlationCard: {
     backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
     padding: Spacing.md, marginBottom: Spacing.sm,
+  },
+  heatmapCard: {
+    backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
+    padding: Spacing.md, marginBottom: Spacing.sm,
+    marginHorizontal: Spacing.screenPad,
+  },
+  heatmapMeta: { fontSize: 11, color: Colors.textTertiary, marginLeft: 'auto' },
+  heatmapGrid: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: CELL_GAP, marginTop: Spacing.sm,
+  },
+  heatCell: {
+    width: CELL, height: CELL, borderRadius: 3,
   },
 })
