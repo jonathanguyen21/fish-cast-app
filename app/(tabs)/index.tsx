@@ -331,6 +331,16 @@ export default function ForecastScreen() {
                 </Text>
               </View>
             )}
+            {(windPeak ?? 0) >= 25 && (
+              <View style={[styles.solunarBanner, styles.windWarningBanner]}>
+                <Ionicons name="warning-outline" size={14} color={Colors.danger} />
+                <Text style={styles.windWarningText}>
+                  {(windPeak ?? 0) >= 30
+                    ? `Wind gusts to ${windPeak} mph — dangerous conditions. Stay safe.`
+                    : `Wind peaks at ${windPeak} mph — rough conditions. Use caution.`}
+                </Text>
+              </View>
+            )}
             <FishingIntelCard conditions={conditions} />
             <DayPlanStrip hourlyScores={conditions.hourlyScores} />
             <ScoreTimeline
@@ -518,6 +528,11 @@ const styles = StyleSheet.create({
     borderColor: Colors.accent + '40',
   },
   solunarBannerText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500' },
+  windWarningBanner: {
+    backgroundColor: Colors.danger + '15',
+    borderColor: Colors.danger + '50',
+  },
+  windWarningText: { fontSize: 12, color: Colors.danger, fontWeight: '500', flex: 1 },
   summaryCard: {
     marginHorizontal: Spacing.screenPad, marginBottom: Spacing.sm,
     backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
