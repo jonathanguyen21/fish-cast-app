@@ -67,6 +67,15 @@ function tideTurnCountdown(tide: { next: { type: string; time: string } }): stri
   return `${type} in ${diffH}h ${diffM}m`
 }
 
+function waterTempNote(tempF: number): string {
+  if (tempF < 45) return 'Very cold'
+  if (tempF < 55) return 'Cold · fish slow'
+  if (tempF < 65) return 'Ideal range'
+  if (tempF < 72) return 'Warm · active'
+  if (tempF < 80) return 'Hot · fish early'
+  return 'Very hot'
+}
+
 function tideFlowLabel(curve: number[], currentHour: number): string | null {
   if (curve.length < 2) return null
   const curr = curve[Math.min(currentHour, curve.length - 1)] ?? 0
@@ -277,9 +286,22 @@ export default function ForecastScreen() {
             {conditions && (
               <TouchableOpacity
                 style={styles.logBtn}
-                onPress={() => Share.share({
-                  message: `${activeSpot.name} — Fishing Score: ${conditions.fishingScore} (${conditions.scoreLabel})\nBest window: ${conditions.bestWindow.start}–${conditions.bestWindow.end}\nvia FishCast`,
-                })}
+                onPress={() => {
+                  const wind = conditions.wind
+                  const tide = conditions.tide
+                  const moon = conditions.moon
+                  const lines = [
+                    `🎣 ${activeSpot.name} — Fishing Report`,
+                    `📊 Score: ${conditions.fishingScore}/100 — ${conditions.scoreLabel}`,
+                    `⭐ Best window: ${conditions.bestWindow.start}–${conditions.bestWindow.end} (avg ${conditions.bestWindow.score})`,
+                  ]
+                  if (moon.majorPeriods.length > 0) lines.push(`🌙 Major solunar: ${moon.majorPeriods[0].start}–${moon.majorPeriods[0].end}`)
+                  if (tide) lines.push(`🌊 Tide: ${tidePhaseText(tide.phase)} · ${tide.next.type === 'high' ? 'High' : 'Low'} at ${tide.next.time}`)
+                  lines.push(`💨 Wind: ${wind.speed} mph ${wind.directionLabel}`)
+                  if (conditions.water.temp > 0) lines.push(`🌡️ Water: ${conditions.water.temp}°F`)
+                  lines.push(`Powered by FishCast 🎣`)
+                  Share.share({ message: lines.join('\n') })
+                }}
               >
                 <Ionicons name="share-outline" size={14} color={Colors.textSecondary} />
                 <Text style={[styles.logBtnText, { color: Colors.textSecondary }]}>Share</Text>
@@ -389,6 +411,11 @@ export default function ForecastScreen() {
                     : conditions.water.temp}°
                 </Text>
                 <Text style={styles.quickSub}>{tempUnit === 'C' ? '°C' : '°F'}</Text>
+                {conditions.water.temp > 0 && (
+                  <Text style={[styles.quickPeak, { textAlign: 'center' }]} numberOfLines={2}>
+                    {waterTempNote(conditions.water.temp)}
+                  </Text>
+                )}
               </View>
             </View>
             {conditions.tide && <TideChart tide={conditions.tide} currentHour={currentHour} />}
