@@ -437,7 +437,11 @@ export default function ForecastScreen() {
                 })}
               />
               {conditions.tide && (
-                <View style={styles.quickCard}>
+                <TouchableOpacity
+                  style={styles.quickCard}
+                  activeOpacity={0.75}
+                  onPress={() => router.push({ pathname: '/detail/tide' as any, params: { data: JSON.stringify(conditions.tide) } })}
+                >
                   <Ionicons name="water-outline" size={18} color={Colors.ocean} />
                   <Text style={styles.quickLabel}>Tide</Text>
                   <Text style={styles.quickValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
@@ -456,7 +460,7 @@ export default function ForecastScreen() {
                     ) : null
                   })()}
                   <Text style={styles.quickPeak} numberOfLines={1}>{tideTurnCountdown(conditions.tide)}</Text>
-                </View>
+                </TouchableOpacity>
               )}
               <View style={styles.quickCard}>
                 <Ionicons name="thermometer-outline" size={18} color={Colors.accent} />

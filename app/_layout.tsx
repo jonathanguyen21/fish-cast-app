@@ -146,6 +146,10 @@ export default function RootLayout() {
           name="detail/solunar-calendar"
           options={{ title: 'Solunar Calendar', presentation: 'modal', headerShown: false }}
         />
+        <Stack.Screen
+          name="detail/tide"
+          options={{ title: 'Tides', presentation: 'modal', headerShown: false }}
+        />
       </Stack>
     </PersistQueryClientProvider>
     </AppErrorBoundary>
