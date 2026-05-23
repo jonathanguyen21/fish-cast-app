@@ -15,6 +15,7 @@ interface SettingsState {
   alertsEnabled: boolean
   isPro: boolean
   speciesAlerts: Record<string, SpeciesAlert>
+  hasSeenOnboarding: boolean
   setTempUnit: (u: 'F' | 'C') => void
   setSpeedUnit: (u: 'mph' | 'kts') => void
   setLengthUnit: (u: 'ft' | 'm') => void
@@ -23,6 +24,7 @@ interface SettingsState {
   setIsPro: (v: boolean) => void
   setSpeciesAlert: (speciesId: string, alert: Partial<SpeciesAlert>) => void
   clearSpeciesAlert: (speciesId: string) => void
+  setHasSeenOnboarding: (v: boolean) => void
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -35,6 +37,7 @@ export const useSettingsStore = create<SettingsState>()(
       alertsEnabled: false,
       isPro: false,
       speciesAlerts: {},
+      hasSeenOnboarding: false,
       setTempUnit: (tempUnit) => set({ tempUnit }),
       setSpeedUnit: (speedUnit) => set({ speedUnit }),
       setLengthUnit: (lengthUnit) => set({ lengthUnit }),
@@ -54,6 +57,7 @@ export const useSettingsStore = create<SettingsState>()(
         delete next[speciesId]
         set({ speciesAlerts: next })
       },
+      setHasSeenOnboarding: (hasSeenOnboarding) => set({ hasSeenOnboarding }),
     }),
     {
       name: 'fishcast-settings',

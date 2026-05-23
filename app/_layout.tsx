@@ -13,6 +13,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import 'react-native-reanimated'
 import { Colors } from '../theme/colors'
 import { useSpotsStore } from '../store/spotsStore'
+import { useSettingsStore } from '../store/settingsStore'
+import { OnboardingModal } from '../features/onboarding/OnboardingModal'
 import { DEFAULT_SPOTS } from '../data/defaultSpots'
 import { resolveNearestStation } from '../services/noaaStationService'
 import { detectRegion } from '../data/species'
@@ -62,6 +64,8 @@ export default function RootLayout() {
   const spots = useSpotsStore(s => s.spots)
   const addSpot = useSpotsStore(s => s.addSpot)
   const hasSeeded = useRef(false)
+  const hasSeenOnboarding = useSettingsStore(s => s.hasSeenOnboarding)
+  const setHasSeenOnboarding = useSettingsStore(s => s.setHasSeenOnboarding)
 
   useEffect(() => { if (error) throw error }, [error])
   useEffect(() => { if (loaded) SplashScreen.hideAsync() }, [loaded])
@@ -88,6 +92,9 @@ export default function RootLayout() {
 
   return (
     <AppErrorBoundary>
+    {!hasSeenOnboarding && loaded && (
+      <OnboardingModal onDismiss={() => setHasSeenOnboarding(true)} />
+    )}
     <PersistQueryClientProvider
       client={queryClient}
       persistOptions={{ persister: asyncStoragePersister, maxAge: 24 * 60 * 60 * 1000 }}
