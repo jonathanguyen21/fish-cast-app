@@ -392,7 +392,7 @@ export default function CatchLogScreen() {
       `${entries.length} catches logged`,
       avgScore != null ? `Avg fishing score: ${avgScore}/100` : null,
       best?.weight != null ? `Personal best: ${best.weight} lb ${best.species}` : null,
-      streak >= 2 ? `${streak}-day fishing streak 🔥` : null,
+      streak >= 2 ? `${streak}-day fishing streak` : null,
       '',
       'Top species:',
       ...topSpecies.map(([sp, n]) => `  ${sp}: ${n} ${n === 1 ? 'catch' : 'catches'}`),
@@ -408,7 +408,8 @@ export default function CatchLogScreen() {
           <Text style={styles.title}>Catch Log</Text>
           {streak >= 2 && (
             <View style={styles.streakBadge}>
-              <Text style={styles.streakText}>🔥 {streak}-day streak</Text>
+              <Ionicons name="flame" size={12} color={Colors.warning} />
+              <Text style={styles.streakText}>{streak}-day streak</Text>
             </View>
           )}
         </View>
@@ -621,6 +622,7 @@ const styles = StyleSheet.create({
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   title: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary },
   streakBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
     backgroundColor: Colors.warning + '22', borderRadius: 10,
     paddingHorizontal: 8, paddingVertical: 3,
     borderWidth: 1, borderColor: Colors.warning + '44',

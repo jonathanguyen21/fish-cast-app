@@ -1,15 +1,19 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from './scoringEngine'
 import type { HourlyScore } from '../../types/conditions'
 
+type IoniconName = keyof typeof Ionicons.glyphMap
+
 interface Block {
   label: string
   hours: string[]
   avgScore: number
-  icon: string
+  iconName: IoniconName
+  iconColor: string
 }
 
 function parseHour(hour: string): number {
@@ -21,14 +25,14 @@ function parseHour(hour: string): number {
   return h
 }
 
-function buildBlocks(hourlyScores: HourlyScore[]): Block[] {
-  const TIME_BLOCKS: { label: string; icon: string; start: number; end: number }[] = [
-    { label: 'Dawn', icon: '🌅', start: 5, end: 8 },
-    { label: 'Morning', icon: '☀️', start: 9, end: 12 },
-    { label: 'Afternoon', icon: '🌤', start: 13, end: 17 },
-    { label: 'Dusk', icon: '🌇', start: 18, end: 20 },
-  ]
+const TIME_BLOCKS: { label: string; iconName: IoniconName; iconColor: string; start: number; end: number }[] = [
+  { label: 'Dawn',      iconName: 'sunny-outline',        iconColor: '#FB923C', start: 5,  end: 8  },
+  { label: 'Morning',   iconName: 'sunny',                iconColor: '#FBBF24', start: 9,  end: 12 },
+  { label: 'Afternoon', iconName: 'partly-sunny-outline', iconColor: '#FCD34D', start: 13, end: 17 },
+  { label: 'Dusk',      iconName: 'moon-outline',         iconColor: Colors.purple, start: 18, end: 20 },
+]
 
+function buildBlocks(hourlyScores: HourlyScore[]): Block[] {
   return TIME_BLOCKS.map(block => {
     const relevant = hourlyScores.filter(h => {
       const hr = parseHour(h.hour)
@@ -41,7 +45,8 @@ function buildBlocks(hourlyScores: HourlyScore[]): Block[] {
       label: block.label,
       hours: relevant.map(h => h.hour),
       avgScore,
-      icon: block.icon,
+      iconName: block.iconName,
+      iconColor: block.iconColor,
     }
   })
 }
@@ -59,7 +64,7 @@ export function DayPlanStrip({ hourlyScores }: { hourlyScores: HourlyScore[] }) 
           const isTop = block.avgScore === maxScore && block.avgScore >= 50
           return (
             <View key={block.label} style={[styles.block, isTop && styles.blockHighlight]}>
-              <Text style={styles.icon}>{block.icon}</Text>
+              <Ionicons name={block.iconName} size={18} color={block.iconColor} />
               <Text style={styles.blockLabel}>{block.label}</Text>
               <View style={styles.barTrack}>
                 <View style={[
@@ -110,7 +115,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.accent + '44',
   },
-  icon: { fontSize: 16 },
   blockLabel: { fontSize: 10, color: Colors.textTertiary, fontWeight: '600' },
   barTrack: {
     width: '100%',

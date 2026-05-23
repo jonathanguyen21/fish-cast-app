@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { Svg, Circle, Path } from 'react-native-svg'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getMoonIllumination } from 'suncalc'
@@ -20,20 +21,64 @@ interface CalDay {
   isToday: boolean
 }
 
-const PHASE_LABELS = [
-  { max: 0.03, label: '🌑 New Moon' },
-  { max: 0.12, label: '🌒 Waxing Crescent' },
-  { max: 0.22, label: '🌓 First Quarter' },
-  { max: 0.38, label: '🌔 Waxing Gibbous' },
-  { max: 0.55, label: '🌕 Full Moon' },
-  { max: 0.65, label: '🌖 Waning Gibbous' },
-  { max: 0.78, label: '🌗 Last Quarter' },
-  { max: 0.92, label: '🌘 Waning Crescent' },
-  { max: 1.01, label: '🌑 New Moon' },
+const PHASE_NAMES = [
+  { max: 0.03, label: 'New Moon' },
+  { max: 0.12, label: 'Waxing Crescent' },
+  { max: 0.22, label: 'First Quarter' },
+  { max: 0.38, label: 'Waxing Gibbous' },
+  { max: 0.55, label: 'Full Moon' },
+  { max: 0.65, label: 'Waning Gibbous' },
+  { max: 0.78, label: 'Last Quarter' },
+  { max: 0.92, label: 'Waning Crescent' },
+  { max: 1.01, label: 'New Moon' },
 ]
 
-function getPhaseLabel(phase: number): string {
-  return PHASE_LABELS.find(p => phase < p.max)?.label ?? '🌑 New Moon'
+function getPhaseName(phase: number): string {
+  return PHASE_NAMES.find(p => phase < p.max)?.label ?? 'New Moon'
+}
+
+function MoonPhaseIcon({ phase, size = 15 }: { phase: number; size?: number }) {
+  const r = (size - 1) / 2
+  const cx = size / 2
+  const cy = size / 2
+  const illum = phase <= 0.5 ? phase * 2 : (1 - phase) * 2
+  const isWaxing = phase < 0.5
+  const txr = r * Math.abs(2 * illum - 1)
+  const litColor = '#CBD5E1'
+
+  if (illum < 0.04) {
+    return (
+      <Svg width={size} height={size}>
+        <Circle cx={cx} cy={cy} r={r} fill={Colors.card} stroke={Colors.textTertiary} strokeWidth={0.75} />
+      </Svg>
+    )
+  }
+  if (illum > 0.96) {
+    return (
+      <Svg width={size} height={size}>
+        <Circle cx={cx} cy={cy} r={r} fill={litColor} />
+      </Svg>
+    )
+  }
+
+  const top = `${cx.toFixed(1)},${(cy - r).toFixed(1)}`
+  const bot = `${cx.toFixed(1)},${(cy + r).toFixed(1)}`
+  const tx = txr.toFixed(1)
+  let d: string
+  if (isWaxing) {
+    const sw = illum < 0.5 ? 1 : 0
+    d = `M ${top} A ${r} ${r} 0 0 1 ${bot} A ${tx} ${r} 0 0 ${sw} ${top} Z`
+  } else {
+    const sw = illum < 0.5 ? 0 : 1
+    d = `M ${top} A ${r} ${r} 0 0 0 ${bot} A ${tx} ${r} 0 0 ${sw} ${top} Z`
+  }
+
+  return (
+    <Svg width={size} height={size}>
+      <Circle cx={cx} cy={cy} r={r} fill={Colors.card} />
+      <Path d={d} fill={litColor} />
+    </Svg>
+  )
 }
 
 function solunarStrength(phase: number): DayStrength {
@@ -72,7 +117,7 @@ function buildCalendar(today: Date): CalDay[] {
       monthLabel: MONTH_NAMES[date.getMonth()],
       strength: solunarStrength(phase),
       phase,
-      phaseLabel: getPhaseLabel(phase),
+      phaseLabel: getPhaseName(phase),
       illumination: Math.round(illumination * 100),
       isToday,
     })
@@ -195,7 +240,10 @@ export default function SolunarCalendarScreen() {
                 </Text>
               </View>
               <Text style={styles.detailDate}>{MONTH_NAMES[d.date.getMonth()]} {d.dayNum}</Text>
-              <Text style={styles.detailPhase}>{d.phaseLabel}</Text>
+              <View style={styles.detailPhaseRow}>
+                <MoonPhaseIcon phase={d.phase} size={14} />
+                <Text style={styles.detailPhase}>{d.phaseLabel}</Text>
+              </View>
               <Text style={styles.detailIllum}>{d.illumination}%</Text>
             </View>
           ))}
@@ -302,11 +350,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginBottom: 4,
   },
-  detailRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  detailRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 1 },
+  detailPhaseRow: { flexDirection: 'row', alignItems: 'center', gap: 5, flex: 1 },
   detailStrengthBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2, minWidth: 52, alignItems: 'center' },
   detailStrengthText: { fontSize: 11, fontWeight: '700' },
   detailDate: { fontSize: 12, color: Colors.textSecondary, width: 48 },
-  detailPhase: { fontSize: 12, color: Colors.textTertiary, flex: 1 },
+  detailPhase: { fontSize: 12, color: Colors.textTertiary },
   detailIllum: { fontSize: 11, color: Colors.textTertiary, width: 32, textAlign: 'right' },
   footnote: {
     fontSize: 11,

@@ -26,7 +26,7 @@ const STEPS: Step[] = [
   },
   {
     icon: 'moon-outline',
-    iconColor: '#A78BFA',
+    iconColor: Colors.purple,
     title: 'Solunar Windows',
     body: 'Fish feed more aggressively during major and minor solunar periods tied to the moon. The ◉ and ◎ dots on the timeline show you exactly when these windows occur.',
   },
