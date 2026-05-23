@@ -1,6 +1,7 @@
 import React from 'react'
 import { View, Text, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import Svg, { Circle, Path, ClipPath, Defs } from 'react-native-svg'
 import { cardStyles } from '../../theme/cardStyles'
 import { Colors } from '../../theme/colors'
 import type { MoonData } from '../../types/conditions'
@@ -45,11 +46,51 @@ function nextPeriodLabel(moon: MoonData): string | null {
   return null
 }
 
+function MoonPhaseIcon({ phase, illumination }: { phase: string; illumination: number }) {
+  const R = 9
+  const cx = R, cy = R
+  const size = R * 2
+
+  const isWaning = phase.toLowerCase().includes('waning')
+  const frac = illumination / 100
+
+  // For the illuminated "bulge": map 0->1->0 illumination fraction to ellipse x-radius
+  // frac=0: new moon (dark), frac=0.5: quarter (half), frac=1: full
+  // The illuminated side of the disc:
+  // Waxing: right side lit. Waning: left side lit.
+  // We use SVG path to draw limb + terminator as an ellipse arc.
+  const termX = R * (1 - 2 * frac) // -R at full (behind), +R at new (in front)
+
+  const illuminatedPath = (() => {
+    if (frac >= 0.98) {
+      return `M ${cx - R},${cy} A ${R},${R} 0 0,1 ${cx + R},${cy} A ${R},${R} 0 0,1 ${cx - R},${cy} Z`
+    }
+    if (frac <= 0.02) return null
+
+    const tx = cx + termX
+    const ry = R
+    const large = frac > 0.5 ? 1 : 0
+    if (isWaning) {
+      return `M ${cx - R},${cy} A ${R},${R} 0 0,0 ${cx + R},${cy} A ${Math.abs(termX)},${ry} 0 0,${large === 1 ? 0 : 1} ${cx - R},${cy} Z`
+    } else {
+      return `M ${cx + R},${cy} A ${R},${R} 0 0,0 ${cx - R},${cy} A ${Math.abs(termX)},${ry} 0 0,${large === 1 ? 1 : 0} ${cx + R},${cy} Z`
+    }
+  })()
+
+  return (
+    <Svg width={size} height={size} style={{ marginBottom: 4 }}>
+      <Circle cx={cx} cy={cy} r={R} fill={Colors.surface} />
+      {illuminatedPath && <Path d={illuminatedPath} fill={Colors.warning} opacity={0.9} />}
+      <Circle cx={cx} cy={cy} r={R} fill="none" stroke={Colors.textTertiary} strokeWidth={0.8} />
+    </Svg>
+  )
+}
+
 export function MoonCard({ moon, onPress }: Props) {
   const periodHint = nextPeriodLabel(moon)
   return (
     <TouchableOpacity style={cardStyles.card} onPress={onPress} activeOpacity={0.75}>
-      <Ionicons name="moon-outline" size={18} color={Colors.accent} style={{ marginBottom: 4 }} />
+      <MoonPhaseIcon phase={moon.phase} illumination={moon.illumination} />
       <Text style={cardStyles.label}>Moon</Text>
       <Text style={cardStyles.value}>{moon.illumination}%</Text>
       <Text style={cardStyles.sub} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
