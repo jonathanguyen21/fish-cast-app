@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import {
   ScrollView, View, Text, StyleSheet, RefreshControl,
-  ActivityIndicator, TouchableOpacity, Share,
+  ActivityIndicator, TouchableOpacity, Share, Linking,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -307,6 +307,18 @@ export default function ForecastScreen() {
                 <Text style={[styles.logBtnText, { color: Colors.textSecondary }]}>Share</Text>
               </TouchableOpacity>
             )}
+            <TouchableOpacity
+              style={styles.logBtn}
+              onPress={() => {
+                const url = `maps://?q=${encodeURIComponent(activeSpot.name)}&ll=${activeSpot.lat},${activeSpot.lng}`
+                Linking.openURL(url).catch(() => {
+                  Linking.openURL(`https://maps.google.com/?q=${activeSpot.lat},${activeSpot.lng}`)
+                })
+              }}
+            >
+              <Ionicons name="navigate-outline" size={14} color={Colors.textSecondary} />
+              <Text style={[styles.logBtnText, { color: Colors.textSecondary }]}>Maps</Text>
+            </TouchableOpacity>
             <TouchableOpacity style={styles.logBtn} onPress={() => router.push('/(tabs)/catchlog')}>
               <Ionicons name="journal-outline" size={14} color={Colors.accent} />
               <Text style={styles.logBtnText}>Log</Text>
