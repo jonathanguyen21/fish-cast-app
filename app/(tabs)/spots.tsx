@@ -1,14 +1,48 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import { useSpots } from '../../hooks/useSpots'
 import { useConditions } from '../../hooks/useConditions'
 import { SwipeableRow } from '../../features/common/SwipeableRow'
+import { getDailySolunar } from '../../services/solunarService'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from '../../features/score/scoringEngine'
 import type { Spot } from '../../types/spot'
+
+function solunarDotColor(rating: number): string {
+  if (rating >= 70) return Colors.success
+  if (rating >= 50) return Colors.accent
+  if (rating >= 35) return Colors.warning
+  return Colors.textTertiary + '60'
+}
+
+function SolunarMiniBar({ lat, lng }: { lat: number; lng: number }) {
+  const ratings = useMemo(() => {
+    const today = new Date()
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today)
+      d.setDate(today.getDate() + i)
+      return getDailySolunar(lat, lng, d).rating
+    })
+  }, [lat, lng])
+
+  return (
+    <View style={{ flexDirection: 'row', gap: 3, marginTop: 4 }}>
+      {ratings.map((r, i) => (
+        <View
+          key={i}
+          style={{
+            width: 6, height: 6, borderRadius: 3,
+            backgroundColor: solunarDotColor(r),
+          }}
+        />
+      ))}
+      <Text style={{ fontSize: 9, color: Colors.textTertiary, marginLeft: 2, marginTop: -1 }}>7d solunar</Text>
+    </View>
+  )
+}
 
 function SpotRow({ spot, isActive, onPress, onDelete, onEdit }: {
   spot: Spot; isActive: boolean; onPress: () => void; onDelete: () => void; onEdit: () => void
@@ -48,6 +82,7 @@ function SpotRow({ spot, isActive, onPress, onDelete, onEdit }: {
             {spot.type === 'saltwater' ? 'Saltwater' : 'Freshwater'}
           </Text>
         </View>
+        <SolunarMiniBar lat={spot.lat} lng={spot.lng} />
       </View>
       <TouchableOpacity onPress={onEdit} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} style={styles.editBtn}>
         <Ionicons name="pencil-outline" size={15} color={Colors.textTertiary} />
