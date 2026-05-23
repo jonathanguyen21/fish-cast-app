@@ -19,6 +19,7 @@ import { ActiveRightNow } from '../../features/species/ActiveRightNow'
 import { TopTargetCard } from '../../features/species/TopTargetCard'
 import { SolunarWeekStrip } from '../../features/solunar/SolunarWeekStrip'
 import { ForecastStrip } from '../../features/forecast/ForecastStrip'
+import { WeekTopDays } from '../../features/forecast/WeekTopDays'
 import { DayCalendar } from '../../features/calendar/DayCalendar'
 import { scoreSpecies } from '../../features/species/speciesScoring'
 import { scoreColor } from '../../features/score/scoringEngine'
@@ -516,6 +517,7 @@ export default function ForecastScreen() {
               }}
             />
             <SolunarWeekStrip lat={activeSpot.lat} lng={activeSpot.lng} onSelectDate={(d) => { setSelectedDate(d); setShowCalendar(false) }} />
+            {forecast && <WeekTopDays forecast={forecast} />}
             <ForecastStrip forecast={forecast} isPro={isPro} isLoading={forecastLoading} isError={forecastError} onUpgrade={() => router.push('/settings')} lat={activeSpot.lat} lng={activeSpot.lng} />
             {recentCatch && (
               <TouchableOpacity
