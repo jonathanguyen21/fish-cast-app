@@ -6,6 +6,7 @@ function makeConditions(overrides: Partial<ConditionsData> = {}): ConditionsData
     fishingScore: 72,
     scoreLabel: 'Great day to fish',
     bestWindow: { start: '2:00 PM', end: '5:00 PM', score: 85 },
+    secondWindow: null,
     wind: { speed: 8, gusts: 12, direction: 225, directionLabel: 'SW', unit: 'mph' },
     windHourly: [],
     airHourly: [],

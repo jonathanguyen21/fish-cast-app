@@ -351,6 +351,7 @@ export default function ForecastScreen() {
               score={conditions.fishingScore}
               label={conditions.scoreLabel}
               bestWindow={conditions.bestWindow}
+              secondWindow={conditions.secondWindow}
               breakdown={conditions.scoreBreakdown}
               spotName={activeSpot.name}
             />

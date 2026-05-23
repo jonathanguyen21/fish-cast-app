@@ -14,6 +14,7 @@ function makeConditions(score: number): ConditionsData {
     fishingScore: score,
     scoreLabel: 'Good',
     bestWindow: { start: '10:00 AM', end: '1:00 PM', score },
+    secondWindow: null,
     wind: { speed: 10, gusts: 14, direction: 225, directionLabel: 'SW', unit: 'mph' },
     windHourly: [],
     airHourly: [],

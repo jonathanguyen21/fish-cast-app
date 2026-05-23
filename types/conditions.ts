@@ -103,6 +103,7 @@ export interface ConditionsData {
   fishingScore: number
   scoreLabel: string
   bestWindow: { start: string; end: string; score: number }
+  secondWindow: { start: string; end: string; score: number } | null
   wind: WindData
   windHourly: HourlyWind[]
   airHourly: { hour: number; temp: number; rainChance: number; cloudCover: number }[]

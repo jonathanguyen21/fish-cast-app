@@ -16,6 +16,7 @@ export const MOCK_CONDITIONS: ConditionsData = {
   fishingScore: 82,
   scoreLabel: 'Great day to fish',
   bestWindow: { start: '2:00 PM', end: '5:00 PM', score: 91 },
+  secondWindow: null,
   wind: { speed: 8, gusts: 14, direction: 225, directionLabel: 'SW', unit: 'mph' },
   windHourly: [],
   airHourly: [],

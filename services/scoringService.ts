@@ -1,5 +1,5 @@
 import { calculateScore, calculateScoreWithBreakdown, scoreLabel } from '../features/score/scoringEngine'
-import { findBestThreeHourWindow } from '../features/score/bestWindow'
+import { findBestThreeHourWindow, findSecondBestWindow } from '../features/score/bestWindow'
 import { detectPhase, hoursFromLastTurn } from '../features/tide/tideUtils'
 import type { ConditionsData, SkyData, WindData, PressureData, HourlyScore, ScoreBreakdown } from '../types/conditions'
 import type { Spot } from '../types/spot'
@@ -168,6 +168,17 @@ export function buildConditionsData(
       }
     : { start: formatHourTime(5), end: formatHourTime(7), score: 0 }
 
+  const secondWindowResult = windowResult
+    ? findSecondBestWindow(hourlyScores.map(h => h.score), 5, windowResult)
+    : null
+  const secondWindow = secondWindowResult
+    ? {
+        start: formatHourTime(secondWindowResult.startHour),
+        end: formatHourTime(secondWindowResult.endHour),
+        score: secondWindowResult.avgScore,
+      }
+    : null
+
   // Produce hours from the first NWS period through hour 23.
   // NWS only has future forecast data so never backfill past hours.
   const todayHourly = nws?.hourlyForecast ?? []
@@ -184,6 +195,7 @@ export function buildConditionsData(
     fishingScore: currentScore,
     scoreLabel: scoreLabel(currentScore),
     bestWindow,
+    secondWindow,
     wind,
     windHourly: marine?.windHourly?.length
       ? marine.windHourly

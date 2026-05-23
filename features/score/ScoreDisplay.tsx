@@ -48,6 +48,7 @@ interface Props {
   score: number
   label: string
   bestWindow: { start: string; end: string; score: number }
+  secondWindow?: { start: string; end: string; score: number } | null
   breakdown?: {
     pressure: number
     solunar: number
@@ -70,7 +71,7 @@ const FACTORS: { key: keyof NonNullable<Props['breakdown']>; icon: IoniconName; 
   { key: 'sky',       icon: 'cloud-outline',          label: 'Sky',        max: 10 },
 ]
 
-export function ScoreDisplay({ score, label, bestWindow, breakdown, spotName }: Props) {
+export function ScoreDisplay({ score, label, bestWindow, secondWindow, breakdown, spotName }: Props) {
   const [reminderSet, setReminderSet] = useState(false)
 
   async function handleSetReminder() {
@@ -160,6 +161,15 @@ export function ScoreDisplay({ score, label, bestWindow, breakdown, spotName }: 
           <Text style={[styles.bestWindowScore, { color: scoreColor(bestWindow.score) }]}> · {bestWindow.score}</Text>
         </View>
       </View>
+      {secondWindow && (
+        <View style={styles.secondWindowRow}>
+          <Text style={styles.secondWindowLabel}>Also good</Text>
+          <View style={styles.secondWindowPill}>
+            <Text style={styles.secondWindowTime}>{secondWindow.start}–{secondWindow.end}</Text>
+            <Text style={[styles.secondWindowScore, { color: scoreColor(secondWindow.score) }]}> · {secondWindow.score}</Text>
+          </View>
+        </View>
+      )}
       {(() => {
         const { text, accent } = windowStatus(bestWindow.start, bestWindow.end, nowMins)
         return text ? (
@@ -285,6 +295,34 @@ const styles = StyleSheet.create({
   bestWindowScore: {
     fontSize: 12,
     color: Colors.textSecondary,
+  },
+  secondWindowRow: {
+    marginTop: 4,
+    alignItems: 'center',
+    gap: 3,
+  },
+  secondWindowLabel: {
+    fontSize: 10,
+    color: Colors.textTertiary,
+  },
+  secondWindowPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: Colors.card,
+  },
+  secondWindowTime: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  secondWindowScore: {
+    fontSize: 10,
+    color: Colors.textTertiary,
   },
   countdownPill: {
     flexDirection: 'row',
