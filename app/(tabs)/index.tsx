@@ -295,9 +295,17 @@ export default function ForecastScreen() {
             {conditions && (
               <TouchableOpacity
                 style={styles.logBtn}
-                onPress={() => Share.share({
-                  message: `${activeSpot.name} — Fishing Score: ${conditions.fishingScore} (${conditions.scoreLabel})\nBest window: ${conditions.bestWindow.start}–${conditions.bestWindow.end}\nvia FishCast`,
-                })}
+                onPress={() => {
+                  const tideInfo = conditions.tide
+                    ? ` · ${conditions.tide.phase === 'incoming' ? 'Incoming tide' : conditions.tide.phase === 'outgoing' ? 'Outgoing tide' : 'Slack tide'}`
+                    : ''
+                  const windInfo = conditions.wind.speed > 0
+                    ? ` · Wind ${conditions.wind.speed} mph ${conditions.wind.directionLabel}`
+                    : ''
+                  Share.share({
+                    message: `🎣 ${activeSpot.name}\nFishing Score: ${conditions.fishingScore}/100 — ${conditions.scoreLabel}\nBest window: ${conditions.bestWindow.start}–${conditions.bestWindow.end} (score ${conditions.bestWindow.score})${tideInfo}${windInfo}\n\nForecast powered by FishCast`,
+                  })
+                }}
               >
                 <Ionicons name="share-outline" size={14} color={Colors.textSecondary} />
                 <Text style={[styles.logBtnText, { color: Colors.textSecondary }]}>Share</Text>
