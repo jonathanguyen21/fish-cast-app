@@ -21,7 +21,7 @@ import { DayCalendar } from '../../features/calendar/DayCalendar'
 import { scoreSpecies } from '../../features/species/speciesScoring'
 import { scoreColor } from '../../features/score/scoringEngine'
 import { scoreSpeciesHourly, type SpeciesHourlyScore } from '../../features/species/speciesHourlyScoring'
-import { detectPhase } from '../../features/tide/tideUtils'
+import { detectPhase, estimateCurrentStrength } from '../../features/tide/tideUtils'
 import { getSpeciesForRegion } from '../../data/species'
 import { calculateSolunar } from '../../services/solunarService'
 import { Colors } from '../../theme/colors'
@@ -413,11 +413,14 @@ export default function ForecastScreen() {
                     <Ionicons name={tidePhaseIcon(conditions.tide.phase)} size={10} color={conditions.tide.phase === 'incoming' ? Colors.ocean : Colors.textSecondary} />
                     <Text style={styles.quickSub} numberOfLines={1}>{tidePhaseText(conditions.tide.phase)}</Text>
                   </View>
-                  {tideFlowLabel(conditions.tide.hourlyCurve, currentHour) && (
-                    <Text style={styles.quickPeak} numberOfLines={1}>
-                      {tideFlowLabel(conditions.tide.hourlyCurve, currentHour)}
-                    </Text>
-                  )}
+                  {(() => {
+                    const strength = estimateCurrentStrength(conditions.tide.hourlyCurve, currentHour)
+                    const strengthColor = strength === 'strong' ? Colors.success : strength === 'moderate' ? Colors.warning : Colors.textTertiary
+                    const strengthLabel = strength === 'strong' ? 'Strong current' : strength === 'moderate' ? 'Moderate' : strength === 'weak' ? 'Weak current' : null
+                    return strengthLabel ? (
+                      <Text style={[styles.quickPeak, { color: strengthColor }]} numberOfLines={1}>{strengthLabel}</Text>
+                    ) : null
+                  })()}
                   <Text style={styles.quickPeak} numberOfLines={1}>{tideTurnCountdown(conditions.tide)}</Text>
                 </View>
               )}

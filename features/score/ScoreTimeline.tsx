@@ -145,6 +145,7 @@ export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, moon
             <Text style={[styles.tableCell, styles.tableScore]}>Score</Text>
             {tidePhasesByHour && <Text style={[styles.tableCell, styles.tableTide]}>Tide</Text>}
             {windHourly && windHourly.length > 0 && <Text style={[styles.tableCell, styles.tableWind]}>Wind</Text>}
+            {moonPeriods && <Text style={[styles.tableCell, { width: 14 }]}></Text>}
           </View>
           <ScrollView style={styles.tableScroll} nestedScrollEnabled>
             {hourlyScores.map((item) => {
@@ -186,6 +187,15 @@ export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, moon
                       {wind ? `${convertSpeed(wind.speed)} ${speedSuffix}` : '—'}
                     </Text>
                   )}
+                  {(() => {
+                    const ms = getMoonStatus(hourNum, moonPeriods)
+                    if (!ms) return null
+                    return (
+                      <Text style={ms === 'major' ? styles.moonMajorTable : styles.moonMinorTable}>
+                        {ms === 'major' ? '◉' : '◎'}
+                      </Text>
+                    )
+                  })()}
                 </View>
               )
             })}
@@ -261,6 +271,8 @@ const styles = StyleSheet.create({
   },
   scorePillText: { fontSize: 12, fontWeight: '600' },
   scorePillPeak: { fontWeight: '800' },
+  moonMajorTable: { fontSize: 10, color: Colors.accent, width: 14, textAlign: 'center' },
+  moonMinorTable: { fontSize: 10, color: Colors.textTertiary, width: 14, textAlign: 'center' },
   proBanner: {
     marginTop: Spacing.sm,
     flexDirection: 'row',

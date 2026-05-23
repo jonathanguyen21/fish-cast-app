@@ -33,3 +33,14 @@ export function formatScrubTime(h: number): string {
   const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h
   return `${displayH}:00 ${period}`
 }
+
+export type CurrentStrength = 'strong' | 'moderate' | 'weak' | 'slack'
+
+export function estimateCurrentStrength(hourlyCurve: number[], currentHour: number): CurrentStrength {
+  const i = Math.min(Math.max(currentHour, 1), 22)
+  const ratePerHour = Math.abs(hourlyCurve[i] - hourlyCurve[i - 1])
+  if (ratePerHour < SLACK_THRESHOLD_FT_PER_HOUR) return 'slack'
+  if (ratePerHour >= 1.0) return 'strong'
+  if (ratePerHour >= 0.5) return 'moderate'
+  return 'weak'
+}

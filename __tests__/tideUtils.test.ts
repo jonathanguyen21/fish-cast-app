@@ -1,4 +1,4 @@
-import { detectPhase, hoursFromLastTurn, formatTideHeight, formatScrubTime } from '../features/tide/tideUtils'
+import { detectPhase, hoursFromLastTurn, formatTideHeight, formatScrubTime, estimateCurrentStrength } from '../features/tide/tideUtils'
 
 const risingCurve = [0.3,0.5,1.1,1.9,2.8,3.6,4.3,4.8,5.0,5.1,4.9,4.5,
                      3.8,3.0,2.2,1.5,1.0,0.8,0.9,1.3,1.9,2.7,3.2,3.8]
@@ -53,6 +53,25 @@ describe('formatScrubTime', () => {
   it('formats 11 PM correctly', () => expect(formatScrubTime(23)).toBe('11:00 PM'))
   it('formats 6 AM correctly', () => expect(formatScrubTime(6)).toBe('6:00 AM'))
   it('formats 7 PM correctly', () => expect(formatScrubTime(19)).toBe('7:00 PM'))
+})
+
+describe('estimateCurrentStrength', () => {
+  it('returns slack when rate of change is below threshold', () => {
+    const flatCurve = Array(24).fill(3.0)
+    expect(estimateCurrentStrength(flatCurve, 10)).toBe('slack')
+  })
+  it('returns strong when rate is ≥ 1.0 ft/hr', () => {
+    const fastCurve = Array(24).fill(0).map((_, i) => i * 1.5)
+    expect(estimateCurrentStrength(fastCurve, 5)).toBe('strong')
+  })
+  it('returns moderate when rate is 0.5–1.0 ft/hr', () => {
+    const modCurve = Array(24).fill(0).map((_, i) => i * 0.7)
+    expect(estimateCurrentStrength(modCurve, 5)).toBe('moderate')
+  })
+  it('returns weak when rate is 0.25–0.5 ft/hr', () => {
+    const weakCurve = Array(24).fill(0).map((_, i) => i * 0.35)
+    expect(estimateCurrentStrength(weakCurve, 5)).toBe('weak')
+  })
 })
 
 describe('detectPhase clamping', () => {
