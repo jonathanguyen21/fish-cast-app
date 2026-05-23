@@ -49,6 +49,22 @@ describe('settingsStore.alerts', () => {
   })
 })
 
+describe('settingsStore.onboarding', () => {
+  beforeEach(() => {
+    useSettingsStore.setState({ hasSeenOnboarding: false })
+  })
+
+  it('defaults to not seen', () => {
+    expect(useSettingsStore.getState().hasSeenOnboarding).toBe(false)
+  })
+
+  it('setHasSeenOnboarding marks as seen', () => {
+    const { result } = renderHook(() => useSettingsStore())
+    act(() => { result.current.setHasSeenOnboarding(true) })
+    expect(result.current.hasSeenOnboarding).toBe(true)
+  })
+})
+
 describe('settingsStore.speciesAlerts', () => {
   beforeEach(() => {
     useSettingsStore.setState({ speciesAlerts: {}, alertThreshold: 70 })

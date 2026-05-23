@@ -69,4 +69,33 @@ describe('SpeciesCard', () => {
     fireEvent.press(getByTestId(`species-card-${freeSpecies.id}`))
     expect(onPress).toHaveBeenCalled()
   })
+
+  it('renders 5AM/8PM labels when hourly data and currentHour provided', () => {
+    const hourly = Array.from({ length: 16 }, (_, i) => ({ hour: 5 + i, score: 50 + i * 2 }))
+    const { getByText } = render(
+      <SpeciesCard
+        speciesScore={makeScore(freeSpecies)}
+        isPro={false}
+        onPress={() => {}}
+        hourly={hourly}
+        currentHour={10}
+      />
+    )
+    expect(getByText('5AM')).toBeTruthy()
+    expect(getByText('8PM')).toBeTruthy()
+  })
+
+  it('does not show sparkline for locked pro species', () => {
+    const hourly = Array.from({ length: 16 }, (_, i) => ({ hour: 5 + i, score: 50 }))
+    const { queryByText } = render(
+      <SpeciesCard
+        speciesScore={makeScore(proSpecies)}
+        isPro={false}
+        onPress={() => {}}
+        hourly={hourly}
+        currentHour={10}
+      />
+    )
+    expect(queryByText('5AM')).toBeNull()
+  })
 })
