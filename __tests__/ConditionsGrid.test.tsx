@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, fireEvent } from '@testing-library/react-native'
 import { ConditionsGrid } from '../features/conditions/ConditionsGrid'
-import type { PressureData, MoonData, SwellData, SkyData, SunData, AirData } from '../types/conditions'
+import type { PressureData, MoonData, SwellData, SkyData, SunData, AirData, WindData } from '../types/conditions'
 
 const PRESSURE: PressureData = {
   value: 30.05, trend: 'stable', rate: 'slow', unit: 'inHg',
@@ -15,9 +15,10 @@ const SWELL: SwellData = { height: 3.2, period: 8, direction: 270, directionLabe
 const SKY: SkyData = { condition: 'Clear', rainChance: 5, icon: 'clear' }
 const SUN: SunData = { sunrise: '6:15 AM', sunset: '8:30 PM' }
 const AIR: AirData = { temp: 62, high: 68, low: 55, humidity: 75, unit: 'F' }
+const WIND: WindData = { speed: 10, gusts: 15, direction: 270, directionLabel: 'W', unit: 'mph' }
 
 const PROPS = {
-  conditions: { pressure: PRESSURE, moon: MOON, swell: SWELL, sky: SKY, sun: SUN, air: AIR },
+  conditions: { pressure: PRESSURE, moon: MOON, swell: SWELL, sky: SKY, sun: SUN, air: AIR, wind: WIND },
   spotType: 'saltwater' as const,
 }
 
@@ -114,5 +115,23 @@ describe('ConditionsGrid', () => {
   it('renders moon phase from MoonCard', () => {
     const { getByText } = render(<ConditionsGrid {...PROPS} />)
     expect(getByText('Full Moon')).toBeTruthy()
+  })
+
+  it('does not show wind chill when temp is above 50°F', () => {
+    const { queryByText } = render(<ConditionsGrid {...PROPS} />)
+    expect(queryByText(/Feels/)).toBeNull()
+  })
+
+  it('shows wind chill when temp is cold and wind is strong', () => {
+    const coldProps = {
+      ...PROPS,
+      conditions: {
+        ...PROPS.conditions,
+        air: { ...AIR, temp: 35 },
+        wind: { ...WIND, speed: 20 },
+      },
+    }
+    const { getByText } = render(<ConditionsGrid {...coldProps} />)
+    expect(getByText(/Feels \d+°/)).toBeTruthy()
   })
 })

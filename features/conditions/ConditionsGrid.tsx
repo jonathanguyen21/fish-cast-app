@@ -10,8 +10,13 @@ import { MoonCard } from './MoonCard'
 import type { ConditionsData } from '../../types/conditions'
 import { useSettingsStore } from '../../store/settingsStore'
 
+function calcWindChill(tempF: number, windMph: number): number | null {
+  if (tempF > 50 || windMph < 3) return null
+  return Math.round(35.74 + 0.6215 * tempF - 35.75 * Math.pow(windMph, 0.16) + 0.4275 * tempF * Math.pow(windMph, 0.16))
+}
+
 interface Props {
-  conditions: Pick<ConditionsData, 'pressure' | 'swell' | 'air' | 'sky' | 'moon' | 'sun'>
+  conditions: Pick<ConditionsData, 'pressure' | 'swell' | 'air' | 'sky' | 'moon' | 'sun' | 'wind'>
   spotType?: 'saltwater' | 'freshwater'
   onPressPressure?: () => void
   onPressSwell?: () => void
@@ -80,11 +85,14 @@ export function ConditionsGrid({
   onPressMoon,
   onPressSun,
 }: Props) {
-  const { pressure, swell, air, sky, moon, sun } = conditions
+  const { pressure, swell, air, sky, moon, sun, wind } = conditions
 
   const tempUnit = useSettingsStore(s => s.tempUnit)
   const toDisplayTemp = (f: number) => tempUnit === 'C' ? Math.round((f - 32) * 5 / 9) : f
   const tempSuffix = tempUnit === 'C' ? '°C' : '°F'
+
+  const windChillF = calcWindChill(air.temp, wind.speed)
+  const windChillDisplay = windChillF !== null ? toDisplayTemp(windChillF) : null
 
   const skyIcon = SKY_ICON[sky.icon] ?? 'cloud-outline'
 
@@ -148,6 +156,11 @@ export function ConditionsGrid({
           <Text style={cardStyles.sub} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
             H:{toDisplayTemp(air.high)}° L:{toDisplayTemp(air.low)}°
           </Text>
+          {windChillDisplay !== null && (
+            <Text style={[cardStyles.sub, { color: Colors.ocean, marginTop: 1 }]} numberOfLines={1}>
+              Feels {windChillDisplay}°
+            </Text>
+          )}
         </TouchableOpacity>
         <TouchableOpacity style={cardStyles.card} onPress={onPressSun} activeOpacity={0.75}>
           <Ionicons name="sunny-outline" size={18} color={Colors.warning} style={{ marginBottom: 4 }} />
