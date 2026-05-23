@@ -1,4 +1,4 @@
-import { findBestThreeHourWindow } from '../features/score/bestWindow'
+import { findBestThreeHourWindow, findSecondBestThreeHourWindow } from '../features/score/bestWindow'
 
 describe('findBestThreeHourWindow', () => {
   it('finds the highest-average 3-hour window with explicit start hour', () => {
@@ -25,5 +25,39 @@ describe('findBestThreeHourWindow', () => {
     expect(findBestThreeHourWindow([50, 50, 51], 5)?.avgScore).toBe(50)
     // [50, 51, 51] avg = 50.67 → 51
     expect(findBestThreeHourWindow([50, 51, 51], 5)?.avgScore).toBe(51)
+  })
+})
+
+describe('findSecondBestThreeHourWindow', () => {
+  it('finds a non-overlapping second window', () => {
+    // best is hours 5-7 (idx 0, startHour=5)
+    // second best should be at least 3 away: idx >= 3 → hour 8+
+    // [80, 80, 80, 20, 20, 70, 70, 70] → best=5-7 (80), second=10-12 (70)
+    const scores = [80, 80, 80, 20, 20, 70, 70, 70]
+    const result = findSecondBestThreeHourWindow(scores, 5, 5) // bestWindowStart=5
+    expect(result).not.toBeNull()
+    expect(result!.startHour).toBeGreaterThanOrEqual(8) // no overlap with 5-7
+    expect(result!.avgScore).toBe(70)
+  })
+
+  it('returns null when fewer than 3 scores', () => {
+    expect(findSecondBestThreeHourWindow([80, 80], 5, 5)).toBeNull()
+  })
+
+  it('returns null if second window scores below 40', () => {
+    // All scores are low except the best window
+    const scores = [80, 80, 80, 20, 20, 20, 20, 20]
+    const result = findSecondBestThreeHourWindow(scores, 5, 5)
+    expect(result).toBeNull()
+  })
+
+  it('does not overlap with best window (within 2 hours)', () => {
+    // best at hour 6 (idx 1), second must have |i - 1| > 2 → i >= 4
+    const scores = [60, 90, 90, 90, 60, 75, 75, 75]
+    const best = findBestThreeHourWindow(scores, 5)
+    const second = findSecondBestThreeHourWindow(scores, 5, best!.startHour)
+    expect(second).not.toBeNull()
+    // second window starts at hour 9 (idx 4)
+    expect(Math.abs(second!.startHour - best!.startHour)).toBeGreaterThan(2)
   })
 })

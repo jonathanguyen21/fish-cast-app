@@ -29,6 +29,47 @@ const SKY_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   'heavy-rain': 'thunderstorm-outline',
 }
 
+function parseTimeToMinutes(t: string): number {
+  const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i)
+  if (!m) return -1
+  let h = parseInt(m[1])
+  const min = parseInt(m[2])
+  if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12
+  if (m[3].toUpperCase() === 'AM' && h === 12) h = 0
+  return h * 60 + min
+}
+
+function goldenHourLabel(sunrise: string, sunset: string): { text: string; color: string } | null {
+  const now = new Date()
+  const nowMins = now.getHours() * 60 + now.getMinutes()
+  const riseMins = parseTimeToMinutes(sunrise)
+  const setMins = parseTimeToMinutes(sunset)
+  if (riseMins < 0 || setMins < 0) return null
+
+  const dawnStart = riseMins - 30
+  const dawnEnd = riseMins + 30
+  const duskStart = setMins - 30
+  const duskEnd = setMins + 30
+
+  if (nowMins >= dawnStart && nowMins <= dawnEnd) {
+    return { text: 'Golden hour NOW', color: Colors.warning }
+  }
+  if (nowMins >= duskStart && nowMins <= duskEnd) {
+    return { text: 'Dusk hour NOW', color: Colors.warning }
+  }
+  if (nowMins < dawnStart) {
+    const diff = dawnStart - nowMins
+    const h = Math.floor(diff / 60), m = diff % 60
+    return { text: h > 0 ? `Dawn in ${h}h ${m}m` : `Dawn in ${m}m`, color: Colors.textTertiary }
+  }
+  if (nowMins < duskStart) {
+    const diff = duskStart - nowMins
+    const h = Math.floor(diff / 60), m = diff % 60
+    return { text: h > 0 ? `Dusk in ${h}h ${m}m` : `Dusk in ${m}m`, color: Colors.textTertiary }
+  }
+  return null
+}
+
 export function ConditionsGrid({
   conditions,
   spotType,
@@ -119,6 +160,14 @@ export function ConditionsGrid({
             <Ionicons name="arrow-down-outline" size={10} color={Colors.textTertiary} />
             <Text style={cardStyles.sub} numberOfLines={1}>{sun.sunset}</Text>
           </View>
+          {(() => {
+            const hint = goldenHourLabel(sun.sunrise, sun.sunset)
+            return hint ? (
+              <Text style={[cardStyles.sub, { color: hint.color, fontWeight: '600', marginTop: 2 }]} numberOfLines={1}>
+                {hint.text}
+              </Text>
+            ) : null
+          })()}
         </TouchableOpacity>
       </View>
     </View>

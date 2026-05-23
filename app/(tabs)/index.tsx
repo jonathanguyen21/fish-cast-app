@@ -63,6 +63,24 @@ function tideTurnCountdown(tide: { next: { type: string; time: string } }): stri
   return `${type} in ${diffH}h ${diffM}m`
 }
 
+function waterTempNote(tempF: number): string {
+  if (tempF < 45) return 'Very cold'
+  if (tempF < 55) return 'Cold · fish slow'
+  if (tempF < 65) return 'Ideal range'
+  if (tempF < 72) return 'Warm · active'
+  if (tempF < 80) return 'Hot · fish early'
+  return 'Very hot'
+}
+
+function tideFlowLabel(curve: number[], currentHour: number): string | null {
+  if (curve.length < 2) return null
+  const curr = curve[Math.min(currentHour, curve.length - 1)] ?? 0
+  const next = curve[Math.min(currentHour + 1, curve.length - 1)] ?? curr
+  const rate = Math.abs(next - curr)
+  if (rate < 0.15) return null
+  return `${rate.toFixed(1)} ft/hr`
+}
+
 function localDateKey(d: Date): string {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -301,6 +319,7 @@ export default function ForecastScreen() {
               score={conditions.fishingScore}
               label={conditions.scoreLabel}
               bestWindow={conditions.bestWindow}
+              secondWindow={conditions.secondWindow}
               breakdown={conditions.scoreBreakdown}
             />
             {solunarNow && (
@@ -348,6 +367,11 @@ export default function ForecastScreen() {
                     <Ionicons name={tidePhaseIcon(conditions.tide.phase)} size={10} color={conditions.tide.phase === 'incoming' ? Colors.ocean : Colors.textSecondary} />
                     <Text style={styles.quickSub} numberOfLines={1}>{tidePhaseText(conditions.tide.phase)}</Text>
                   </View>
+                  {tideFlowLabel(conditions.tide.hourlyCurve, currentHour) && (
+                    <Text style={styles.quickPeak} numberOfLines={1}>
+                      {tideFlowLabel(conditions.tide.hourlyCurve, currentHour)}
+                    </Text>
+                  )}
                   <Text style={styles.quickPeak} numberOfLines={1}>{tideTurnCountdown(conditions.tide)}</Text>
                 </View>
               )}
@@ -360,6 +384,11 @@ export default function ForecastScreen() {
                     : conditions.water.temp}°
                 </Text>
                 <Text style={styles.quickSub}>{tempUnit === 'C' ? '°C' : '°F'}</Text>
+                {conditions.water.temp > 0 && (
+                  <Text style={[styles.quickPeak, { textAlign: 'center' }]} numberOfLines={2}>
+                    {waterTempNote(conditions.water.temp)}
+                  </Text>
+                )}
               </View>
             </View>
             {conditions.tide && <TideChart tide={conditions.tide} currentHour={currentHour} />}

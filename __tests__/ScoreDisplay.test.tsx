@@ -72,4 +72,26 @@ describe('ScoreDisplay', () => {
     expect(screen.getByText('Water Temp')).toBeTruthy()
     expect(screen.getByText('Sky')).toBeTruthy()
   })
+
+  it('shows hint text for each factor in breakdown', () => {
+    // pressure=22/25 ratio=0.88 → 'Slowly falling — fish feeding'
+    const breakdown = { pressure: 22, solunar: 19, tide: 18, wind: 14, waterTemp: 9, sky: 9 }
+    render(<ScoreDisplay {...props} breakdown={breakdown} />)
+    fireEvent.press(screen.getByTestId('score-display'))
+    expect(screen.getByText('Slowly falling — fish feeding')).toBeTruthy()
+    // solunar=19/20 ratio=0.95 → 'Major period — peak feeding'
+    expect(screen.getByText('Major period — peak feeding')).toBeTruthy()
+  })
+
+  it('shows "Also good" for second window when provided', () => {
+    const secondWindow = { start: '7:00 AM', end: '10:00 AM', score: 74 }
+    render(<ScoreDisplay {...props} secondWindow={secondWindow} />)
+    expect(screen.getByText('Also good')).toBeTruthy()
+    expect(screen.getByText(/7:00 AM/)).toBeTruthy()
+  })
+
+  it('does not show second window row when not provided', () => {
+    render(<ScoreDisplay {...props} />)
+    expect(screen.queryByText('Also good')).toBeNull()
+  })
 })

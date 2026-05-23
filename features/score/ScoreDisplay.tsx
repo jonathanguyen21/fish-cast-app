@@ -20,6 +20,7 @@ interface Props {
   score: number
   label: string
   bestWindow: { start: string; end: string; score: number }
+  secondWindow?: { start: string; end: string; score: number } | null
   breakdown?: {
     pressure: number
     solunar: number
@@ -32,16 +33,22 @@ interface Props {
 
 type IoniconName = keyof typeof Ionicons.glyphMap
 
-const FACTORS: { key: keyof NonNullable<Props['breakdown']>; icon: IoniconName; label: string; max: number }[] = [
-  { key: 'pressure',  icon: 'speedometer-outline', label: 'Pressure',   max: 25 },
-  { key: 'solunar',   icon: 'moon-outline',         label: 'Solunar',    max: 20 },
-  { key: 'tide',      icon: 'water-outline',         label: 'Tide',       max: 20 },
-  { key: 'wind',      icon: 'navigate-outline',      label: 'Wind',       max: 15 },
-  { key: 'waterTemp', icon: 'thermometer-outline',   label: 'Water Temp', max: 10 },
-  { key: 'sky',       icon: 'cloud-outline',          label: 'Sky',        max: 10 },
+const FACTORS: { key: keyof NonNullable<Props['breakdown']>; icon: IoniconName; label: string; max: number; hint: (r: number) => string }[] = [
+  { key: 'pressure',  icon: 'speedometer-outline', label: 'Pressure',   max: 25,
+    hint: r => r >= 0.85 ? 'Slowly falling — fish feeding' : r >= 0.65 ? 'Stable conditions' : r >= 0.4 ? 'Changing — fish adjusting' : 'Rapid change — fish stressed' },
+  { key: 'solunar',   icon: 'moon-outline',         label: 'Solunar',    max: 20,
+    hint: r => r >= 0.95 ? 'Major period — peak feeding' : r >= 0.65 ? 'Minor period active' : r >= 0.45 ? 'Near a period' : 'No solunar activity' },
+  { key: 'tide',      icon: 'water-outline',         label: 'Tide',       max: 20,
+    hint: r => r >= 0.9 ? 'Mid-incoming — prime' : r >= 0.6 ? 'Incoming or outgoing' : r >= 0.35 ? 'Near turn' : 'Slack water' },
+  { key: 'wind',      icon: 'navigate-outline',      label: 'Wind',       max: 15,
+    hint: r => r >= 0.9 ? 'Light winds — ideal' : r >= 0.6 ? 'Moderate — manageable' : r >= 0.3 ? 'Strong — fish deeper' : 'Rough — hard cap applied' },
+  { key: 'waterTemp', icon: 'thermometer-outline',   label: 'Water Temp', max: 10,
+    hint: r => r >= 0.85 ? 'Ideal temperature range' : r >= 0.55 ? 'Warm — fish active' : 'Cold or hot — fish slow' },
+  { key: 'sky',       icon: 'cloud-outline',          label: 'Sky',        max: 10,
+    hint: r => r >= 0.9 ? 'Overcast — low light bite' : r >= 0.6 ? 'Partly cloudy — good' : r >= 0.3 ? 'Clear skies' : 'Heavy rain — cap applied' },
 ]
 
-export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
+export function ScoreDisplay({ score, label, bestWindow, secondWindow, breakdown }: Props) {
   const gradientId = useRef(`scoreGrad-${Math.random().toString(36).slice(2)}`).current
   const animatedOffset = useSharedValue(CIRCUMFERENCE)
   const [expanded, setExpanded] = useState(false)
@@ -110,19 +117,31 @@ export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
           <Text style={[styles.bestWindowScore, { color: scoreColor(bestWindow.score) }]}> · {bestWindow.score}</Text>
         </View>
       </View>
+      {secondWindow && (
+        <View style={styles.secondWindowRow}>
+          <Text style={styles.secondWindowLabel}>Also good</Text>
+          <View style={styles.secondWindowPill}>
+            <Text style={styles.secondWindowTime}>{secondWindow.start}–{secondWindow.end}</Text>
+            <Text style={[styles.secondWindowScore, { color: scoreColor(secondWindow.score) }]}> · {secondWindow.score}</Text>
+          </View>
+        </View>
+      )}
 
       <Text style={styles.tapHint}>{expanded ? 'Tap to collapse' : 'Tap to see score breakdown'}</Text>
 
       {expanded && breakdown && (
         <View style={styles.breakdownPanel}>
-          {FACTORS.map(({ key, icon, label: factorLabel, max }) => {
+          {FACTORS.map(({ key, icon, label: factorLabel, max, hint }) => {
             const pts = breakdown[key]
             const ratio = Math.min(pts / max, 1)
             const fillColor = scoreColor(ratio * 100)
             return (
               <View key={key} style={styles.breakdownRow}>
                 <Ionicons name={icon} size={14} color={Colors.textSecondary} style={styles.breakdownIcon} />
-                <Text style={styles.breakdownLabel}>{factorLabel}</Text>
+                <View style={styles.breakdownLabelCol}>
+                  <Text style={styles.breakdownLabel}>{factorLabel}</Text>
+                  <Text style={styles.breakdownHint} numberOfLines={1}>{hint(ratio)}</Text>
+                </View>
                 <View style={styles.breakdownBarTrack}>
                   <View style={[styles.breakdownBarFill, { width: `${ratio * 100}%` as DimensionValue, backgroundColor: fillColor }]} />
                 </View>
@@ -230,10 +249,45 @@ const styles = StyleSheet.create({
     width: 18,
     textAlign: 'center',
   },
+  breakdownLabelCol: {
+    width: 80,
+  },
   breakdownLabel: {
     fontSize: 12,
     color: Colors.textSecondary,
-    width: 72,
+  },
+  breakdownHint: {
+    fontSize: 9,
+    color: Colors.textTertiary,
+    marginTop: 1,
+  },
+  secondWindowRow: {
+    marginTop: 4,
+    alignItems: 'center',
+    gap: 3,
+  },
+  secondWindowLabel: {
+    fontSize: 10,
+    color: Colors.textTertiary,
+  },
+  secondWindowPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: Colors.card,
+  },
+  secondWindowTime: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  secondWindowScore: {
+    fontSize: 10,
+    color: Colors.textTertiary,
   },
   breakdownBarTrack: {
     flex: 1,

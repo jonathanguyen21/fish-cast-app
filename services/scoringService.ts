@@ -1,5 +1,5 @@
 import { calculateScore, calculateScoreWithBreakdown, scoreLabel } from '../features/score/scoringEngine'
-import { findBestThreeHourWindow } from '../features/score/bestWindow'
+import { findBestThreeHourWindow, findSecondBestThreeHourWindow } from '../features/score/bestWindow'
 import { detectPhase, hoursFromLastTurn } from '../features/tide/tideUtils'
 import type { ConditionsData, SkyData, WindData, PressureData, HourlyScore, ScoreBreakdown } from '../types/conditions'
 import type { Spot } from '../types/spot'
@@ -159,7 +159,8 @@ export function buildConditionsData(
     })
   }
 
-  const windowResult = findBestThreeHourWindow(hourlyScores.map(h => h.score), 5)
+  const scores = hourlyScores.map(h => h.score)
+  const windowResult = findBestThreeHourWindow(scores, 5)
   const bestWindow = windowResult
     ? {
         start: formatHourTime(windowResult.startHour),
@@ -167,6 +168,17 @@ export function buildConditionsData(
         score: windowResult.avgScore,
       }
     : { start: formatHourTime(5), end: formatHourTime(7), score: 0 }
+
+  const secondWindowResult = windowResult
+    ? findSecondBestThreeHourWindow(scores, 5, windowResult.startHour)
+    : null
+  const secondWindow = secondWindowResult
+    ? {
+        start: formatHourTime(secondWindowResult.startHour),
+        end: formatHourTime(secondWindowResult.endHour),
+        score: secondWindowResult.avgScore,
+      }
+    : null
 
   // Always produce hours 0-23 for the selected day.
   // Past hours not returned by NWS are backfilled with the first available entry.
@@ -181,6 +193,7 @@ export function buildConditionsData(
     fishingScore: currentScore,
     scoreLabel: scoreLabel(currentScore),
     bestWindow,
+    secondWindow,
     wind,
     windHourly: extendedHourly.map(h => ({
       hour: h.hour,
