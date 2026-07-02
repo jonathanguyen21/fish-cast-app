@@ -28,7 +28,9 @@ export default function ForecastScreen() {
   const netInfo = useNetInfo()
   const { activeSpot, spots } = useSpots()
   const { data: conditions, isLoading, isError, refetch } = useConditions(activeSpot)
-  const { data: forecast } = useForecast(activeSpot)
+  const {
+    data: forecast, isLoading: forecastLoading, isError: forecastError, refetch: refetchForecast,
+  } = useForecast(activeSpot)
   const [showWaitlist, setShowWaitlist] = useState(false)
   const isPro = useSettingsStore(s => s.isPro)
   const tempUnit = useSettingsStore(s => s.tempUnit)
@@ -92,7 +94,13 @@ export default function ForecastScreen() {
       <ScrollView
         style={styles.screen}
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={isLoading && !!conditions} onRefresh={refetch} tintColor={Colors.accent} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading && !!conditions}
+            onRefresh={() => { refetch(); refetchForecast() }}
+            tintColor={Colors.accent}
+          />
+        }
       >
         <View style={styles.header}>
           <Text style={styles.spotName}>{activeSpot.name}</Text>
@@ -168,7 +176,18 @@ export default function ForecastScreen() {
                 />
               ))}
             </View>
-            <ForecastStrip forecast={forecast} isPro={isPro} onUpgrade={() => setShowWaitlist(true)} />
+            <ForecastStrip
+              forecast={forecast}
+              isLoading={forecastLoading}
+              isError={forecastError}
+              isPro={isPro}
+              onRetry={refetchForecast}
+              onUpgrade={() => setShowWaitlist(true)}
+              onDayPress={(day) => router.push({
+                pathname: '/detail/day' as any,
+                params: { data: JSON.stringify(day) },
+              })}
+            />
           </>
         )}
       </ScrollView>
