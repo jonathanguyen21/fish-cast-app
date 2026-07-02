@@ -91,7 +91,7 @@ export interface ConditionsData {
   wind: WindData
   windHourly: HourlyWind[]
   tide: TideData | null
-  water: { temp: number; unit: string }
+  water: { temp: number; unit: string; estimated: boolean }
   air: AirData
   pressure: PressureData
   swell: SwellData | null

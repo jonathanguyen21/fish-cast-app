@@ -93,6 +93,7 @@ export function buildConditionsData(
   const wind = noaa?.wind ?? nws?.wind ?? NEUTRAL_WIND
   const sky = nws?.sky ?? NEUTRAL_SKY
   const waterTempValue = noaa?.waterTemp ?? (spot.type === 'saltwater' ? 65 : 68)
+  const waterTempEstimated = noaa?.waterTemp == null
   const tide = noaa?.tide ?? null
 
   const currentHour = now.getHours()
@@ -175,7 +176,7 @@ export function buildConditionsData(
       directionLabel: h.windDirection,
     })) ?? [],
     tide,
-    water: { temp: waterTempValue, unit: '°F' },
+    water: { temp: waterTempValue, unit: '°F', estimated: waterTempEstimated },
     air: nws?.air ?? { temp: 65, high: 70, low: 58, humidity: 70, unit: '°F' },
     pressure,
     swell: marine,

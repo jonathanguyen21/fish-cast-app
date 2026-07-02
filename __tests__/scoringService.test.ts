@@ -150,4 +150,17 @@ describe('buildConditionsData', () => {
     const result = buildConditionsData(NOAA, NWS, null, SOLUNAR, SPOT, new Date())
     expect(result.pressure.readings).toEqual(NOAA!.pressure!.readings)
   })
+
+  it('marks water temp as estimated when NOAA has none', () => {
+    const noaaNoTemp = { ...NOAA, waterTemp: null }
+    const result = buildConditionsData(noaaNoTemp, NWS, SWELL, SOLUNAR, SPOT, NOW)
+    expect(result.water.estimated).toBe(true)
+    expect(result.water.temp).toBe(65) // saltwater default
+  })
+
+  it('marks water temp as real when NOAA provides it', () => {
+    const result = buildConditionsData(NOAA, NWS, SWELL, SOLUNAR, SPOT, NOW)
+    expect(result.water.estimated).toBe(false)
+    expect(result.water.temp).toBe(57)
+  })
 })

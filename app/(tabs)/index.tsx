@@ -129,11 +129,14 @@ export default function ForecastScreen() {
               <View style={styles.quickCard}>
                 <Text style={styles.quickLabel}>Water</Text>
                 <Text style={styles.quickValue}>
+                  {conditions.water.estimated ? '~' : ''}
                   {tempUnit === 'C'
                     ? Math.round((conditions.water.temp - 32) * 5 / 9)
                     : conditions.water.temp}°
                 </Text>
-                <Text style={styles.quickSub}>{tempUnit === 'C' ? '°C' : '°F'}</Text>
+                <Text style={styles.quickSub}>
+                  {tempUnit === 'C' ? '°C' : '°F'}{conditions.water.estimated ? ' · est.' : ''}
+                </Text>
               </View>
             </View>
             {conditions.tide && <TideChart tide={conditions.tide} currentHour={currentHour} />}
@@ -146,6 +149,11 @@ export default function ForecastScreen() {
               />
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>What's Biting</Text>
+              {conditions.water.estimated && (
+                <Text style={styles.estimateNote}>
+                  Species activity estimated — no live water temp at this station
+                </Text>
+              )}
               {scoredSpecies.map(ss => (
                 <SpeciesCard
                   key={ss.species.id}
@@ -212,4 +220,5 @@ const styles = StyleSheet.create({
   quickPeak: { fontSize: 10, color: Colors.textTertiary, marginTop: 2 },
   section: { marginHorizontal: Spacing.screenPad, marginBottom: Spacing.md },
   sectionTitle: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm },
+  estimateNote: { fontSize: 11, color: Colors.textTertiary, marginBottom: Spacing.sm },
 })
