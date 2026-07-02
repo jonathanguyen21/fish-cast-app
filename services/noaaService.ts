@@ -166,3 +166,48 @@ export async function fetchNoaaData(spot: Spot): Promise<NoaaData> {
     airTemp: null,
   }
 }
+
+export interface TideWeek {
+  curvesByDate: Record<string, number[]>
+  eventsByDate: Record<string, TideEvent[]>
+}
+
+function localDateOf(t: string): string {
+  // NOAA t format: 'YYYY-MM-DD HH:mm'
+  return t.split(' ')[0]
+}
+
+export async function fetchTideWeek(stationId: string): Promise<TideWeek | null> {
+  const now = new Date()
+  const beginDate = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
+  const base = buildUrl(stationId, 'predictions', `&begin_date=${beginDate}&range=168&datum=MLLW`)
+
+  const [curveRes, hiloRes] = await Promise.allSettled([
+    fetchProduct(`${base}&interval=h`),
+    fetchProduct(`${base}&interval=hilo`),
+  ])
+  const curveData = curveRes.status === 'fulfilled' ? curveRes.value : null
+  const hiloData = hiloRes.status === 'fulfilled' ? hiloRes.value : null
+  if (!curveData?.predictions) return null
+
+  const curvesByDate: Record<string, number[]> = {}
+  for (const p of curveData.predictions) {
+    const key = localDateOf(p.t)
+    const hour = parseInt((p.t.split(' ')[1] ?? '0:00').split(':')[0], 10)
+    if (!curvesByDate[key]) curvesByDate[key] = new Array(24).fill(0)
+    if (hour >= 0 && hour < 24) curvesByDate[key][hour] = parseFloat(p.v) || 0
+  }
+
+  const eventsByDate: Record<string, TideEvent[]> = {}
+  for (const p of hiloData?.predictions ?? []) {
+    const key = localDateOf(p.t)
+    if (!eventsByDate[key]) eventsByDate[key] = []
+    eventsByDate[key].push({
+      type: (p.type === 'H' ? 'high' : 'low') as 'high' | 'low',
+      time: formatNoaaTime(p.t),
+      height: parseFloat(p.v),
+    })
+  }
+
+  return { curvesByDate, eventsByDate }
+}

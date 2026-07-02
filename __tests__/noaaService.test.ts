@@ -1,4 +1,4 @@
-import { fetchNoaaData } from '../services/noaaService'
+import { fetchNoaaData, fetchTideWeek } from '../services/noaaService'
 import type { Spot } from '../types/spot'
 
 const SPOT: Spot = {
@@ -139,5 +139,54 @@ describe('fetchNoaaData', () => {
     expect(readings).toHaveLength(4)
     expect(readings[0]).toBeCloseTo(29.91, 2)
     expect(readings[readings.length - 1]).toBeCloseTo(29.87, 2)
+  })
+})
+
+const weekCurveFixture = require('./fixtures/noaaWeekCurve.json')
+const weekHiloFixture = require('./fixtures/noaaWeekHilo.json')
+
+describe('fetchTideWeek', () => {
+  beforeEach(() => { global.fetch = jest.fn() })
+
+  function mockWeek() {
+    ;(global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: async () => weekCurveFixture })
+      .mockResolvedValueOnce({ ok: true, json: async () => weekHiloFixture })
+  }
+
+  it('requests a 168-hour range with datum and lst_ldt', async () => {
+    mockWeek()
+    await fetchTideWeek('9415020')
+    const urls = (global.fetch as jest.Mock).mock.calls.map(c => c[0] as string)
+    expect(urls).toHaveLength(2)
+    for (const url of urls) {
+      expect(url).toContain('begin_date=')
+      expect(url).toContain('range=168')
+      expect(url).toContain('datum=MLLW')
+      expect(url).toContain('time_zone=lst_ldt')
+      expect(url).toContain('product=predictions')
+    }
+    expect(urls[0]).toContain('interval=h')
+    expect(urls[1]).toContain('interval=hilo')
+  })
+
+  it('groups hourly curve and events by local date', async () => {
+    mockWeek()
+    const week = await fetchTideWeek('9415020')
+    expect(week).not.toBeNull()
+    expect(Object.keys(week!.curvesByDate).sort()).toEqual(['2026-07-01', '2026-07-02'])
+    expect(week!.curvesByDate['2026-07-01']).toHaveLength(24)
+    expect(week!.curvesByDate['2026-07-01'][1]).toBeCloseTo(1.8, 1)
+    expect(week!.eventsByDate['2026-07-01']).toHaveLength(2)
+    expect(week!.eventsByDate['2026-07-01'][0].type).toBe('high')
+    expect(week!.eventsByDate['2026-07-02']).toHaveLength(1)
+  })
+
+  it('returns null when the curve product fails', async () => {
+    ;(global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: async () => require('./fixtures/noaaMissingProduct.json') })
+      .mockResolvedValueOnce({ ok: true, json: async () => weekHiloFixture })
+    const week = await fetchTideWeek('9415020')
+    expect(week).toBeNull()
   })
 })
