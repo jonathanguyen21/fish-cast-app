@@ -54,12 +54,17 @@ function parseTideEvents(data: any): TideEvent[] {
   }))
 }
 
+const KNOTS_TO_MPH = 1.15078
+const MB_TO_INHG = 0.02953
+
 function parseWind(data: any): WindData | null {
-  const d = data?.data?.[0]
-  if (!d) return null
+  const entries: any[] = data?.data ?? []
+  if (entries.length === 0) return null
+  // API returns readings oldest-first — most recent is last
+  const d = entries[entries.length - 1]
   return {
-    speed: parseFloat(d.s) || 0,
-    gusts: parseFloat(d.g) || 0,
+    speed: Math.round((parseFloat(d.s) || 0) * KNOTS_TO_MPH),
+    gusts: Math.round((parseFloat(d.g) || 0) * KNOTS_TO_MPH),
     direction: parseFloat(d.d) || 0,
     directionLabel: d.dr || 'N',
     unit: 'mph',
@@ -67,18 +72,18 @@ function parseWind(data: any): WindData | null {
 }
 
 function parsePressure(data: any): PressureData | null {
-  if (!data?.data?.length) return null
-  const readings = data.data
-    .map((d: any) => parseFloat(d.v))
-    .filter((v: number) => !isNaN(v))
-  if (readings.length === 0) return null
+  const entries: any[] = data?.data ?? []
+  const values = entries
+    .map((d: any) => ({ t: d.t as string, v: parseFloat(d.v) }))
+    .filter((e: { v: number }) => !isNaN(e.v))
+  if (values.length === 0) return null
 
-  // data arrives newest-first; reverse so index 0 = oldest (left of chart)
-  const orderedReadings = [...readings].reverse()
-
-  const current = readings[0]
-  const threeHrAgo = readings[Math.min(3, readings.length - 1)]
-  const delta = current - threeHrAgo
+  // API returns 6-minute readings oldest-first, in millibars
+  const toInHg = (mb: number) => parseFloat((mb * MB_TO_INHG).toFixed(2))
+  const current = toInHg(values[values.length - 1].v)
+  // ~3 hours back = 30 readings at 6-minute intervals
+  const threeHoursBack = toInHg(values[Math.max(0, values.length - 1 - 30)].v)
+  const delta = current - threeHoursBack
   const abs = Math.abs(delta)
 
   const trend: PressureData['trend'] =
@@ -86,7 +91,11 @@ function parsePressure(data: any): PressureData | null {
   const rate: PressureData['rate'] =
     abs < 0.06 ? 'slow' : abs < 0.12 ? 'normal' : 'fast'
 
-  return { value: current, trend, rate, unit: 'inHg', readings: orderedReadings }
+  // hourly samples (minute :00) for the detail chart, oldest-first
+  let readings = values.filter(e => e.t.slice(-2) === '00').map(e => toInHg(e.v))
+  if (readings.length === 0) readings = values.slice(-8).map(e => toInHg(e.v))
+
+  return { value: current, trend, rate, unit: 'inHg', readings }
 }
 
 export async function fetchNoaaData(spot: Spot): Promise<NoaaData> {
@@ -145,7 +154,9 @@ export async function fetchNoaaData(spot: Spot): Promise<NoaaData> {
     }
   }
 
-  const waterTemp = tempData?.data?.[0]?.v ? parseFloat(tempData.data[0].v) : null
+  const tempEntries: any[] = tempData?.data ?? []
+  const lastTemp = tempEntries.length > 0 ? parseFloat(tempEntries[tempEntries.length - 1].v) : NaN
+  const waterTemp = isNaN(lastTemp) ? null : lastTemp
 
   return {
     tide,

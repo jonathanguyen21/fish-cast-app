@@ -36,33 +36,36 @@ describe('fetchNoaaData', () => {
     expect(global.fetch).not.toHaveBeenCalled()
   })
 
-  it('parses wind speed, direction, and gusts', async () => {
+  it('parses wind from the most recent reading, converted knots to mph', async () => {
     mockAllProducts()
     const result = await fetchNoaaData(SPOT)
-    expect(result.wind?.speed).toBeCloseTo(8.4, 1)
-    expect(result.wind?.gusts).toBeCloseTo(14.0, 1)
+    // last fixture entry: 7.3 kn -> 8 mph, gusts 12.2 kn -> 14 mph
+    expect(result.wind?.speed).toBe(8)
+    expect(result.wind?.gusts).toBe(14)
     expect(result.wind?.directionLabel).toBe('SW')
     expect(result.wind?.unit).toBe('mph')
   })
 
-  it('parses water temperature', async () => {
+  it('parses water temperature from the most recent reading', async () => {
     mockAllProducts()
     const result = await fetchNoaaData(SPOT)
     expect(result.waterTemp).toBeCloseTo(57.2, 1)
   })
 
-  it('parses pressure value', async () => {
+  it('parses pressure value in inHg from the most recent mb reading', async () => {
     mockAllProducts()
     const result = await fetchNoaaData(SPOT)
-    expect(result.pressure?.value).toBeCloseTo(30.02, 2)
+    // 1011.50 mb * 0.02953 = 29.87 inHg
+    expect(result.pressure?.value).toBeCloseTo(29.87, 2)
     expect(result.pressure?.unit).toBe('inHg')
   })
 
-  it('detects falling pressure trend from fixture', async () => {
+  it('detects slow falling pressure trend from ascending fixture', async () => {
     mockAllProducts()
     const result = await fetchNoaaData(SPOT)
-    // fixture goes from 30.18 → 30.02 over several hours = falling
+    // fixture falls 1013.00 -> 1011.50 mb over 3h = -0.04 inHg -> falling, slow
     expect(result.pressure?.trend).toBe('falling')
+    expect(result.pressure?.rate).toBe('slow')
   })
 
   it('parses tide events with correct types', async () => {
@@ -128,14 +131,13 @@ describe('fetchNoaaData', () => {
     expect(urls[4]).not.toContain('date=today')
   })
 
-  it('includes readings array on pressure (oldest to newest)', async () => {
+  it('includes hourly readings array on pressure (oldest to newest, inHg)', async () => {
     mockAllProducts()
     const result = await fetchNoaaData(SPOT)
-    expect(Array.isArray(result.pressure?.readings)).toBe(true)
-    expect(result.pressure!.readings!.length).toBe(5)
-    // oldest first: 30.18 comes before 30.02 in the fixture
     const readings = result.pressure!.readings!
-    expect(readings[0]).toBeCloseTo(30.18, 2)
-    expect(readings[readings.length - 1]).toBeCloseTo(30.02, 2)
+    // hourly samples at 11:00, 12:00, 13:00, 14:00
+    expect(readings).toHaveLength(4)
+    expect(readings[0]).toBeCloseTo(29.91, 2)
+    expect(readings[readings.length - 1]).toBeCloseTo(29.87, 2)
   })
 })
