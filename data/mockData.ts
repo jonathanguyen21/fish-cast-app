@@ -1,5 +1,4 @@
 import type { ConditionsData } from '../types/conditions'
-import type { DayForecast } from '../types/conditions'
 import type { Spot } from '../types/spot'
 
 export const MOCK_SPOT: Spot = {
@@ -54,13 +53,3 @@ export const MOCK_CONDITIONS: ConditionsData = {
     { hour: '7PM', hourIndex: 19, score: 70 }, { hour: '8PM', hourIndex: 20, score: 62 },
   ],
 }
-
-export const MOCK_FORECAST: DayForecast[] = [
-  { date: '2026-05-04', dayLabel: 'Today', peakScore: 82, scoreLabel: 'Great day to fish', peakWindow: { start: '2 PM', end: '5 PM' } },
-  { date: '2026-05-05', dayLabel: 'Tue', peakScore: 71, scoreLabel: 'Great day to fish', peakWindow: { start: '3 PM', end: '6 PM' } },
-  { date: '2026-05-06', dayLabel: 'Wed', peakScore: 58, scoreLabel: 'Decent — pick your window', peakWindow: { start: '6 AM', end: '9 AM' } },
-  { date: '2026-05-07', dayLabel: 'Thu', peakScore: 44, scoreLabel: 'Tough but possible', peakWindow: { start: '7 AM', end: '9 AM' } },
-  { date: '2026-05-08', dayLabel: 'Fri', peakScore: 67, scoreLabel: 'Decent — pick your window', peakWindow: { start: '4 PM', end: '7 PM' } },
-  { date: '2026-05-09', dayLabel: 'Sat', peakScore: 88, scoreLabel: 'Great day to fish', peakWindow: { start: '7 AM', end: '10 AM' } },
-  { date: '2026-05-10', dayLabel: 'Sun', peakScore: 79, scoreLabel: 'Great day to fish', peakWindow: { start: '5 PM', end: '8 PM' } },
-]

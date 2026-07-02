@@ -77,11 +77,14 @@ export interface HourlyScore {
 }
 
 export interface DayForecast {
-  date: string
-  dayLabel: string
+  date: string                      // 'YYYY-MM-DD'
+  dayLabel: string                  // 'Today', 'Thu', ...
   peakScore: number
   scoreLabel: string
   peakWindow: { start: string; end: string }
+  hourlyScores: HourlyScore[]       // 24 entries
+  tideEvents: TideEvent[]
+  sun: SunData
 }
 
 export interface ConditionsData {
