@@ -92,11 +92,31 @@ describe('buildConditionsData', () => {
     expect(result.fishingScore).toBeLessThanOrEqual(100)
   })
 
-  it('hourlyScores covers hours 5 through 20', () => {
+  it('hourlyScores covers all 24 hours with hourIndex', () => {
     const result = buildConditionsData(NOAA, NWS, SWELL, SOLUNAR, SPOT, NOW)
-    expect(result.hourlyScores).toHaveLength(16)
-    expect(result.hourlyScores[0].hour).toBe('5AM')
-    expect(result.hourlyScores[15].hour).toBe('8PM')
+    expect(result.hourlyScores).toHaveLength(24)
+    expect(result.hourlyScores[0].hour).toBe('12AM')
+    expect(result.hourlyScores[0].hourIndex).toBe(0)
+    expect(result.hourlyScores[23].hour).toBe('11PM')
+    expect(result.hourlyScores[23].hourIndex).toBe(23)
+  })
+
+  it('bestWindow starts at or after the current hour', () => {
+    // NOW is 2:00 PM (hour 14)
+    const result = buildConditionsData(NOAA, NWS, SWELL, SOLUNAR, SPOT, NOW)
+    expect(result.bestWindow.passed).toBeUndefined()
+    const m = result.bestWindow.start.match(/(\d+):00 (AM|PM)/)!
+    let h = parseInt(m[1], 10)
+    if (m[2] === 'PM' && h !== 12) h += 12
+    if (m[2] === 'AM' && h === 12) h = 0
+    expect(h).toBeGreaterThanOrEqual(14)
+  })
+
+  it('flags bestWindow as passed late at night', () => {
+    const LATE = new Date('2026-05-06T23:00:00')
+    const result = buildConditionsData(NOAA, NWS, SWELL, SOLUNAR, SPOT, LATE)
+    expect(result.bestWindow.passed).toBe(true)
+    expect(result.bestWindow.score).toBeGreaterThan(0)
   })
 
   it('bestWindow score is the highest 3-hour average', () => {

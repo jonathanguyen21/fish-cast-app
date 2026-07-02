@@ -118,9 +118,9 @@ export function buildConditionsData(
     sky: { condition: sky.icon },
   })
 
-  // Hourly scores: 5AM (hour 5) to 8PM (hour 20) = 16 hours
+  // Hourly scores: all 24 hours (0–23); hourIndex == hour
   const hourlyScores: HourlyScore[] = []
-  for (let h = 5; h <= 20; h++) {
+  for (let h = 0; h < 24; h++) {
     const hourTide = hourlyCurve.length > 0
       ? { phase: detectPhase(hourlyCurve, h), hoursFromTurn: hoursFromLastTurn(hourlyCurve, h) }
       : null
@@ -130,6 +130,7 @@ export function buildConditionsData(
 
     hourlyScores.push({
       hour: formatHourLabel(h),
+      hourIndex: h,
       score: calculateScore({
         pressure: { value: pressure.value, trend: pressure.trend, rate: pressure.rate },
         tide: hourTide,
@@ -142,19 +143,25 @@ export function buildConditionsData(
     })
   }
 
-  // Best 3-hour window
-  let bestWindow = { start: formatHourTime(5), end: formatHourTime(7), score: 0 }
-  for (let i = 0; i < hourlyScores.length - 2; i++) {
-    const avg = Math.round(
-      (hourlyScores[i].score + hourlyScores[i + 1].score + hourlyScores[i + 2].score) / 3
-    )
-    if (avg > bestWindow.score) {
-      bestWindow = {
-        start: formatHourTime(5 + i),
-        end: formatHourTime(5 + i + 2),
-        score: avg,
-      }
+  // Best 3-hour window that starts now or later
+  const windowAvg = (i: number) => Math.round(
+    (hourlyScores[i].score + hourlyScores[i + 1].score + hourlyScores[i + 2].score) / 3
+  )
+  let bestWindow: ConditionsData['bestWindow'] | null = null
+  for (let i = currentHour; i <= 21; i++) {
+    const avg = windowAvg(i)
+    if (!bestWindow || avg > bestWindow.score) {
+      bestWindow = { start: formatHourTime(i), end: formatHourTime(i + 2), score: avg }
     }
+  }
+  if (!bestWindow) {
+    // 10 PM or later — every window today has already started; report the day's peak honestly
+    let peak = { start: formatHourTime(0), end: formatHourTime(2), score: windowAvg(0) }
+    for (let i = 1; i <= 21; i++) {
+      const avg = windowAvg(i)
+      if (avg > peak.score) peak = { start: formatHourTime(i), end: formatHourTime(i + 2), score: avg }
+    }
+    bestWindow = { ...peak, passed: true }
   }
 
   return {

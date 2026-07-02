@@ -17,7 +17,7 @@ const GRAD_END = '#48cae4'
 interface Props {
   score: number
   label: string
-  bestWindow: { start: string; end: string; score: number }
+  bestWindow: { start: string; end: string; score: number; passed?: boolean }
 }
 
 export function ScoreDisplay({ score, label, bestWindow }: Props) {
@@ -71,7 +71,9 @@ export function ScoreDisplay({ score, label, bestWindow }: Props) {
         </View>
       </View>
       <Text style={styles.bestWindow}>
-        Best window: {bestWindow.start}–{bestWindow.end} · Score {bestWindow.score}
+        {bestWindow.passed
+          ? `Peak today was ${bestWindow.start}–${bestWindow.end} · Score ${bestWindow.score}`
+          : `Best window: ${bestWindow.start}–${bestWindow.end} · Score ${bestWindow.score}`}
       </Text>
     </View>
   )

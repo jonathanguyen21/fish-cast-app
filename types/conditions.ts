@@ -72,6 +72,7 @@ export interface HourlyWind {
 
 export interface HourlyScore {
   hour: string
+  hourIndex: number
   score: number
 }
 
@@ -86,7 +87,7 @@ export interface DayForecast {
 export interface ConditionsData {
   fishingScore: number
   scoreLabel: string
-  bestWindow: { start: string; end: string; score: number }
+  bestWindow: { start: string; end: string; score: number; passed?: boolean }
   wind: WindData
   windHourly: HourlyWind[]
   tide: TideData | null

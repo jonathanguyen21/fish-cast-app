@@ -44,14 +44,14 @@ export const MOCK_CONDITIONS: ConditionsData = {
     minorPeriods: [{ start: '8:30 AM', end: '9:30 AM' }, { start: '9:00 PM', end: '10:00 PM' }],
   },
   hourlyScores: [
-    { hour: '5AM', score: 65 }, { hour: '6AM', score: 72 },
-    { hour: '7AM', score: 68 }, { hour: '8AM', score: 55 },
-    { hour: '9AM', score: 48 }, { hour: '10AM', score: 42 },
-    { hour: '11AM', score: 38 }, { hour: '12PM', score: 45 },
-    { hour: '1PM', score: 58 }, { hour: '2PM', score: 78 },
-    { hour: '3PM', score: 91 }, { hour: '4PM', score: 88 },
-    { hour: '5PM', score: 82 }, { hour: '6PM', score: 75 },
-    { hour: '7PM', score: 70 }, { hour: '8PM', score: 62 },
+    { hour: '5AM', hourIndex: 5, score: 65 }, { hour: '6AM', hourIndex: 6, score: 72 },
+    { hour: '7AM', hourIndex: 7, score: 68 }, { hour: '8AM', hourIndex: 8, score: 55 },
+    { hour: '9AM', hourIndex: 9, score: 48 }, { hour: '10AM', hourIndex: 10, score: 42 },
+    { hour: '11AM', hourIndex: 11, score: 38 }, { hour: '12PM', hourIndex: 12, score: 45 },
+    { hour: '1PM', hourIndex: 13, score: 58 }, { hour: '2PM', hourIndex: 14, score: 78 },
+    { hour: '3PM', hourIndex: 15, score: 91 }, { hour: '4PM', hourIndex: 16, score: 88 },
+    { hour: '5PM', hourIndex: 17, score: 82 }, { hour: '6PM', hourIndex: 18, score: 75 },
+    { hour: '7PM', hourIndex: 19, score: 70 }, { hour: '8PM', hourIndex: 20, score: 62 },
   ],
 }
 
