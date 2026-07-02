@@ -7,6 +7,7 @@ export interface NwsData {
   wind: WindData
   hourlyForecast: {
     hour: number
+    epochMs: number
     windSpeed: number
     cloudCover: number
     rainChance: number
@@ -92,6 +93,7 @@ export async function fetchNwsData(spot: Spot): Promise<NwsData> {
 
   const hourlyForecast = periods.map((p: any) => ({
     hour: new Date(p.startTime).getHours(),
+    epochMs: new Date(p.startTime).getTime(),
     windSpeed: parseWindSpeed(p.windSpeed),
     cloudCover: p.shortForecast.toLowerCase().includes('cloud') ? 70 : 20,
     rainChance: p.probabilityOfPrecipitation?.value ?? 0,

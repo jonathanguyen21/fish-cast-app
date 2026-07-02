@@ -30,13 +30,15 @@ const NOAA: NoaaData = {
   airTemp: null,
 }
 
+const dayMs = (h: number) => new Date('2026-05-06T00:00:00').getTime() + h * 3_600_000
+
 const NWS: NwsData = {
   air: { temp: 62, high: 67, low: 52, humidity: 78, unit: '°F' },
   sky: { condition: 'Partly Cloudy', rainChance: 15, icon: 'partly-cloudy' },
   wind: { speed: 10, gusts: 15, direction: 225, directionLabel: 'SW', unit: 'mph' },
   hourlyForecast: [
-    { hour: 5, windSpeed: 5, cloudCover: 30, rainChance: 10, windDirection: 'SW' },
-    { hour: 14, windSpeed: 10, cloudCover: 50, rainChance: 15, windDirection: 'W' },
+    { hour: 5, epochMs: dayMs(5), windSpeed: 5, cloudCover: 30, rainChance: 10, windDirection: 'SW' },
+    { hour: 14, epochMs: dayMs(14), windSpeed: 10, cloudCover: 50, rainChance: 15, windDirection: 'W' },
   ],
 }
 
@@ -133,7 +135,7 @@ describe('buildConditionsData', () => {
   })
 
   it('includes windHourly derived from NWS hourlyForecast', () => {
-    const result = buildConditionsData(NOAA, NWS, null, SOLUNAR, SPOT, new Date())
+    const result = buildConditionsData(NOAA, NWS, null, SOLUNAR, SPOT, NOW)
     expect(Array.isArray(result.windHourly)).toBe(true)
     expect(result.windHourly.length).toBe(NWS!.hourlyForecast.length)
     expect(result.windHourly[0]).toHaveProperty('hour')
@@ -141,13 +143,27 @@ describe('buildConditionsData', () => {
     expect(result.windHourly[0]).toHaveProperty('directionLabel')
   })
 
+  it('windHourly only includes periods from today', () => {
+    const tomorrow5am = dayMs(24 + 5)
+    const nwsTwoDays: NwsData = {
+      ...NWS,
+      hourlyForecast: [
+        { hour: 5, epochMs: dayMs(5), windSpeed: 5, cloudCover: 30, rainChance: 10, windDirection: 'SW' },
+        { hour: 5, epochMs: tomorrow5am, windSpeed: 22, cloudCover: 30, rainChance: 10, windDirection: 'SW' },
+      ],
+    }
+    const result = buildConditionsData(NOAA, nwsTwoDays, null, SOLUNAR, SPOT, NOW)
+    expect(result.windHourly).toHaveLength(1)
+    expect(result.windHourly[0].speed).toBe(5)
+  })
+
   it('returns empty windHourly when NWS unavailable', () => {
-    const result = buildConditionsData(NOAA, null, null, SOLUNAR, SPOT, new Date())
+    const result = buildConditionsData(NOAA, null, null, SOLUNAR, SPOT, NOW)
     expect(result.windHourly).toEqual([])
   })
 
   it('passes through pressure.readings from NOAA data', () => {
-    const result = buildConditionsData(NOAA, NWS, null, SOLUNAR, SPOT, new Date())
+    const result = buildConditionsData(NOAA, NWS, null, SOLUNAR, SPOT, NOW)
     expect(result.pressure.readings).toEqual(NOAA!.pressure!.readings)
   })
 

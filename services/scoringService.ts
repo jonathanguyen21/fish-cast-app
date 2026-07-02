@@ -58,16 +58,24 @@ function getHourlySolunar(solunar: SolunarData, hour: number): ScoringInputs['so
   }
 }
 
-function getHourlyWind(nws: NwsData | null, hour: number): WindData {
+function findPeriodForHour(nws: NwsData, hour: number, now: Date) {
+  const target = new Date(now)
+  target.setHours(hour, 0, 0, 0)
+  return nws.hourlyForecast.find(p => Math.abs(p.epochMs - target.getTime()) < 30 * 60 * 1000)
+    ?? nws.hourlyForecast.find(p => p.hour === hour)
+    ?? nws.hourlyForecast[0]
+}
+
+function getHourlyWind(nws: NwsData | null, hour: number, now: Date): WindData {
   if (!nws) return NEUTRAL_WIND
-  const period = nws.hourlyForecast.find(h => h.hour === hour) ?? nws.hourlyForecast[0]
+  const period = findPeriodForHour(nws, hour, now)
   if (!period) return NEUTRAL_WIND
   return { ...nws.wind, speed: period.windSpeed, gusts: period.windSpeed + 5 }
 }
 
-function getHourlySky(nws: NwsData | null, hour: number): SkyData {
+function getHourlySky(nws: NwsData | null, hour: number, now: Date): SkyData {
   if (!nws) return NEUTRAL_SKY
-  const period = nws.hourlyForecast.find(h => h.hour === hour) ?? nws.hourlyForecast[0]
+  const period = findPeriodForHour(nws, hour, now)
   if (!period) return nws.sky
   const rainChance = period.rainChance
   let icon: SkyData['icon'] = period.cloudCover > 70 ? 'overcast' :
@@ -125,8 +133,8 @@ export function buildConditionsData(
     const hourTide = hourlyCurve.length > 0
       ? { phase: detectPhase(hourlyCurve, h), hoursFromTurn: hoursFromLastTurn(hourlyCurve, h) }
       : null
-    const hourSky = getHourlySky(nws, h)
-    const hourWind = getHourlyWind(nws, h)
+    const hourSky = getHourlySky(nws, h, now)
+    const hourWind = getHourlyWind(nws, h, now)
     const hourSolunar = getHourlySolunar(solunar, h)
 
     hourlyScores.push({
@@ -170,11 +178,13 @@ export function buildConditionsData(
     scoreLabel: scoreLabel(currentScore),
     bestWindow,
     wind,
-    windHourly: nws?.hourlyForecast.map(h => ({
-      hour: h.hour,
-      speed: h.windSpeed,
-      directionLabel: h.windDirection,
-    })) ?? [],
+    windHourly: nws?.hourlyForecast
+      .filter(p => new Date(p.epochMs).toDateString() === now.toDateString())
+      .map(h => ({
+        hour: h.hour,
+        speed: h.windSpeed,
+        directionLabel: h.windDirection,
+      })) ?? [],
     tide,
     water: { temp: waterTempValue, unit: '°F', estimated: waterTempEstimated },
     air: nws?.air ?? { temp: 65, high: 70, low: 58, humidity: 70, unit: '°F' },

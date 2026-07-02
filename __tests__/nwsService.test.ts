@@ -63,4 +63,12 @@ describe('fetchNwsData', () => {
     expect(result.hourlyForecast[0]).toHaveProperty('windDirection')
     expect(result.hourlyForecast[0].windDirection).toBe('SW')
   })
+
+  it('includes epochMs derived from period startTime', async () => {
+    mockNws()
+    const result = await fetchNwsData(SPOT)
+    const fixture = require('./fixtures/nwsHourlyForecast.json')
+    const firstStart = new Date(fixture.properties.periods[0].startTime).getTime()
+    expect(result.hourlyForecast[0].epochMs).toBe(firstStart)
+  })
 })
