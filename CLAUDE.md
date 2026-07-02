@@ -42,11 +42,11 @@ services/
   marineService.ts         Open-Meteo marine swell → SwellData | null
   solunarService.ts        suncalc moon/sun → SolunarData (local, no network)
   scoringService.ts        buildConditionsData() — wires all sources into ConditionsData
-  forecastService.ts       Phase B2 stub (throws — not yet implemented)
+  forecastService.ts       7-day forecast — buildForecastDays() runs calculateScore per hour per day; neutral pressure for future days
 
 hooks/
   useConditions.ts         4 parallel TanStack Queries → ConditionsData | null
-  useForecast.ts           Phase B2 stub
+  useForecast.ts           TanStack query over fetchForecast (6h stale, keyed by spot + date)
   useSpots.ts              Thin wrapper over spotsStore
 
 features/
@@ -127,8 +127,9 @@ AsyncStorage persistence survives cold opens (maxAge: 24h).
 | NWS | `['nws', spot.id]` | 60 min | 4 hr |
 | Marine | `['marine', spot.id]` | 60 min | 4 hr |
 | Solunar | `['solunar', spot.id, 'YYYY-MM-DD']` | 24 hr | 48 hr |
+| Forecast | `['forecast', spot.id, 'YYYY-MM-DD']` | 6 hr | 24 hr |
 
-`isLoading` = any of the 4 queries loading. `isError` = (NOAA AND NWS both fail) OR solunar fails. `data` returns null until solunar resolves (solunar is required). `useForecast` is a separate hook (not part of the 4 queries above); it currently returns `{ data: [], isLoading: false }` as a stub — Phase 2 will wire it to `['forecast', spot.id, 'YYYY-MM-DD']` with a 6hr staleTime / 24hr gcTime.
+`isLoading` = any of the 4 queries loading. `isError` = (NOAA AND NWS both fail) OR solunar fails. `data` returns null until solunar resolves (solunar is required). `useForecast` is a separate hook (not part of the 4 queries above) backed by its own TanStack Query — see the Forecast row above.
 
 ---
 
@@ -199,6 +200,8 @@ Hourly scores: all 24 hours (0–23), each entry carries `hourIndex`; best windo
 
 **Region detection:** `detectRegion(lat, lng)` in `data/species/index.ts` — bounding boxes, west coast if lat 32–49 and lng -125 to -114.
 
+**Teaser gate:** free users see forecast days 0–1; days 2–6 locked behind ProWaitlistSheet (`FREE_DAYS` const in `ForecastStrip`).
+
 ---
 
 ## TypeScript
@@ -223,9 +226,6 @@ Service tests use `global.fetch = jest.fn()` with fixture JSON from `__tests__/f
 
 ---
 
-## What's Next (Phase B2 / C)
+## What's Next (Phase C)
 
-- **Phase B2:** `useForecast` / `forecastService.ts` — 7-day forecast from NWS daily gridpoints
 - **Phase C:** Push notifications (background fetch at user's alert threshold), Pro subscription (RevenueCat), species data for northeast/southeast/freshwater regions
-
-`forecastService.ts` currently throws `'Phase B2: not yet implemented'`.
