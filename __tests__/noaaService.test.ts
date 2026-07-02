@@ -100,6 +100,34 @@ describe('fetchNoaaData', () => {
     expect(result.wind).toBeNull()
   })
 
+  it('requests products with lst_ldt time zone and MLLW datum on predictions', async () => {
+    mockAllProducts()
+    await fetchNoaaData(SPOT)
+    const urls = (global.fetch as jest.Mock).mock.calls.map(c => c[0] as string)
+    expect(urls).toHaveLength(5)
+    for (const url of urls) {
+      expect(url).toContain('time_zone=lst_ldt')
+      expect(url).not.toContain('LST/LDT')
+    }
+    // predictions (hilo, then hourly) need datum and date=today
+    expect(urls[0]).toContain('product=predictions')
+    expect(urls[0]).toContain('interval=hilo')
+    expect(urls[0]).toContain('datum=MLLW')
+    expect(urls[0]).toContain('date=today')
+    expect(urls[1]).toContain('interval=h')
+    expect(urls[1]).toContain('datum=MLLW')
+    // observational products use trailing ranges, never date=today
+    expect(urls[2]).toContain('product=water_temperature')
+    expect(urls[2]).toContain('range=2')
+    expect(urls[2]).not.toContain('date=today')
+    expect(urls[3]).toContain('product=wind')
+    expect(urls[3]).toContain('range=2')
+    expect(urls[3]).not.toContain('date=today')
+    expect(urls[4]).toContain('product=air_pressure')
+    expect(urls[4]).toContain('range=7')
+    expect(urls[4]).not.toContain('date=today')
+  })
+
   it('includes readings array on pressure (oldest to newest)', async () => {
     mockAllProducts()
     const result = await fetchNoaaData(SPOT)

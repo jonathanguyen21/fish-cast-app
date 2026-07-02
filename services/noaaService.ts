@@ -11,10 +11,11 @@ export interface NoaaData {
 }
 
 const BASE = 'https://api.tidesandcurrents.noaa.gov/api/prod/datagetter'
-const COMMON = 'time_zone=LST/LDT&units=english&format=json'
+// Verified against the live API 2026-07-01: time_zone must be lst_ldt (LST/LDT is rejected)
+const COMMON = 'time_zone=lst_ldt&units=english&format=json'
 
 function buildUrl(station: string, product: string, extra = ''): string {
-  return `${BASE}?station=${station}&date=today&${COMMON}&product=${product}${extra}`
+  return `${BASE}?station=${station}&${COMMON}&product=${product}${extra}`
 }
 
 async function fetchProduct(url: string): Promise<any> {
@@ -95,10 +96,10 @@ export async function fetchNoaaData(spot: Spot): Promise<NoaaData> {
 
   const id = spot.stationId
   const [hiLoRes, curveRes, tempRes, windRes, pressureRes] = await Promise.allSettled([
-    fetchProduct(buildUrl(id, 'predictions', '&interval=hilo')),
-    fetchProduct(buildUrl(id, 'predictions', '&interval=h')),
-    fetchProduct(buildUrl(id, 'water_temperature')),
-    fetchProduct(buildUrl(id, 'wind', '&range=1')),
+    fetchProduct(buildUrl(id, 'predictions', '&date=today&datum=MLLW&interval=hilo')),
+    fetchProduct(buildUrl(id, 'predictions', '&date=today&datum=MLLW&interval=h')),
+    fetchProduct(buildUrl(id, 'water_temperature', '&range=2')),
+    fetchProduct(buildUrl(id, 'wind', '&range=2')),
     fetchProduct(buildUrl(id, 'air_pressure', '&range=7')),
   ])
 
