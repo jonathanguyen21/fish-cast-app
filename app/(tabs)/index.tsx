@@ -106,7 +106,7 @@ export default function ForecastScreen() {
               label={conditions.scoreLabel}
               bestWindow={conditions.bestWindow}
             />
-            <ScoreTimeline hourlyScores={conditions.hourlyScores} />
+            <ScoreTimeline hourlyScores={conditions.hourlyScores} currentHour={currentHour} />
             <View style={styles.quickStats}>
               <WindDisplay
                 wind={conditions.wind}
