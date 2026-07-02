@@ -4,7 +4,7 @@
 
 React Native / Expo fishing forecast app. Combines NOAA tide/water/wind/pressure data, NWS weather, Open-Meteo marine swell, and local solunar calculations into a 0–100 fishing score. Shows what species are active at the user's saved spot right now, an hourly score timeline, tide chart, conditions grid, and a 7-day forecast strip.
 
-**Current state: Phase B1 complete.** All screens use live API data. No mock data in production paths.
+**Current state: Phase B1 + trust fixes complete.** All screens use live API data. No mock data in production paths.
 
 ---
 
@@ -18,7 +18,7 @@ React Native / Expo fishing forecast app. Combines NOAA tide/water/wind/pressure
 - **react-native-svg** — tide bezier chart, score bars
 - **suncalc** — local moon/sun calculations (no network)
 - **TypeScript strict mode** throughout
-- **Jest + React Native Testing Library** — 69 tests, 12 suites
+- **Jest + React Native Testing Library** — run `npx jest --no-coverage` for the current count
 
 ---
 
@@ -127,6 +127,7 @@ AsyncStorage persistence survives cold opens (maxAge: 24h).
 | NWS | `['nws', spot.id]` | 60 min | 4 hr |
 | Marine | `['marine', spot.id]` | 60 min | 4 hr |
 | Solunar | `['solunar', spot.id, 'YYYY-MM-DD']` | 24 hr | 48 hr |
+| Forecast (Phase 2) | `['forecast', spot.id, 'YYYY-MM-DD']` | 6 hr | 24 hr — stub returns `[]` until Phase 2 lands. |
 
 `isLoading` = any of the 4 queries loading. `isError` = (NOAA AND NWS both fail) OR solunar fails. `data` returns null until solunar resolves (solunar is required).
 
@@ -138,6 +139,9 @@ AsyncStorage persistence survives cold opens (maxAge: 24h).
 - No auth required
 - Station list: `/mdapi/prod/webapi/stations.json?type=tidepredictions&units=english`
 - Products fetched in parallel via `Promise.allSettled`: `predictions`, `hourly_height`, `water_temperature`, `wind`, `air_pressure`
+- Request params (verified against live API): `time_zone=lst_ldt` (NOT `LST/LDT`), predictions require `datum=MLLW`, observational products use `range=N` trailing hours (no `date=today`)
+- Observational data arrives OLDEST-FIRST at 6-minute intervals — "current" reading is the LAST element
+- Units: air_pressure arrives in millibars (converted ×0.02953 to inHg), wind in knots (converted ×1.15078 to mph)
 - Error JSON (NOAA's way of reporting missing products) returns null field, not throw
 - `stationId` is resolved at spot-save time via `resolveNearestStation()` (max 200km)
 
@@ -178,7 +182,7 @@ Freshwater spots: tide contributes 0, remaining 80 pts scaled to 100.
 
 Score labels: `Stay home` (0–39) · `Tough but possible` (40–54) · `Decent — pick your window` (55–69) · `Great day to fish` (70–84) · `Drop everything and go` (85–100)
 
-Hourly scores: hours 5–20 (16 entries), best window = 3-hour sliding average.
+Hourly scores: all 24 hours (0–23), each entry carries `hourIndex`; best window = highest 3-hour sliding average starting at or after the current hour (`passed: true` when the day is spent).
 
 `scoringService.buildConditionsData()` is the wiring layer — it maps raw API data into `ScoringInputs`, calls `calculateScore()` per hour, and assembles `ConditionsData`. Important: `sky.icon` (not `sky.condition`) is passed to `calculateScore`.
 
