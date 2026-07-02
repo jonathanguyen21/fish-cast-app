@@ -1,4 +1,4 @@
-import { calculateScore, scoreLabel } from '../features/score/scoringEngine'
+import { calculateScore, calculateScoreBreakdown, scoreLabel } from '../features/score/scoringEngine'
 import { detectPhase, hoursFromLastTurn } from '../features/tide/tideUtils'
 import type { ConditionsData, SkyData, WindData, PressureData, HourlyScore } from '../types/conditions'
 import type { Spot } from '../types/spot'
@@ -125,12 +125,13 @@ export function buildConditionsData(
     spotType: spot.type,
   }
 
-  const currentScore = calculateScore({
+  const currentBreakdown = calculateScoreBreakdown({
     ...baseInputs,
     solunar: solunar,
     wind: { speed: wind.speed },
     sky: { condition: sky.icon },
   })
+  const currentScore = currentBreakdown.total
 
   // Hourly scores: all 24 hours (0–23); hourIndex == hour
   const hourlyScores: HourlyScore[] = []
@@ -142,18 +143,20 @@ export function buildConditionsData(
     const hourWind = getHourlyWind(nws, h, now)
     const hourSolunar = getHourlySolunar(solunar, h)
 
+    const hourBreakdown = calculateScoreBreakdown({
+      pressure: { value: pressure.value, trend: pressure.trend, rate: pressure.rate },
+      tide: hourTide,
+      waterTemp: { value: waterTempValue, spotType: spot.type },
+      spotType: spot.type,
+      solunar: hourSolunar,
+      wind: { speed: hourWind.speed },
+      sky: { condition: hourSky.icon },
+    })
     hourlyScores.push({
       hour: formatHourLabel(h),
       hourIndex: h,
-      score: calculateScore({
-        pressure: { value: pressure.value, trend: pressure.trend, rate: pressure.rate },
-        tide: hourTide,
-        waterTemp: { value: waterTempValue, spotType: spot.type },
-        spotType: spot.type,
-        solunar: hourSolunar,
-        wind: { speed: hourWind.speed },
-        sky: { condition: hourSky.icon },
-      }),
+      score: hourBreakdown.total,
+      breakdown: hourBreakdown,
     })
   }
 
@@ -181,6 +184,7 @@ export function buildConditionsData(
   return {
     fishingScore: currentScore,
     scoreLabel: scoreLabel(currentScore),
+    currentBreakdown,
     bestWindow,
     wind,
     windHourly: nws?.hourlyForecast

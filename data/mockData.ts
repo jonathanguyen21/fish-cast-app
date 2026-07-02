@@ -14,6 +14,19 @@ export const MOCK_SPOT: Spot = {
 export const MOCK_CONDITIONS: ConditionsData = {
   fishingScore: 82,
   scoreLabel: 'Great day to fish',
+  currentBreakdown: {
+    total: 82,
+    scaled: false,
+    capNote: null,
+    factors: [
+      { key: 'pressure', label: 'Pressure', points: 25, max: 25, note: 'Falling slowly — prime feeding trigger' },
+      { key: 'solunar', label: 'Solunar', points: 14, max: 20, note: 'Minor solunar period — elevated activity' },
+      { key: 'tide', label: 'Tide', points: 15, max: 20, note: 'Mid-incoming — good water movement' },
+      { key: 'wind', label: 'Wind', points: 15, max: 15, note: 'Light chop — ideal' },
+      { key: 'waterTemp', label: 'Water Temp', points: 10, max: 10, note: 'In the productive temperature range' },
+      { key: 'sky', label: 'Sky', points: 8, max: 10, note: 'Partly cloudy — decent light conditions' },
+    ],
+  },
   bestWindow: { start: '2:00 PM', end: '5:00 PM', score: 91 },
   wind: { speed: 8, gusts: 14, direction: 225, directionLabel: 'SW', unit: 'mph' },
   windHourly: [],

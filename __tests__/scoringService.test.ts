@@ -179,6 +179,16 @@ describe('buildConditionsData', () => {
     expect(result.water.estimated).toBe(false)
     expect(result.water.temp).toBe(57)
   })
+
+  it('attaches a breakdown to the current score and every hourly score', () => {
+    const result = buildConditionsData(NOAA, NWS, SWELL, SOLUNAR, SPOT, NOW)
+    expect(result.currentBreakdown.total).toBe(result.fishingScore)
+    expect(result.currentBreakdown.factors.length).toBeGreaterThanOrEqual(5)
+    for (const h of result.hourlyScores) {
+      expect(h.breakdown).toBeDefined()
+      expect(h.breakdown!.total).toBe(h.score)
+    }
+  })
 })
 
 describe('skyIconFor', () => {

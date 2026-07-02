@@ -1,4 +1,4 @@
-import { calculateScore, scoreLabel } from '../features/score/scoringEngine'
+import { calculateScoreBreakdown, scoreLabel } from '../features/score/scoringEngine'
 import { detectPhase, hoursFromLastTurn } from '../features/tide/tideUtils'
 import { calculateSolunar } from './solunarService'
 import { fetchNwsData } from './nwsService'
@@ -40,21 +40,23 @@ export function buildForecastDays(
       const period = nws?.hourlyForecast.find(
         p => Math.abs(p.epochMs - target.getTime()) < 30 * 60 * 1000
       ) ?? null
+      const hourBreakdown = calculateScoreBreakdown({
+        // Pressure is not forecastable from our free sources — future days score neutral.
+        pressure: { value: NEUTRAL_PRESSURE.value, trend: NEUTRAL_PRESSURE.trend, rate: NEUTRAL_PRESSURE.rate },
+        tide: curve
+          ? { phase: detectPhase(curve, h), hoursFromTurn: hoursFromLastTurn(curve, h) }
+          : null,
+        waterTemp: { value: spot.type === 'saltwater' ? 65 : 68, spotType: spot.type },
+        spotType: spot.type,
+        solunar: getHourlySolunar(solunar, h),
+        wind: { speed: period ? period.windSpeed : NEUTRAL_WIND.speed },
+        sky: { condition: period ? skyIconFor(period.cloudCover, period.rainChance) : 'partly-cloudy' },
+      })
       hourlyScores.push({
         hour: formatHourLabel(h),
         hourIndex: h,
-        score: calculateScore({
-          // Pressure is not forecastable from our free sources — future days score neutral.
-          pressure: { value: NEUTRAL_PRESSURE.value, trend: NEUTRAL_PRESSURE.trend, rate: NEUTRAL_PRESSURE.rate },
-          tide: curve
-            ? { phase: detectPhase(curve, h), hoursFromTurn: hoursFromLastTurn(curve, h) }
-            : null,
-          waterTemp: { value: spot.type === 'saltwater' ? 65 : 68, spotType: spot.type },
-          spotType: spot.type,
-          solunar: getHourlySolunar(solunar, h),
-          wind: { speed: period ? period.windSpeed : NEUTRAL_WIND.speed },
-          sky: { condition: period ? skyIconFor(period.cloudCover, period.rainChance) : 'partly-cloudy' },
-        }),
+        score: hourBreakdown.total,
+        breakdown: hourBreakdown,
       })
     }
 

@@ -89,6 +89,7 @@ export interface HourlyScore {
   hour: string
   hourIndex: number
   score: number
+  breakdown?: ScoreBreakdown
 }
 
 export interface DayForecast {
@@ -106,6 +107,7 @@ export interface DayForecast {
 export interface ConditionsData {
   fishingScore: number
   scoreLabel: string
+  currentBreakdown: ScoreBreakdown
   bestWindow: { start: string; end: string; score: number; passed?: boolean }
   wind: WindData
   windHourly: HourlyWind[]
