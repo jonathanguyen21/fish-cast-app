@@ -72,6 +72,7 @@ export function ForecastStrip({ forecast, isLoading, isError, isPro, onRetry, on
                 </View>
                 <Text style={styles.window}>{day.peakWindow.start}</Text>
                 <Text style={styles.window}>–{day.peakWindow.end}</Text>
+                {i === 0 && <Text style={styles.window}>(forecast estimate)</Text>}
               </TouchableOpacity>
             )
           })}

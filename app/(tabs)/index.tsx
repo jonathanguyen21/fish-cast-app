@@ -133,7 +133,7 @@ export default function ForecastScreen() {
                   params: { data: JSON.stringify(betterDay) },
                 })}
               >
-                {betterDay.dayLabel} looks better — {betterDay.peakScore} at {betterDay.peakWindow.start}–{betterDay.peakWindow.end} ›
+                {betterDay.dayLabel} looks better — {betterDay.peakScore} at {betterDay.peakWindow.start}–{betterDay.peakWindow.end} (forecast estimate) ›
               </Text>
             )}
             <ScoreTimeline hourlyScores={conditions.hourlyScores} currentHour={currentHour} />

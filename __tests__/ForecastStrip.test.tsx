@@ -57,4 +57,12 @@ describe('ForecastStrip', () => {
     fireEvent.press(getByText('Could not load forecast — tap to retry'))
     expect(onRetry).toHaveBeenCalled()
   })
+
+  it('labels only the Today card as a forecast estimate', () => {
+    const { getAllByText } = render(
+      <ForecastStrip forecast={DAYS} isLoading={false} isError={false} isPro={true}
+        onRetry={noop} onUpgrade={noop} onDayPress={noop} />
+    )
+    expect(getAllByText('(forecast estimate)')).toHaveLength(1)
+  })
 })
