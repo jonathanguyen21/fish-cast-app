@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { View, Text, StyleSheet, Pressable } from 'react-native'
 import Animated, { useSharedValue, useAnimatedProps, withTiming, Easing } from 'react-native-reanimated'
 import { Svg, Circle, Defs, LinearGradient, Stop } from 'react-native-svg'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
+import { ScoreBreakdownSheet } from './ScoreBreakdownSheet'
+import type { ScoreBreakdown } from '../../types/conditions'
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle)
 
@@ -18,9 +20,11 @@ interface Props {
   score: number
   label: string
   bestWindow: { start: string; end: string; score: number; passed?: boolean }
+  breakdown?: ScoreBreakdown | null
 }
 
-export function ScoreDisplay({ score, label, bestWindow }: Props) {
+export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
+  const [showBreakdown, setShowBreakdown] = useState(false)
   const animatedOffset = useSharedValue(CIRCUMFERENCE)
 
   useEffect(() => {
@@ -36,45 +40,56 @@ export function ScoreDisplay({ score, label, bestWindow }: Props) {
 
   return (
     <View style={styles.container} testID="score-display">
-      <View style={styles.circleWrapper}>
-        {/* SVG rotated so arc starts at top */}
-        <Svg width={SIZE} height={SIZE} style={styles.svg}>
-          <Defs>
-            <LinearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="0">
-              <Stop offset="0" stopColor={GRAD_START} />
-              <Stop offset="1" stopColor={GRAD_END} />
-            </LinearGradient>
-          </Defs>
-          {/* Background track */}
-          <Circle
-            cx={SIZE / 2} cy={SIZE / 2} r={RADIUS}
-            fill="none"
-            stroke={Colors.surface}
-            strokeWidth={STROKE_WIDTH}
-          />
-          {/* Progress arc */}
-          <AnimatedCircle
-            cx={SIZE / 2} cy={SIZE / 2} r={RADIUS}
-            fill="none"
-            stroke="url(#scoreGrad)"
-            strokeWidth={STROKE_WIDTH}
-            strokeDasharray={CIRCUMFERENCE}
-            strokeLinecap="round"
-            animatedProps={animatedProps}
-          />
-        </Svg>
-        {/* Text overlay — native Text nodes so tests can find them */}
-        <View style={styles.textOverlay} pointerEvents="none">
-          <Text style={styles.scoreNumber} testID="score-number">{score}</Text>
-          <Text style={styles.scoreName}>FISHING SCORE</Text>
-          <Text style={styles.scoreLabel}>{label}</Text>
+      <Pressable onPress={() => { if (breakdown) setShowBreakdown(true) }}>
+        <View style={styles.circleWrapper}>
+          {/* SVG rotated so arc starts at top */}
+          <Svg width={SIZE} height={SIZE} style={styles.svg}>
+            <Defs>
+              <LinearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="0">
+                <Stop offset="0" stopColor={GRAD_START} />
+                <Stop offset="1" stopColor={GRAD_END} />
+              </LinearGradient>
+            </Defs>
+            {/* Background track */}
+            <Circle
+              cx={SIZE / 2} cy={SIZE / 2} r={RADIUS}
+              fill="none"
+              stroke={Colors.surface}
+              strokeWidth={STROKE_WIDTH}
+            />
+            {/* Progress arc */}
+            <AnimatedCircle
+              cx={SIZE / 2} cy={SIZE / 2} r={RADIUS}
+              fill="none"
+              stroke="url(#scoreGrad)"
+              strokeWidth={STROKE_WIDTH}
+              strokeDasharray={CIRCUMFERENCE}
+              strokeLinecap="round"
+              animatedProps={animatedProps}
+            />
+          </Svg>
+          {/* Text overlay — native Text nodes so tests can find them */}
+          <View style={styles.textOverlay} pointerEvents="none">
+            <Text style={styles.scoreNumber} testID="score-number">{score}</Text>
+            <Text style={styles.scoreName}>FISHING SCORE</Text>
+            <Text style={styles.scoreLabel}>{label}</Text>
+          </View>
         </View>
-      </View>
+      </Pressable>
       <Text style={styles.bestWindow}>
         {bestWindow.passed
           ? `Peak today was ${bestWindow.start}–${bestWindow.end} · Score ${bestWindow.score}`
           : `Best window: ${bestWindow.start}–${bestWindow.end} · Score ${bestWindow.score}`}
       </Text>
+      {breakdown && (
+        <Text style={styles.tapHint}>Tap the dial to see why</Text>
+      )}
+      <ScoreBreakdownSheet
+        visible={showBreakdown}
+        onClose={() => setShowBreakdown(false)}
+        title={`Right now — Score ${score}`}
+        breakdown={breakdown ?? null}
+      />
     </View>
   )
 }
@@ -124,4 +139,5 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginTop: Spacing.sm,
   },
+  tapHint: { fontSize: 10, color: Colors.textTertiary, marginTop: 4 },
 })

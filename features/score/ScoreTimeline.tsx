@@ -1,9 +1,9 @@
 import React, { useRef, useState } from 'react'
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native'
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from './scoringEngine'
-import { useSettingsStore } from '../../store/settingsStore'
+import { ScoreBreakdownSheet } from './ScoreBreakdownSheet'
 import type { HourlyScore } from '../../types/conditions'
 
 interface Props {
@@ -17,8 +17,7 @@ const BAR_WIDTH = 28
 const BAR_SLOT = BAR_WIDTH + 12 // wrapper width + gap, used for auto-scroll math
 
 export function ScoreTimeline({ hourlyScores, currentHour, title = "Today's Forecast" }: Props) {
-  const isPro = useSettingsStore(s => s.isPro)
-  const [tooltipVisible, setTooltipVisible] = useState(false)
+  const [selected, setSelected] = useState<HourlyScore | null>(null)
   const scrollRef = useRef<ScrollView>(null)
 
   if (hourlyScores.length === 0) return null
@@ -49,8 +48,8 @@ export function ScoreTimeline({ hourlyScores, currentHour, title = "Today's Fore
               key={item.hour}
               testID="timeline-bar"
               style={[styles.barWrapper, isPast && styles.pastBar]}
-              onPress={() => { if (!isPro) setTooltipVisible(true) }}
-              activeOpacity={isPro ? 1 : 0.7}
+              onPress={() => { if (item.breakdown) setSelected(item) }}
+              activeOpacity={0.7}
             >
               <Text style={styles.scoreLabel}>{isPeak ? item.score : ''}</Text>
               <View style={[styles.barTrack, isNow && styles.nowTrack]}>
@@ -67,15 +66,12 @@ export function ScoreTimeline({ hourlyScores, currentHour, title = "Today's Fore
         })}
       </ScrollView>
 
-      <Modal transparent visible={tooltipVisible} onRequestClose={() => setTooltipVisible(false)}>
-        <Pressable style={styles.overlay} onPress={() => setTooltipVisible(false)}>
-          <View style={styles.tooltip}>
-            <Text style={styles.tooltipTitle}>Score Breakdown</Text>
-            <Text style={styles.tooltipBody}>Detailed hourly score breakdown is a Pro feature.</Text>
-            <Text style={styles.tooltipHint}>Tap anywhere to dismiss</Text>
-          </View>
-        </Pressable>
-      </Modal>
+      <ScoreBreakdownSheet
+        visible={selected !== null}
+        onClose={() => setSelected(null)}
+        title={selected ? `${selected.hour} — Score ${selected.score}` : ''}
+        breakdown={selected?.breakdown ?? null}
+      />
     </View>
   )
 }
@@ -101,15 +97,4 @@ const styles = StyleSheet.create({
   hourLabel: { fontSize: 10, color: Colors.textTertiary, marginTop: 4 },
   nowLabel: { color: Colors.accent, fontWeight: '700' },
   scoreLabel: { fontSize: 10, color: Colors.textSecondary, fontWeight: '600', height: 14 },
-  overlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.6)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  tooltip: {
-    backgroundColor: Colors.card, borderRadius: Spacing.cardRadius,
-    padding: Spacing.lg, margin: Spacing.xl, alignItems: 'center',
-  },
-  tooltipTitle: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginBottom: Spacing.sm },
-  tooltipBody: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20 },
-  tooltipHint: { fontSize: 12, color: Colors.textTertiary, marginTop: Spacing.md },
 })

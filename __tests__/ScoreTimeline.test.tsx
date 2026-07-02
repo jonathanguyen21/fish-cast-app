@@ -1,5 +1,5 @@
 import React from 'react'
-import { render } from '@testing-library/react-native'
+import { render, fireEvent } from '@testing-library/react-native'
 import { ScoreTimeline } from '../features/score/ScoreTimeline'
 import type { HourlyScore } from '../types/conditions'
 
@@ -23,5 +23,20 @@ describe('ScoreTimeline', () => {
   it('shows no Now label when currentHour is null', () => {
     const { queryByText } = render(<ScoreTimeline hourlyScores={HOURS} currentHour={null} />)
     expect(queryByText('Now')).toBeNull()
+  })
+
+  it('opens the breakdown sheet when a bar with breakdown is tapped', () => {
+    const withBreakdown = HOURS.map(h => ({
+      ...h,
+      breakdown: {
+        total: h.score, scaled: false, capNote: null,
+        factors: [{ key: 'wind' as const, label: 'Wind', points: 15, max: 15, note: 'Light chop — ideal' }],
+      },
+    }))
+    const { getAllByTestId, getByText } = render(
+      <ScoreTimeline hourlyScores={withBreakdown} currentHour={14} />
+    )
+    fireEvent.press(getAllByTestId('timeline-bar')[3])
+    expect(getByText('Light chop — ideal')).toBeTruthy()
   })
 })

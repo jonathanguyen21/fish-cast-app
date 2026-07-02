@@ -124,6 +124,7 @@ export default function ForecastScreen() {
               score={conditions.fishingScore}
               label={conditions.scoreLabel}
               bestWindow={conditions.bestWindow}
+              breakdown={conditions.currentBreakdown}
             />
             {betterDay && (
               <Text
