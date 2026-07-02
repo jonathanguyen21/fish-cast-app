@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react'
-import { View, Text, Switch, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
-import Slider from '@react-native-community/slider'
-import * as Notifications from 'expo-notifications'
+import React, { useState } from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
 import { useSettingsStore } from '../../store/settingsStore'
+import { ProWaitlistSheet } from '../../components/ProWaitlistSheet'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 
@@ -38,21 +37,10 @@ export default function SettingsScreen() {
     tempUnit, setTempUnit,
     speedUnit, setSpeedUnit,
     lengthUnit, setLengthUnit,
-    alertThreshold, setAlertThreshold,
-    alertsEnabled, setAlertsEnabled,
     isPro,
   } = useSettingsStore()
 
-  const [permissionStatus, setPermissionStatus] = useState<string>('undetermined')
-
-  useEffect(() => {
-    Notifications.getPermissionsAsync().then(p => setPermissionStatus(p.status))
-  }, [])
-
-  async function requestPermission() {
-    const { status } = await Notifications.requestPermissionsAsync()
-    setPermissionStatus(status)
-  }
+  const [showWaitlist, setShowWaitlist] = useState(false)
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -65,30 +53,10 @@ export default function SettingsScreen() {
 
       <Text style={styles.sectionHeader}>Alerts</Text>
       <View style={styles.card}>
-        <Row label="Score Alerts">
-          <Switch value={alertsEnabled} onValueChange={setAlertsEnabled} trackColor={{ true: Colors.accent }} />
-        </Row>
-        {alertsEnabled && (
-          <View style={styles.sliderRow}>
-            <Text style={styles.rowLabel}>Notify when score &gt;= {alertThreshold}</Text>
-            <Slider
-              style={{ width: '100%' }}
-              minimumValue={40} maximumValue={90} step={5}
-              value={alertThreshold} onValueChange={setAlertThreshold}
-              minimumTrackTintColor={Colors.accent}
-              maximumTrackTintColor={Colors.card}
-              thumbTintColor={Colors.accent}
-            />
-          </View>
-        )}
-        {alertsEnabled && permissionStatus !== 'granted' && (
-          <TouchableOpacity style={styles.permButton} onPress={requestPermission}>
-            <Text style={styles.permText}>Enable Notifications →</Text>
-          </TouchableOpacity>
-        )}
-        {alertsEnabled && permissionStatus === 'granted' && (
-          <Text style={styles.permGranted}>✓ Notifications enabled</Text>
-        )}
+        <View style={styles.row}>
+          <Text style={styles.rowLabel}>Smart score alerts</Text>
+          <Text style={styles.comingSoon}>Coming soon</Text>
+        </View>
       </View>
 
       <Text style={styles.sectionHeader}>Subscription</Text>
@@ -96,7 +64,7 @@ export default function SettingsScreen() {
         <View style={styles.proStatus}>
           <Text style={styles.proLabel}>{isPro ? '✓ FishCast Pro' : 'Free Plan'}</Text>
           {!isPro && (
-            <TouchableOpacity style={styles.upgradeButton}>
+            <TouchableOpacity style={styles.upgradeButton} onPress={() => setShowWaitlist(true)}>
               <Text style={styles.upgradeText}>Upgrade to Pro</Text>
             </TouchableOpacity>
           )}
@@ -105,6 +73,7 @@ export default function SettingsScreen() {
       </View>
 
       <Text style={styles.version}>FishCast v1.0.0</Text>
+      <ProWaitlistSheet visible={showWaitlist} onClose={() => setShowWaitlist(false)} />
     </ScrollView>
   )
 }
@@ -128,14 +97,11 @@ const styles = StyleSheet.create({
   toggleActive: { backgroundColor: Colors.accent + '33', borderWidth: 1, borderColor: Colors.accent },
   toggleText: { fontSize: 13, color: Colors.textSecondary },
   toggleTextActive: { color: Colors.accent, fontWeight: '600' },
-  sliderRow: { padding: Spacing.md },
+  comingSoon: { fontSize: 13, color: Colors.textTertiary },
   proStatus: { padding: Spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   proLabel: { fontSize: 16, fontWeight: '600', color: Colors.textPrimary },
   upgradeButton: { backgroundColor: Colors.accent, borderRadius: 8, paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs },
   upgradeText: { color: Colors.background, fontWeight: '700', fontSize: 14 },
   manageLink: { padding: Spacing.md, color: Colors.ocean, fontSize: 14 },
-  permButton: { padding: Spacing.md, backgroundColor: Colors.accent + '22' },
-  permText: { color: Colors.accent, fontSize: 14, fontWeight: '600' },
-  permGranted: { padding: Spacing.md, color: Colors.success, fontSize: 13 },
   version: { textAlign: 'center', color: Colors.textTertiary, fontSize: 12, marginTop: Spacing.xl },
 })

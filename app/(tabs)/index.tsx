@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import {
   ScrollView, View, Text, StyleSheet, RefreshControl,
   ActivityIndicator,
@@ -15,6 +15,7 @@ import { WindDisplay } from '../../features/wind/WindDisplay'
 import { ConditionsGrid } from '../../features/conditions/ConditionsGrid'
 import { SpeciesCard } from '../../features/species/SpeciesCard'
 import { ForecastStrip } from '../../features/forecast/ForecastStrip'
+import { ProWaitlistSheet } from '../../components/ProWaitlistSheet'
 import { scoreSpecies } from '../../features/species/speciesScoring'
 import { detectPhase } from '../../features/tide/tideUtils'
 import { getSpeciesForRegion } from '../../data/species'
@@ -28,6 +29,7 @@ export default function ForecastScreen() {
   const { activeSpot, spots } = useSpots()
   const { data: conditions, isLoading, isError, refetch } = useConditions(activeSpot)
   const { data: forecast } = useForecast(activeSpot)
+  const [showWaitlist, setShowWaitlist] = useState(false)
   const isPro = useSettingsStore(s => s.isPro)
   const tempUnit = useSettingsStore(s => s.tempUnit)
   const lengthUnit = useSettingsStore(s => s.lengthUnit)
@@ -166,7 +168,7 @@ export default function ForecastScreen() {
                 />
               ))}
             </View>
-            <ForecastStrip forecast={forecast} isPro={isPro} onUpgrade={() => router.push('/settings')} />
+            <ForecastStrip forecast={forecast} isPro={isPro} onUpgrade={() => setShowWaitlist(true)} />
           </>
         )}
       </ScrollView>
@@ -177,6 +179,8 @@ export default function ForecastScreen() {
           <ActivityIndicator size="large" color={Colors.accent} />
         </View>
       )}
+
+      <ProWaitlistSheet visible={showWaitlist} onClose={() => setShowWaitlist(false)} />
     </View>
   )
 }
