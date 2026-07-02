@@ -30,6 +30,9 @@ export default function ForecastScreen() {
   const { data: forecast } = useForecast(activeSpot)
   const isPro = useSettingsStore(s => s.isPro)
   const tempUnit = useSettingsStore(s => s.tempUnit)
+  const lengthUnit = useSettingsStore(s => s.lengthUnit)
+  const formatHeight = (ft: number) =>
+    lengthUnit === 'm' ? `${(ft * 0.3048).toFixed(1)} m` : `${ft.toFixed(1)} ft`
 
   const now = new Date()
   const currentHour = now.getHours()
@@ -37,8 +40,6 @@ export default function ForecastScreen() {
   const windPeak = conditions?.windHourly?.length
     ? Math.max(...conditions.windHourly.map(h => h.speed))
     : undefined
-
-  const tideNextHigh = conditions?.tide?.events.find(e => e.type === 'high')
 
   const scoredSpecies = useMemo(() => {
     if (!activeSpot || !conditions) return []
@@ -118,11 +119,11 @@ export default function ForecastScreen() {
               {conditions.tide && (
                 <View style={styles.quickCard}>
                   <Text style={styles.quickLabel}>Tide</Text>
-                  <Text style={styles.quickValue}>{conditions.tide.current.height} ft</Text>
+                  <Text style={styles.quickValue}>{formatHeight(conditions.tide.current.height)}</Text>
                   <Text style={styles.quickSub}>{conditions.tide.current.rising ? '▲ Rising' : '▼ Falling'}</Text>
-                  {tideNextHigh && (
-                    <Text style={styles.quickPeak}>▲ {tideNextHigh.height.toFixed(1)} ft {tideNextHigh.time}</Text>
-                  )}
+                  <Text style={styles.quickPeak}>
+                    {conditions.tide.next.type === 'high' ? '▲' : '▼'} {formatHeight(conditions.tide.next.height)} {conditions.tide.next.time}
+                  </Text>
                 </View>
               )}
               <View style={styles.quickCard}>
