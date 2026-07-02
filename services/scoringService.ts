@@ -8,9 +8,9 @@ import type { SolunarData } from './solunarService'
 import type { SwellData } from '../types/conditions'
 import type { ScoringInputs } from '../features/score/scoringEngine'
 
-const NEUTRAL_PRESSURE: PressureData = { value: 29.92, trend: 'stable', rate: 'normal', unit: 'inHg', readings: [] }
-const NEUTRAL_WIND: WindData = { speed: 8, gusts: 12, direction: 0, directionLabel: 'N', unit: 'mph' }
-const NEUTRAL_SKY: SkyData = { condition: 'Partly Cloudy', rainChance: 20, icon: 'partly-cloudy' }
+export const NEUTRAL_PRESSURE: PressureData = { value: 29.92, trend: 'stable', rate: 'normal', unit: 'inHg', readings: [] }
+export const NEUTRAL_WIND: WindData = { speed: 8, gusts: 12, direction: 0, directionLabel: 'N', unit: 'mph' }
+export const NEUTRAL_SKY: SkyData = { condition: 'Partly Cloudy', rainChance: 20, icon: 'partly-cloudy' }
 
 function parseHourFromTimeString(t: string): number {
   const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i)
@@ -21,13 +21,13 @@ function parseHourFromTimeString(t: string): number {
   return h
 }
 
-function formatHourLabel(h: number): string {
+export function formatHourLabel(h: number): string {
   const period = h < 12 ? 'AM' : 'PM'
   const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h
   return `${displayH}${period}`
 }
 
-function formatHourTime(h: number): string {
+export function formatHourTime(h: number): string {
   const period = h < 12 ? 'AM' : 'PM'
   const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h
   return `${displayH}:00 ${period}`
@@ -42,7 +42,7 @@ function isHourInWindow(hour: number, periods: { start: string; end: string }[])
   return false
 }
 
-function getHourlySolunar(solunar: SolunarData, hour: number): ScoringInputs['solunar'] {
+export function getHourlySolunar(solunar: SolunarData, hour: number): ScoringInputs['solunar'] {
   const inMajor = isHourInWindow(hour, solunar.moon.majorPeriods)
   const inMinor = !inMajor && isHourInWindow(hour, solunar.moon.minorPeriods)
   const nearMajor = !inMajor && !inMinor &&
@@ -73,15 +73,20 @@ function getHourlyWind(nws: NwsData | null, hour: number, now: Date): WindData {
   return { ...nws.wind, speed: period.windSpeed, gusts: period.windSpeed + 5 }
 }
 
+export function skyIconFor(cloudCover: number, rainChance: number): SkyData['icon'] {
+  let icon: SkyData['icon'] = cloudCover > 70 ? 'overcast' :
+    cloudCover > 30 ? 'partly-cloudy' : 'clear'
+  if (rainChance >= 60) icon = 'heavy-rain'
+  else if (rainChance >= 30) icon = 'light-rain'
+  return icon
+}
+
 function getHourlySky(nws: NwsData | null, hour: number, now: Date): SkyData {
   if (!nws) return NEUTRAL_SKY
   const period = findPeriodForHour(nws, hour, now)
   if (!period) return nws.sky
   const rainChance = period.rainChance
-  let icon: SkyData['icon'] = period.cloudCover > 70 ? 'overcast' :
-    period.cloudCover > 30 ? 'partly-cloudy' : 'clear'
-  if (rainChance >= 60) icon = 'heavy-rain'
-  else if (rainChance >= 30) icon = 'light-rain'
+  const icon = skyIconFor(period.cloudCover, rainChance)
   const condMap: Record<SkyData['icon'], SkyData['condition']> = {
     clear: 'Clear', 'partly-cloudy': 'Partly Cloudy', overcast: 'Overcast',
     'light-rain': 'Light Rain', 'heavy-rain': 'Heavy Rain',

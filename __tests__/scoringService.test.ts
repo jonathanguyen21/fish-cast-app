@@ -1,4 +1,4 @@
-import { buildConditionsData } from '../services/scoringService'
+import { buildConditionsData, skyIconFor } from '../services/scoringService'
 import type { NoaaData } from '../services/noaaService'
 import type { NwsData } from '../services/nwsService'
 import type { SolunarData } from '../services/solunarService'
@@ -178,5 +178,15 @@ describe('buildConditionsData', () => {
     const result = buildConditionsData(NOAA, NWS, SWELL, SOLUNAR, SPOT, NOW)
     expect(result.water.estimated).toBe(false)
     expect(result.water.temp).toBe(57)
+  })
+})
+
+describe('skyIconFor', () => {
+  it('maps cloud cover and rain chance to icons', () => {
+    expect(skyIconFor(80, 0)).toBe('overcast')
+    expect(skyIconFor(50, 0)).toBe('partly-cloudy')
+    expect(skyIconFor(10, 0)).toBe('clear')
+    expect(skyIconFor(10, 35)).toBe('light-rain')
+    expect(skyIconFor(10, 65)).toBe('heavy-rain')
   })
 })
