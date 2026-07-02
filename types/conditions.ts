@@ -70,6 +70,21 @@ export interface HourlyWind {
   directionLabel: string
 }
 
+export interface ScoreFactor {
+  key: 'pressure' | 'solunar' | 'tide' | 'wind' | 'waterTemp' | 'sky'
+  label: string
+  points: number
+  max: number
+  note: string
+}
+
+export interface ScoreBreakdown {
+  total: number
+  factors: ScoreFactor[]
+  scaled: boolean
+  capNote: string | null
+}
+
 export interface HourlyScore {
   hour: string
   hourIndex: number
