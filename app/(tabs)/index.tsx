@@ -64,6 +64,15 @@ export default function ForecastScreen() {
       })
   }, [activeSpot, conditions, currentHour, isPro])
 
+  const betterDay = useMemo(() => {
+    if (!conditions || forecast.length < 2) return null
+    const todayIsFine = !conditions.bestWindow.passed && conditions.bestWindow.score >= 55
+    if (todayIsFine) return null
+    // Only recommend days the user can actually open (free: tomorrow only)
+    const visible = isPro ? forecast.slice(1) : forecast.slice(1, 2)
+    return visible.find(d => d.peakScore >= 70) ?? null
+  }, [conditions, forecast, isPro])
+
   if (!activeSpot) {
     return (
       <View style={styles.empty}>
@@ -116,6 +125,17 @@ export default function ForecastScreen() {
               label={conditions.scoreLabel}
               bestWindow={conditions.bestWindow}
             />
+            {betterDay && (
+              <Text
+                style={styles.betterDay}
+                onPress={() => router.push({
+                  pathname: '/detail/day' as any,
+                  params: { data: JSON.stringify(betterDay) },
+                })}
+              >
+                {betterDay.dayLabel} looks better — {betterDay.peakScore} at {betterDay.peakWindow.start}–{betterDay.peakWindow.end} ›
+              </Text>
+            )}
             <ScoreTimeline hourlyScores={conditions.hourlyScores} currentHour={currentHour} />
             <View style={styles.quickStats}>
               <WindDisplay
@@ -244,4 +264,8 @@ const styles = StyleSheet.create({
   section: { marginHorizontal: Spacing.screenPad, marginBottom: Spacing.md },
   sectionTitle: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm },
   estimateNote: { fontSize: 11, color: Colors.textTertiary, marginBottom: Spacing.sm },
+  betterDay: {
+    fontSize: 13, color: Colors.accent, textAlign: 'center',
+    marginTop: -4, marginBottom: Spacing.md,
+  },
 })
