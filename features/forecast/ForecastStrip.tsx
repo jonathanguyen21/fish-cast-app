@@ -12,6 +12,7 @@ interface Props {
 }
 
 export function ForecastStrip({ forecast, isPro, onUpgrade }: Props) {
+  if (isPro && forecast.length === 0) return null
   if (!isPro) {
     return (
       <View style={styles.container}>
