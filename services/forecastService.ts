@@ -79,6 +79,7 @@ export function buildForecastDays(
       hourlyScores,
       tideEvents: tideWeek?.eventsByDate[dateKey] ?? [],
       sun: solunar.sun,
+      moon: solunar.moon,
     })
   }
   return days

@@ -12,6 +12,7 @@ const DAYS: DayForecast[] = Array.from({ length: 7 }, (_, d) => ({
   hourlyScores: [],
   tideEvents: [],
   sun: { sunrise: '5:50 AM', sunset: '8:30 PM' },
+  moon: { phase: 'Waxing Gibbous', illumination: 78, majorPeriods: [], minorPeriods: [] },
 }))
 
 const noop = () => {}

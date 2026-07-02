@@ -3,8 +3,10 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
 import { ScoreDisplay } from '../../features/score/ScoreDisplay'
 import { ScoreTimeline } from '../../features/score/ScoreTimeline'
+import { MoonCard } from '../../features/conditions/MoonCard'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
+import { cardStyles } from '../../theme/cardStyles'
 import type { DayForecast } from '../../types/conditions'
 
 export default function DayDetailScreen() {
@@ -44,9 +46,13 @@ export default function DayDetailScreen() {
           ))}
         </View>
       )}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Sun</Text>
-        <Text style={styles.sunText}>↑ {day.sun.sunrise}    ↓ {day.sun.sunset}</Text>
+      <View style={styles.row}>
+        <MoonCard moon={day.moon} />
+        <View style={cardStyles.card}>
+          <Text style={cardStyles.label}>Sun</Text>
+          <Text style={cardStyles.sub}>↑ {day.sun.sunrise}</Text>
+          <Text style={cardStyles.sub}>↓ {day.sun.sunset}</Text>
+        </View>
       </View>
       <Text style={styles.note}>
         Forecast scores assume neutral pressure — check back on the day for the full picture.
@@ -73,7 +79,10 @@ const styles = StyleSheet.create({
   tideType: { fontSize: 14, color: Colors.textPrimary, width: 80 },
   tideTime: { fontSize: 14, color: Colors.textSecondary, flex: 1 },
   tideHeight: { fontSize: 14, color: Colors.textSecondary },
-  sunText: { fontSize: 14, color: Colors.textSecondary },
+  row: {
+    flexDirection: 'row', gap: Spacing.sm,
+    marginHorizontal: Spacing.screenPad, marginBottom: Spacing.md,
+  },
   note: {
     fontSize: 11, color: Colors.textTertiary, textAlign: 'center',
     marginHorizontal: Spacing.screenPad,

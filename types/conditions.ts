@@ -85,6 +85,7 @@ export interface DayForecast {
   hourlyScores: HourlyScore[]       // 24 entries
   tideEvents: TideEvent[]
   sun: SunData
+  moon: MoonData
 }
 
 export interface ConditionsData {

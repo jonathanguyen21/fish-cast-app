@@ -104,6 +104,15 @@ describe('buildForecastDays', () => {
     expect(days[0].sun.sunrise).toMatch(/\d+:\d{2} (AM|PM)/)
     expect(days[3].sun.sunset).toMatch(/\d+:\d{2} (AM|PM)/)
   })
+
+  it('includes solunar major/minor period data per day', () => {
+    const days = buildForecastDays(NWS, TIDE_WEEK, SALT_SPOT, NOW)
+    expect(days[0].moon.phase).toBeTruthy()
+    expect(typeof days[0].moon.illumination).toBe('number')
+    expect(Array.isArray(days[0].moon.majorPeriods)).toBe(true)
+    expect(Array.isArray(days[0].moon.minorPeriods)).toBe(true)
+    expect(days[3].moon.phase).toBeTruthy()
+  })
 })
 
 describe('fetchForecast', () => {
