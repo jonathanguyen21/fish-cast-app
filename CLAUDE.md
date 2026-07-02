@@ -53,7 +53,7 @@ features/
   score/
     scoringEngine.ts       Pure scoring algorithm (ScoringInputs → 0–100)
     ScoreDisplay.tsx       Animated score dial
-    ScoreTimeline.tsx      Hourly bar chart (5AM–8PM)
+    ScoreTimeline.tsx      24-hour bar chart with Now marker + past-hour dimming
   tide/
     tideUtils.ts           Phase detection, hoursFromTurn, height formatting
     TideChart.tsx          SVG bezier tide curve
@@ -127,9 +127,8 @@ AsyncStorage persistence survives cold opens (maxAge: 24h).
 | NWS | `['nws', spot.id]` | 60 min | 4 hr |
 | Marine | `['marine', spot.id]` | 60 min | 4 hr |
 | Solunar | `['solunar', spot.id, 'YYYY-MM-DD']` | 24 hr | 48 hr |
-| Forecast (Phase 2) | `['forecast', spot.id, 'YYYY-MM-DD']` | 6 hr | 24 hr — stub returns `[]` until Phase 2 lands. |
 
-`isLoading` = any of the 4 queries loading. `isError` = (NOAA AND NWS both fail) OR solunar fails. `data` returns null until solunar resolves (solunar is required).
+`isLoading` = any of the 4 queries loading. `isError` = (NOAA AND NWS both fail) OR solunar fails. `data` returns null until solunar resolves (solunar is required). `useForecast` is a separate hook (not part of the 4 queries above); it currently returns `{ data: [], isLoading: false }` as a stub — Phase 2 will wire it to `['forecast', spot.id, 'YYYY-MM-DD']` with a 6hr staleTime / 24hr gcTime.
 
 ---
 
