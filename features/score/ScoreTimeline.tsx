@@ -9,13 +9,14 @@ import type { HourlyScore } from '../../types/conditions'
 interface Props {
   hourlyScores: HourlyScore[]
   currentHour: number | null
+  title?: string
 }
 
 const BAR_MAX_HEIGHT = 80
 const BAR_WIDTH = 28
 const BAR_SLOT = BAR_WIDTH + 12 // wrapper width + gap, used for auto-scroll math
 
-export function ScoreTimeline({ hourlyScores, currentHour }: Props) {
+export function ScoreTimeline({ hourlyScores, currentHour, title = "Today's Forecast" }: Props) {
   const isPro = useSettingsStore(s => s.isPro)
   const [tooltipVisible, setTooltipVisible] = useState(false)
   const scrollRef = useRef<ScrollView>(null)
@@ -25,7 +26,7 @@ export function ScoreTimeline({ hourlyScores, currentHour }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Today's Forecast</Text>
+      <Text style={styles.sectionTitle}>{title}</Text>
       <ScrollView
         ref={scrollRef}
         horizontal

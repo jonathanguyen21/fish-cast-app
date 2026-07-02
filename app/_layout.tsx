@@ -59,6 +59,10 @@ export default function RootLayout() {
           name="detail/pressure"
           options={{ title: 'Pressure Detail', presentation: 'modal', headerShown: true }}
         />
+        <Stack.Screen
+          name="detail/day"
+          options={{ title: 'Day Forecast', presentation: 'modal', headerShown: true }}
+        />
       </Stack>
     </PersistQueryClientProvider>
   )
