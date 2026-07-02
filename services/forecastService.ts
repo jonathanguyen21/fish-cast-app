@@ -89,5 +89,8 @@ export async function fetchForecast(spot: Spot): Promise<DayForecast[]> {
     fetchNwsData(spot).catch(() => null),
     spot.stationId ? fetchTideWeek(spot.stationId).catch(() => null) : Promise.resolve<TideWeek | null>(null),
   ])
+  if (nws === null && tideWeek === null) {
+    throw new Error('Forecast unavailable — both NWS and NOAA sources failed')
+  }
   return buildForecastDays(nws, tideWeek, spot, new Date())
 }

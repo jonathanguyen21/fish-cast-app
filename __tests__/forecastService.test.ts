@@ -1,7 +1,15 @@
-import { buildForecastDays } from '../services/forecastService'
+import { buildForecastDays, fetchForecast } from '../services/forecastService'
+import { fetchNwsData } from '../services/nwsService'
+import { fetchTideWeek } from '../services/noaaService'
 import type { NwsData } from '../services/nwsService'
 import type { TideWeek } from '../services/noaaService'
 import type { Spot } from '../types/spot'
+
+jest.mock('../services/nwsService')
+jest.mock('../services/noaaService')
+
+const mockFetchNwsData = fetchNwsData as jest.MockedFunction<typeof fetchNwsData>
+const mockFetchTideWeek = fetchTideWeek as jest.MockedFunction<typeof fetchTideWeek>
 
 const SALT_SPOT: Spot = {
   id: 'spot_1', name: 'Bodega Bay', lat: 38.33, lng: -123.05,
@@ -95,5 +103,36 @@ describe('buildForecastDays', () => {
     const days = buildForecastDays(NWS, TIDE_WEEK, SALT_SPOT, NOW)
     expect(days[0].sun.sunrise).toMatch(/\d+:\d{2} (AM|PM)/)
     expect(days[3].sun.sunset).toMatch(/\d+:\d{2} (AM|PM)/)
+  })
+})
+
+describe('fetchForecast', () => {
+  beforeEach(() => {
+    jest.resetAllMocks()
+  })
+
+  it('rejects when both NWS and NOAA sources fail', async () => {
+    mockFetchNwsData.mockRejectedValue(new Error('network down'))
+    mockFetchTideWeek.mockRejectedValue(new Error('network down'))
+    await expect(fetchForecast(SALT_SPOT)).rejects.toThrow()
+  })
+
+  it('does not reject when only one source fails (partial data)', async () => {
+    mockFetchNwsData.mockRejectedValue(new Error('network down'))
+    mockFetchTideWeek.mockResolvedValue(TIDE_WEEK)
+    const days = await fetchForecast(SALT_SPOT)
+    expect(days).toHaveLength(7)
+  })
+
+  it('does not reject for a freshwater spot when NWS succeeds (no tide fetch attempted)', async () => {
+    mockFetchNwsData.mockResolvedValue(NWS)
+    const days = await fetchForecast(FRESH_SPOT)
+    expect(days).toHaveLength(7)
+    expect(mockFetchTideWeek).not.toHaveBeenCalled()
+  })
+
+  it('rejects for a freshwater spot when NWS also fails', async () => {
+    mockFetchNwsData.mockRejectedValue(new Error('network down'))
+    await expect(fetchForecast(FRESH_SPOT)).rejects.toThrow()
   })
 })
