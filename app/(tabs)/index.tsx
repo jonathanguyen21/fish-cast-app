@@ -136,7 +136,7 @@ export default function ForecastScreen() {
     const tidePhase = conditions.tide
       ? detectPhase(conditions.tide.hourlyCurve, currentHour)
       : 'slack'
-    return getSpeciesForRegion(activeSpot.lat, activeSpot.lng)
+    return getSpeciesForRegion(activeSpot.lat, activeSpot.lng, activeSpot.type)
       .map(sp => scoreSpecies(sp, {
         month: now.getMonth() + 1,
         waterTemp: conditions.water.temp,
@@ -324,6 +324,7 @@ export default function ForecastScreen() {
               tidePhasesByHour={conditions.tide ? conditions.tidePhasesByHour : undefined}
               windHourly={conditions.windHourly}
               onUpgrade={() => router.push('/settings')}
+              currentHour={selectedDate === localDateKey(new Date()) ? new Date().getHours() : null}
             />
             <View style={styles.quickStats}>
               <WindDisplay
@@ -355,11 +356,14 @@ export default function ForecastScreen() {
                 <Ionicons name="thermometer-outline" size={18} color={Colors.accent} />
                 <Text style={styles.quickLabel}>Water</Text>
                 <Text style={styles.quickValue}>
+                  {conditions.water.estimated ? '~' : ''}
                   {tempUnit === 'C'
                     ? Math.round((conditions.water.temp - 32) * 5 / 9)
                     : conditions.water.temp}°
                 </Text>
-                <Text style={styles.quickSub}>{tempUnit === 'C' ? '°C' : '°F'}</Text>
+                <Text style={styles.quickSub}>
+                  {tempUnit === 'C' ? '°C' : '°F'}{conditions.water.estimated ? ' · est.' : ''}
+                </Text>
               </View>
             </View>
             {conditions.tide && <TideChart tide={conditions.tide} currentHour={currentHour} />}

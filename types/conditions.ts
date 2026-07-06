@@ -76,6 +76,7 @@ export interface HourlyWind {
 
 export interface HourlyScore {
   hour: string
+  hourIndex: number
   score: number
 }
 
@@ -102,13 +103,13 @@ export interface ScoreBreakdown {
 export interface ConditionsData {
   fishingScore: number
   scoreLabel: string
-  bestWindow: { start: string; end: string; score: number }
+  bestWindow: { start: string; end: string; score: number; passed?: boolean }
   wind: WindData
   windHourly: HourlyWind[]
   airHourly: { hour: number; temp: number; rainChance: number; cloudCover: number }[]
   swellHourly: { hour: number; height: number; period: number; directionLabel: string }[] | null
   tide: TideData | null
-  water: { temp: number; unit: string }
+  water: { temp: number; unit: string; estimated: boolean }
   air: AirData
   pressure: PressureData
   swell: SwellData | null

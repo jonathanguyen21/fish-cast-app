@@ -53,7 +53,7 @@ features/
   score/
     scoringEngine.ts       Pure scoring algorithm (ScoringInputs → 0–100)
     ScoreDisplay.tsx       Animated score dial
-    ScoreTimeline.tsx      Hourly bar chart (5AM–8PM)
+    ScoreTimeline.tsx      Hourly bar chart (all 24h, NOW marker + past dimming when viewing today)
   tide/
     tideUtils.ts           Phase detection, hoursFromTurn, height formatting
     TideChart.tsx          SVG bezier tide curve
@@ -178,7 +178,7 @@ Freshwater spots: tide contributes 0, remaining 80 pts scaled to 100.
 
 Score labels: `Stay home` (0–39) · `Tough but possible` (40–54) · `Decent — pick your window` (55–69) · `Great day to fish` (70–84) · `Drop everything and go` (85–100)
 
-Hourly scores: hours 5–20 (16 entries), best window = 3-hour sliding average.
+Hourly scores: all 24 hours (0–23), each entry carries `hourIndex`; best window = highest 3-hour sliding average starting at or after the current hour when viewing today (`passed: true` when the day is spent), whole-day scan for other dates.
 
 `scoringService.buildConditionsData()` is the wiring layer — it maps raw API data into `ScoringInputs`, calls `calculateScore()` per hour, and assembles `ConditionsData`. Important: `sky.icon` (not `sky.condition`) is passed to `calculateScore`.
 
@@ -194,7 +194,7 @@ Hourly scores: hours 5–20 (16 entries), best window = 3-hour sliding average.
 
 **Pressure trend:** Computed from NOAA `air_pressure` hourly readings — `readings[0]` (newest) vs `readings[3]` (older). Fast = >0.06 inHg/hr, slow = <0.02.
 
-**Region detection:** `detectRegion(lat, lng)` in `data/species/index.ts` — bounding boxes, west coast if lat 32–49 and lng -125 to -114.
+**Region routing:** `getSpeciesForRegion(lat, lng, spotType)` in `data/species/index.ts` — freshwater spots always get `freshwaterSpecies`; saltwater maps via `detectRegion` (west_coast: lat 32–49, lng ≤ -117; southeast incl. Gulf: lat 24–35, lng -98..-75; northeast: lat > 35, lng ≥ -82); uncovered saltwater areas get `[]` and an empty-state note on the Species tab. Water temp fallback (65°F/68°F) is flagged via `water.estimated`.
 
 ---
 

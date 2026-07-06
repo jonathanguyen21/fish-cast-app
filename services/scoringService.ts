@@ -109,7 +109,9 @@ export function buildConditionsData(
   const pressure = (isToday ? noaa?.pressure : null) ?? marine?.pressure ?? NEUTRAL_PRESSURE
   const wind = (isToday ? noaa?.wind : null) ?? nws?.wind ?? NEUTRAL_WIND
   const sky = nws?.sky ?? NEUTRAL_SKY
-  const waterTempValue = (isToday ? noaa?.waterTemp : null) ?? marine?.waterTemp ?? (spot.type === 'saltwater' ? 65 : 68)
+  const liveWaterTemp = (isToday ? noaa?.waterTemp : null) ?? marine?.waterTemp ?? null
+  const waterTempValue = liveWaterTemp ?? (spot.type === 'saltwater' ? 65 : 68)
+  const waterTempEstimated = liveWaterTemp == null
 
   const currentHour = refDate.getHours()
   const hourlyCurve = tide?.hourlyCurve ?? []
@@ -136,7 +138,7 @@ export function buildConditionsData(
 
   const hourlyScores: HourlyScore[] = []
   const tidePhasesByHour: Record<number, TidePhase> = {}
-  for (let h = 5; h <= 20; h++) {
+  for (let h = 0; h < 24; h++) {
     const phase = hourlyCurve.length > 0 ? detectPhase(hourlyCurve, h) : 'slack'
     tidePhasesByHour[h] = phase
     const hourTide = hourlyCurve.length > 0
@@ -147,6 +149,7 @@ export function buildConditionsData(
     const hourSolunar = getHourlySolunar(solunar, h)
     hourlyScores.push({
       hour: formatHourLabel(h),
+      hourIndex: h,
       score: calculateScore({
         pressure: { value: pressure.value, trend: pressure.trend, rate: pressure.rate },
         tide: hourTide,
@@ -159,14 +162,34 @@ export function buildConditionsData(
     })
   }
 
-  const windowResult = findBestThreeHourWindow(hourlyScores.map(h => h.score), 5)
-  const bestWindow = windowResult
-    ? {
-        start: formatHourTime(windowResult.startHour),
-        end: formatHourTime(windowResult.endHour),
-        score: windowResult.avgScore,
-      }
-    : { start: formatHourTime(5), end: formatHourTime(7), score: 0 }
+  // For today, only recommend windows that haven't started yet; past 10 PM
+  // every window has begun, so report the day's peak flagged as passed.
+  const allScores = hourlyScores.map(h => h.score)
+  const wholeDay = findBestThreeHourWindow(allScores, 0)
+  let bestWindow: ConditionsData['bestWindow']
+  if (!wholeDay) {
+    bestWindow = { start: formatHourTime(5), end: formatHourTime(7), score: 0 }
+  } else if (isToday && currentHour > 21) {
+    bestWindow = {
+      start: formatHourTime(wholeDay.startHour),
+      end: formatHourTime(wholeDay.endHour),
+      score: wholeDay.avgScore,
+      passed: true,
+    }
+  } else if (isToday && currentHour > 0) {
+    const future = findBestThreeHourWindow(allScores.slice(currentHour), currentHour)!
+    bestWindow = {
+      start: formatHourTime(future.startHour),
+      end: formatHourTime(future.endHour),
+      score: future.avgScore,
+    }
+  } else {
+    bestWindow = {
+      start: formatHourTime(wholeDay.startHour),
+      end: formatHourTime(wholeDay.endHour),
+      score: wholeDay.avgScore,
+    }
+  }
 
   // Produce hours from the first NWS period through hour 23.
   // NWS only has future forecast data so never backfill past hours.
@@ -202,7 +225,7 @@ export function buildConditionsData(
     })),
     swellHourly: marine?.swellHourly ?? null,
     tide,
-    water: { temp: waterTempValue, unit: '°F' },
+    water: { temp: waterTempValue, unit: '°F', estimated: waterTempEstimated },
     air: nws?.air ?? { temp: 65, high: 70, low: 58, humidity: 70, unit: '°F' },
     pressure,
     swell: marine?.swell ?? null,

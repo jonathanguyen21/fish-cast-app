@@ -11,7 +11,7 @@ function makeConditions(overrides: Partial<ConditionsData> = {}): ConditionsData
     airHourly: [],
     swellHourly: null,
     tide: null,
-    water: { temp: 58, unit: '°F' },
+    water: { temp: 58, unit: '°F', estimated: false },
     air: { temp: 62, high: 67, low: 55, humidity: 72, unit: '°F' },
     pressure: { value: 30.05, trend: 'falling', rate: 'slow', unit: 'inHg', readings: [30.18, 30.05] },
     swell: null,

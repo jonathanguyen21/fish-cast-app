@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
@@ -13,19 +13,13 @@ interface Props {
   tidePhasesByHour?: Record<number, TidePhase>
   windHourly?: { hour: number; speed: number; directionLabel: string }[]
   onUpgrade?: () => void
+  /** Hour 0-23 when viewing today; null/undefined hides the NOW marker and past dimming (future dates). */
+  currentHour?: number | null
 }
 
 const BAR_MAX_HEIGHT = 80
 const BAR_WIDTH = 32
-
-function parseHourNum(hourLabel: string): number {
-  const m = hourLabel.match(/^(\d+)(AM|PM)$/i)
-  if (!m) return -1
-  let h = parseInt(m[1])
-  if (m[2].toUpperCase() === 'PM' && h !== 12) h += 12
-  if (m[2].toUpperCase() === 'AM' && h === 12) h = 0
-  return h
-}
+const BAR_SLOT = BAR_WIDTH + 8 + Spacing.xs // wrapper width + gap, used for auto-scroll math
 
 const TIDE_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   incoming: 'arrow-up-outline',
@@ -39,15 +33,15 @@ const TIDE_LABELS: Record<string, string> = {
   slack: 'Slack',
 }
 
-export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUpgrade }: Props) {
+export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUpgrade, currentHour }: Props) {
   const isPro = useSettingsStore(s => s.isPro)
   const speedUnit = useSettingsStore(s => s.speedUnit)
   const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart')
+  const scrollRef = useRef<ScrollView>(null)
 
   if (hourlyScores.length === 0) return null
   const maxScore = Math.max(...hourlyScores.map(h => h.score))
-  const nowH = new Date().getHours()
-  const currentHourLabel = `${nowH === 0 ? 12 : nowH > 12 ? nowH - 12 : nowH}${nowH < 12 ? 'AM' : 'PM'}`
+  const nowIndex = currentHour ?? null
 
   const convertSpeed = (mph: number) => speedUnit === 'kts' ? Math.round(mph * 0.868) : mph
   const speedSuffix = speedUnit === 'kts' ? 'kt' : 'mph'
@@ -75,14 +69,25 @@ export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUp
       </View>
 
       {viewMode === 'chart' ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.scroll}
+          onContentSizeChange={() => {
+            if (nowIndex !== null) {
+              scrollRef.current?.scrollTo({ x: Math.max(0, (nowIndex - 2) * BAR_SLOT), animated: false })
+            }
+          }}
+        >
           {hourlyScores.map((item) => {
             const barHeight = (item.score / 100) * BAR_MAX_HEIGHT
             const isPeak = item.score === maxScore
-            const isNow = item.hour === currentHourLabel
+            const isNow = nowIndex !== null && item.hourIndex === nowIndex
+            const isPast = nowIndex !== null && item.hourIndex < nowIndex
             const color = scoreColor(item.score)
             return (
-              <View key={item.hour} style={styles.barWrapper}>
+              <View key={item.hour} style={[styles.barWrapper, isPast && styles.pastBar]}>
                 <Text style={[styles.scoreLabel, isPeak && { color }]}>{item.score}</Text>
                 {isNow
                   ? <View style={styles.nowChip}><Text style={styles.nowChipText}>NOW</Text></View>
@@ -94,7 +99,9 @@ export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUp
                     isNow && { borderWidth: 2, borderColor: Colors.accent },
                   ]} />
                 </View>
-                <Text style={[styles.hourLabel, isPeak && styles.hourLabelPeak]}>{item.hour}</Text>
+                <Text style={[styles.hourLabel, isPeak && styles.hourLabelPeak, isNow && styles.hourLabelNow]}>
+                  {isNow ? 'Now' : item.hour}
+                </Text>
               </View>
             )
           })}
@@ -109,14 +116,14 @@ export function ScoreTimeline({ hourlyScores, tidePhasesByHour, windHourly, onUp
           </View>
           <ScrollView style={styles.tableScroll} nestedScrollEnabled>
             {hourlyScores.map((item) => {
-              const hourNum = parseHourNum(item.hour)
-              const isNow = item.hour === currentHourLabel
+              const isNow = nowIndex !== null && item.hourIndex === nowIndex
+              const isPast = nowIndex !== null && item.hourIndex < nowIndex
               const isPeak = item.score === maxScore
               const color = scoreColor(item.score)
-              const tidePhase = tidePhasesByHour && hourNum >= 0 ? tidePhasesByHour[hourNum] : undefined
-              const wind = windHourly?.find(w => w.hour === hourNum)
+              const tidePhase = tidePhasesByHour?.[item.hourIndex]
+              const wind = windHourly?.find(w => w.hour === item.hourIndex)
               return (
-                <View key={item.hour} style={[styles.tableRow, isNow && styles.tableRowNow]}>
+                <View key={item.hour} style={[styles.tableRow, isNow && styles.tableRowNow, isPast && styles.pastBar]}>
                   <View style={[styles.tableCell, styles.tableHour]}>
                     <Text style={[styles.tableHourText, isNow && { color: Colors.accent, fontWeight: '700' }]}>
                       {item.hour}
@@ -191,6 +198,8 @@ const styles = StyleSheet.create({
   nowChipPlaceholder: { height: 14, marginBottom: 2 },
   hourLabel: { fontSize: 10, color: Colors.textTertiary, marginTop: 4 },
   hourLabelPeak: { color: Colors.textSecondary, fontWeight: '600' },
+  hourLabelNow: { color: Colors.accent, fontWeight: '700' },
+  pastBar: { opacity: 0.4 },
   scoreLabel: { fontSize: 10, color: Colors.textTertiary, fontWeight: '600', height: 14 },
   // Table view
   tableContainer: { marginTop: 4 },
