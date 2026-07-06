@@ -75,7 +75,7 @@ store/
 data/
   species/
     westCoast.ts           15 species (fully built out)
-    northeast/southeast/freshwater.ts  Stubs (empty arrays)
+    northeast.ts (11) / southeast.ts (12) / freshwater.ts (11) — fully built out; schema-validated by __tests__/speciesData.test.ts
     index.ts               getSpeciesForRegion(), detectRegion()
 
 types/
@@ -186,6 +186,8 @@ Hourly scores: all 24 hours (0–23), each entry carries `hourIndex`; best windo
 
 `scoringService.buildConditionsData()` is the wiring layer — it maps raw API data into `ScoringInputs`, calls `calculateScore()` per hour, and assembles `ConditionsData`. Important: `sky.icon` (not `sky.condition`) is passed to `calculateScore`.
 
+`calculateScoreBreakdown()` is the source of truth; `calculateScore()` returns its `.total`. Breakdowns (per-factor points + plain-English notes) ride on every `HourlyScore` and `ConditionsData.currentBreakdown`, rendered by `ScoreBreakdownSheet` (free feature).
+
 ---
 
 ## Key Patterns
@@ -198,7 +200,7 @@ Hourly scores: all 24 hours (0–23), each entry carries `hourIndex`; best windo
 
 **Pressure trend:** Computed from NOAA `air_pressure` hourly readings — `readings[0]` (newest) vs `readings[3]` (older). Fast = >0.06 inHg/hr, slow = <0.02.
 
-**Region detection:** `detectRegion(lat, lng)` in `data/species/index.ts` — bounding boxes, west coast if lat 32–49 and lng -125 to -114.
+**Region routing:** `getSpeciesForRegion(lat, lng, spotType)` — freshwater spots always get `freshwaterSpecies`; saltwater maps via `detectRegion` (west_coast: lng<=-117; southeast incl. Gulf: lat 24–35, lng -98..-75; northeast: lat>35, lng>=-82); uncovered saltwater areas get `[]` and an empty-state message.
 
 **Teaser gate:** free users see forecast days 0–1; days 2–6 locked behind ProWaitlistSheet (`FREE_DAYS` const in `ForecastStrip`).
 
@@ -228,4 +230,4 @@ Service tests use `global.fetch = jest.fn()` with fixture JSON from `__tests__/f
 
 ## What's Next (Phase C)
 
-- **Phase C:** Push notifications (background fetch at user's alert threshold), Pro subscription (RevenueCat), species data for northeast/southeast/freshwater regions
+- **Phase C:** Push notifications (background fetch at user's alert threshold), Pro subscription (RevenueCat), AI score explainer (Pro), catch logging
