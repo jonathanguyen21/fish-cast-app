@@ -50,7 +50,7 @@ export default function ForecastScreen() {
     const tidePhase = conditions.tide
       ? detectPhase(conditions.tide.hourlyCurve, currentHour)
       : 'slack'
-    return getSpeciesForRegion(activeSpot.lat, activeSpot.lng)
+    return getSpeciesForRegion(activeSpot.lat, activeSpot.lng, activeSpot.type)
       .map(sp => scoreSpecies(sp, {
         month: now.getMonth() + 1,
         waterTemp: conditions.water.temp,
@@ -185,17 +185,23 @@ export default function ForecastScreen() {
                   Species activity estimated — no live water temp at this station
                 </Text>
               )}
-              {scoredSpecies.map(ss => (
-                <SpeciesCard
-                  key={ss.species.id}
-                  speciesScore={ss}
-                  isPro={isPro}
-                  onPress={() => {
-                    if (ss.species.tier === 'pro' && !isPro) return
-                    router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss) } })
-                  }}
-                />
-              ))}
+              {scoredSpecies.length === 0 ? (
+                <Text style={styles.emptySpecies}>
+                  No species data for this area yet — scores above still apply.
+                </Text>
+              ) : (
+                scoredSpecies.map(ss => (
+                  <SpeciesCard
+                    key={ss.species.id}
+                    speciesScore={ss}
+                    isPro={isPro}
+                    onPress={() => {
+                      if (ss.species.tier === 'pro' && !isPro) return
+                      router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss) } })
+                    }}
+                  />
+                ))
+              )}
             </View>
             <ForecastStrip
               forecast={forecast}
@@ -265,6 +271,7 @@ const styles = StyleSheet.create({
   section: { marginHorizontal: Spacing.screenPad, marginBottom: Spacing.md },
   sectionTitle: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary, marginBottom: Spacing.sm },
   estimateNote: { fontSize: 11, color: Colors.textTertiary, marginBottom: Spacing.sm },
+  emptySpecies: { fontSize: 13, color: Colors.textTertiary, paddingVertical: Spacing.sm },
   betterDay: {
     fontSize: 13, color: Colors.accent, textAlign: 'center',
     marginTop: -4, marginBottom: Spacing.md,
