@@ -51,7 +51,10 @@ export default function SpotsScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyTitle}>No spots yet</Text>
-            <Text style={styles.emptyHint}>Tap + to add your first fishing spot</Text>
+            <Text style={styles.emptyHint}>Save the places you fish to get scores and forecasts for each one</Text>
+            <TouchableOpacity style={styles.addButton} onPress={() => router.push('/spot/new')}>
+              <Text style={styles.addButtonText}>Add your first spot</Text>
+            </TouchableOpacity>
           </View>
         }
         renderItem={({ item }) => (
@@ -80,6 +83,11 @@ const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl },
   emptyTitle: { fontSize: 20, fontWeight: '600', color: Colors.textPrimary },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, marginTop: Spacing.sm },
+  addButton: {
+    backgroundColor: Colors.accent, borderRadius: Spacing.cardRadius,
+    paddingVertical: Spacing.md, paddingHorizontal: Spacing.xl, marginTop: Spacing.lg,
+  },
+  addButtonText: { fontSize: 16, fontWeight: '700', color: Colors.background },
   row: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.card,
     borderRadius: Spacing.cardRadius, padding: Spacing.md,

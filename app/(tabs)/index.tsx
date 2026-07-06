@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import {
   ScrollView, View, Text, StyleSheet, RefreshControl,
-  ActivityIndicator,
+  ActivityIndicator, TouchableOpacity,
 } from 'react-native'
 import { useNetInfo } from '@react-native-community/netinfo'
 import { useSpots } from '../../hooks/useSpots'
@@ -77,7 +77,10 @@ export default function ForecastScreen() {
     return (
       <View style={styles.empty}>
         <Text style={styles.emptyText}>No spot selected</Text>
-        <Text style={styles.emptyHint}>Go to Spots tab to add your first fishing spot</Text>
+        <Text style={styles.emptyHint}>Add a fishing spot to see conditions, tides, and your fishing score</Text>
+        <TouchableOpacity style={styles.addButton} onPress={() => router.push('/spot/new')}>
+          <Text style={styles.addButtonText}>Add your first spot</Text>
+        </TouchableOpacity>
       </View>
     )
   }
@@ -250,6 +253,11 @@ const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl },
   emptyText: { fontSize: 20, fontWeight: '600', color: Colors.textPrimary },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, marginTop: Spacing.sm, textAlign: 'center' },
+  addButton: {
+    backgroundColor: Colors.accent, borderRadius: Spacing.cardRadius,
+    paddingVertical: Spacing.md, paddingHorizontal: Spacing.xl, marginTop: Spacing.lg,
+  },
+  addButtonText: { fontSize: 16, fontWeight: '700', color: Colors.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.screenPad, paddingTop: 56, paddingBottom: Spacing.sm,
