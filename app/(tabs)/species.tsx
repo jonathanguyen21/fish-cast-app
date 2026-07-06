@@ -43,7 +43,7 @@ export default function SpeciesScreen() {
     const tidePhase = conditions.tide
       ? detectPhase(conditions.tide.hourlyCurve, currentHour)
       : 'slack'
-    return getSpeciesForRegion(activeSpot.lat, activeSpot.lng)
+    return getSpeciesForRegion(activeSpot.lat, activeSpot.lng, activeSpot.type)
       .map(sp => scoreSpecies(sp, {
         month: now.getMonth() + 1,
         waterTemp: conditions.water.temp,
@@ -119,6 +119,11 @@ export default function SpeciesScreen() {
 
             <View style={styles.section}>
               <Text style={Typography.sectionTitle}>All Species</Text>
+              {scoredSpecies.length === 0 && (
+                <Text style={styles.emptySpecies}>
+                  No species data for this area yet — the fishing score above still applies.
+                </Text>
+              )}
               {visibleSpecies.map(ss => (
                 <SpeciesCard
                   key={ss.species.id}
@@ -183,4 +188,5 @@ const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.sm },
   emptyText: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center', marginTop: Spacing.sm },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center' },
+  emptySpecies: { fontSize: 13, color: Colors.textTertiary, paddingVertical: Spacing.sm },
 })

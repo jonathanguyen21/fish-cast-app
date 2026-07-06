@@ -67,7 +67,7 @@ export default function SettingsScreen() {
   const [openFeatureAfterAuth, setOpenFeatureAfterAuth] = useState(false)
 
   const { activeSpot } = useSpots()
-  const speciesForRegion = activeSpot ? getSpeciesForRegion(activeSpot.lat, activeSpot.lng) : []
+  const speciesForRegion = activeSpot ? getSpeciesForRegion(activeSpot.lat, activeSpot.lng, activeSpot.type) : []
 
   const [permissionStatus, setPermissionStatus] = useState<string>('undetermined')
   const [showFeatureModal, setShowFeatureModal] = useState(false)

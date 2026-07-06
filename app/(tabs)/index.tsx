@@ -136,7 +136,7 @@ export default function ForecastScreen() {
     const tidePhase = conditions.tide
       ? detectPhase(conditions.tide.hourlyCurve, currentHour)
       : 'slack'
-    return getSpeciesForRegion(activeSpot.lat, activeSpot.lng)
+    return getSpeciesForRegion(activeSpot.lat, activeSpot.lng, activeSpot.type)
       .map(sp => scoreSpecies(sp, {
         month: now.getMonth() + 1,
         waterTemp: conditions.water.temp,
