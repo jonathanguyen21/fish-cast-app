@@ -109,7 +109,9 @@ export function buildConditionsData(
   const pressure = (isToday ? noaa?.pressure : null) ?? marine?.pressure ?? NEUTRAL_PRESSURE
   const wind = (isToday ? noaa?.wind : null) ?? nws?.wind ?? NEUTRAL_WIND
   const sky = nws?.sky ?? NEUTRAL_SKY
-  const waterTempValue = (isToday ? noaa?.waterTemp : null) ?? marine?.waterTemp ?? (spot.type === 'saltwater' ? 65 : 68)
+  const liveWaterTemp = (isToday ? noaa?.waterTemp : null) ?? marine?.waterTemp ?? null
+  const waterTempValue = liveWaterTemp ?? (spot.type === 'saltwater' ? 65 : 68)
+  const waterTempEstimated = liveWaterTemp == null
 
   const currentHour = refDate.getHours()
   const hourlyCurve = tide?.hourlyCurve ?? []
@@ -223,7 +225,7 @@ export function buildConditionsData(
     })),
     swellHourly: marine?.swellHourly ?? null,
     tide,
-    water: { temp: waterTempValue, unit: '°F' },
+    water: { temp: waterTempValue, unit: '°F', estimated: waterTempEstimated },
     air: nws?.air ?? { temp: 65, high: 70, low: 58, humidity: 70, unit: '°F' },
     pressure,
     swell: marine?.swell ?? null,

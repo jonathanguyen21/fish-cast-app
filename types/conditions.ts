@@ -109,7 +109,7 @@ export interface ConditionsData {
   airHourly: { hour: number; temp: number; rainChance: number; cloudCover: number }[]
   swellHourly: { hour: number; height: number; period: number; directionLabel: string }[] | null
   tide: TideData | null
-  water: { temp: number; unit: string }
+  water: { temp: number; unit: string; estimated: boolean }
   air: AirData
   pressure: PressureData
   swell: SwellData | null

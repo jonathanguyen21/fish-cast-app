@@ -356,11 +356,14 @@ export default function ForecastScreen() {
                 <Ionicons name="thermometer-outline" size={18} color={Colors.accent} />
                 <Text style={styles.quickLabel}>Water</Text>
                 <Text style={styles.quickValue}>
+                  {conditions.water.estimated ? '~' : ''}
                   {tempUnit === 'C'
                     ? Math.round((conditions.water.temp - 32) * 5 / 9)
                     : conditions.water.temp}°
                 </Text>
-                <Text style={styles.quickSub}>{tempUnit === 'C' ? '°C' : '°F'}</Text>
+                <Text style={styles.quickSub}>
+                  {tempUnit === 'C' ? '°C' : '°F'}{conditions.water.estimated ? ' · est.' : ''}
+                </Text>
               </View>
             </View>
             {conditions.tide && <TideChart tide={conditions.tide} currentHour={currentHour} />}

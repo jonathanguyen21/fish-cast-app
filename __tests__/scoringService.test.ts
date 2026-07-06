@@ -187,6 +187,32 @@ describe('buildConditionsData', () => {
     })
   })
 
+  it('marks water temp as estimated when neither NOAA nor marine provide it', () => {
+    const noNoaa: NoaaData = { ...NOAA, waterTemp: null }
+    const noMarine: Record<string, MarineDay> = {
+      '2026-05-06': { ...MARINE['2026-05-06'], waterTemp: null },
+    }
+    const result = buildConditionsData(DATE, noNoaa, NWS_BY_DAY, noMarine, SOLUNAR, SPOT, NOW)
+    expect(result.water.estimated).toBe(true)
+    expect(result.water.temp).toBe(65) // saltwater fallback
+  })
+
+  it('marks water temp as real when a live source provides it', () => {
+    const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
+    expect(result.water.estimated).toBe(false)
+    expect(result.water.temp).toBeCloseTo(57.2, 1)
+  })
+
+  it('uses the freshwater fallback and marks it estimated for freshwater spots with no data', () => {
+    const freshwaterSpot: Spot = {
+      id: 'spot_fw', name: 'Lake Tahoe', lat: 39.10, lng: -120.04,
+      type: 'freshwater', stationId: null, region: 'west_coast',
+    }
+    const result = buildConditionsData(DATE, null, NWS_BY_DAY, null, SOLUNAR, freshwaterSpot, NOW)
+    expect(result.water.estimated).toBe(true)
+    expect(result.water.temp).toBe(68)
+  })
+
   it('falls back to NEUTRAL_PRESSURE when both noaa and marine pressure are null', () => {
     const noNoaa: NoaaData = { ...NOAA, pressure: null }
     const noMarine: Record<string, MarineDay> = {

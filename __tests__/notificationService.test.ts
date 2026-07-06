@@ -19,7 +19,7 @@ function makeConditions(score: number): ConditionsData {
     airHourly: [],
     swellHourly: null,
     tide: null,
-    water: { temp: 60, unit: '°F' },
+    water: { temp: 60, unit: '°F', estimated: false },
     air: { temp: 62, high: 67, low: 55, humidity: 72, unit: '°F' },
     pressure: { value: 30.05, trend: 'stable', rate: 'normal', unit: 'inHg', readings: [] },
     swell: null,

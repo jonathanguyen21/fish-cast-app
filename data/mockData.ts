@@ -33,7 +33,7 @@ export const MOCK_CONDITIONS: ConditionsData = {
                   4.9,4.5,3.8,3.0,2.2,1.5,1.0,0.8,0.9,1.3,1.9,2.7],
     phase: 'incoming',
   },
-  water: { temp: 57, unit: '°F' },
+  water: { temp: 57, unit: '°F', estimated: false },
   air: { temp: 62, high: 67, low: 52, humidity: 78, unit: '°F' },
   pressure: { value: 30.02, trend: 'falling', rate: 'slow', unit: 'inHg', readings: [] },
   swell: { height: 4.5, period: 12, direction: 290, directionLabel: 'WNW', unit: 'ft' },
