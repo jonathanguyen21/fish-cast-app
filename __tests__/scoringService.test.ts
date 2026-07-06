@@ -134,9 +134,13 @@ describe('buildConditionsData', () => {
     expect(result.pressure.value).toBeCloseTo(29.85, 2)
   })
 
-  it('returns 16 hourly scores (5AM to 8PM)', () => {
+  it('returns 24 hourly scores with hourIndex (12AM to 11PM)', () => {
     const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
-    expect(result.hourlyScores).toHaveLength(16)
+    expect(result.hourlyScores).toHaveLength(24)
+    expect(result.hourlyScores[0].hour).toBe('12AM')
+    expect(result.hourlyScores[0].hourIndex).toBe(0)
+    expect(result.hourlyScores[23].hour).toBe('11PM')
+    expect(result.hourlyScores[23].hourIndex).toBe(23)
   })
 
   it('includes bestWindow with start, end, score', () => {
@@ -144,6 +148,43 @@ describe('buildConditionsData', () => {
     expect(result.bestWindow.start).toBeTruthy()
     expect(result.bestWindow.end).toBeTruthy()
     expect(result.bestWindow.score).toBeGreaterThanOrEqual(0)
+  })
+
+  it('scans the whole day for bestWindow on non-today dates (no passed flag)', () => {
+    const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
+    expect(result.bestWindow.passed).toBeUndefined()
+  })
+
+  describe('future-aware best window when viewing today', () => {
+    const d = new Date()
+    const TODAY = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const noaaToday: NoaaData = { ...NOAA, tideByDay: { [TODAY]: NOAA.tideByDay!['2026-05-06'] } }
+    const nwsToday: Record<string, NwsData> = { [TODAY]: NWS }
+    const marineToday: Record<string, MarineDay> = { [TODAY]: MARINE['2026-05-06'] }
+
+    const parseStart = (start: string): number => {
+      const m = start.match(/(\d+):00 (AM|PM)/)!
+      let h = parseInt(m[1], 10)
+      if (m[2] === 'PM' && h !== 12) h += 12
+      if (m[2] === 'AM' && h === 12) h = 0
+      return h
+    }
+
+    it('bestWindow starts at or after the current hour', () => {
+      const at2pm = new Date()
+      at2pm.setHours(14, 0, 0, 0)
+      const result = buildConditionsData(TODAY, noaaToday, nwsToday, marineToday, SOLUNAR, SPOT, at2pm)
+      expect(result.bestWindow.passed).toBeUndefined()
+      expect(parseStart(result.bestWindow.start)).toBeGreaterThanOrEqual(14)
+    })
+
+    it('flags bestWindow as passed late at night and reports the day peak', () => {
+      const at11pm = new Date()
+      at11pm.setHours(23, 0, 0, 0)
+      const result = buildConditionsData(TODAY, noaaToday, nwsToday, marineToday, SOLUNAR, SPOT, at11pm)
+      expect(result.bestWindow.passed).toBe(true)
+      expect(result.bestWindow.score).toBeGreaterThan(0)
+    })
   })
 
   it('falls back to NEUTRAL_PRESSURE when both noaa and marine pressure are null', () => {
@@ -177,10 +218,10 @@ describe('buildConditionsData', () => {
     expect(result.swellHourly![0]).toHaveProperty('period')
   })
 
-  it('populates tidePhasesByHour with 16 keys for saltwater', () => {
+  it('populates tidePhasesByHour with all 24 hours for saltwater', () => {
     const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
     const keys = Object.keys(result.tidePhasesByHour).map(Number).sort((a, b) => a - b)
-    expect(keys).toEqual([5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+    expect(keys).toEqual(Array.from({ length: 24 }, (_, i) => i))
     for (const phase of Object.values(result.tidePhasesByHour)) {
       expect(['incoming', 'outgoing', 'slack']).toContain(phase)
     }

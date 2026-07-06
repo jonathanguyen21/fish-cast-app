@@ -6,12 +6,12 @@ import type { HourlyScore } from '../types/conditions'
 import type { TidePhase } from '../features/tide/tideUtils'
 
 const SCORES: HourlyScore[] = [
-  { hour: '5AM', score: 50 }, { hour: '6AM', score: 60 }, { hour: '7AM', score: 75 },
-  { hour: '8AM', score: 80 }, { hour: '9AM', score: 72 }, { hour: '10AM', score: 65 },
-  { hour: '11AM', score: 60 }, { hour: '12PM', score: 55 }, { hour: '1PM', score: 50 },
-  { hour: '2PM', score: 48 }, { hour: '3PM', score: 45 }, { hour: '4PM', score: 44 },
-  { hour: '5PM', score: 46 }, { hour: '6PM', score: 50 }, { hour: '7PM', score: 55 },
-  { hour: '8PM', score: 52 },
+  { hour: '5AM', hourIndex: 5, score: 50 }, { hour: '6AM', hourIndex: 6, score: 60 }, { hour: '7AM', hourIndex: 7, score: 75 },
+  { hour: '8AM', hourIndex: 8, score: 80 }, { hour: '9AM', hourIndex: 9, score: 72 }, { hour: '10AM', hourIndex: 10, score: 65 },
+  { hour: '11AM', hourIndex: 11, score: 60 }, { hour: '12PM', hourIndex: 12, score: 55 }, { hour: '1PM', hourIndex: 13, score: 50 },
+  { hour: '2PM', hourIndex: 14, score: 48 }, { hour: '3PM', hourIndex: 15, score: 45 }, { hour: '4PM', hourIndex: 16, score: 44 },
+  { hour: '5PM', hourIndex: 17, score: 46 }, { hour: '6PM', hourIndex: 18, score: 50 }, { hour: '7PM', hourIndex: 19, score: 55 },
+  { hour: '8PM', hourIndex: 20, score: 52 },
 ]
 
 const TIDE_PHASES: Record<number, TidePhase> = {
@@ -138,5 +138,27 @@ describe('ScoreTimeline', () => {
     expect(queryByText('Time')).toBeTruthy()
     fireEvent.press(getByTestId('timeline-chart-toggle'))
     expect(queryByText('Time')).toBeNull()
+  })
+
+  it('shows NOW marker at currentHour', () => {
+    const { getByText } = render(
+      <ScoreTimeline hourlyScores={SCORES} currentHour={14} onUpgrade={() => {}} />
+    )
+    expect(getByText('NOW')).toBeTruthy()
+    expect(getByText('Now')).toBeTruthy()
+  })
+
+  it('shows no NOW marker when currentHour is null (future date)', () => {
+    const { queryByText } = render(
+      <ScoreTimeline hourlyScores={SCORES} currentHour={null} onUpgrade={() => {}} />
+    )
+    expect(queryByText('NOW')).toBeNull()
+  })
+
+  it('shows no NOW marker when currentHour is outside the rendered hours', () => {
+    const { queryByText } = render(
+      <ScoreTimeline hourlyScores={SCORES} currentHour={2} onUpgrade={() => {}} />
+    )
+    expect(queryByText('NOW')).toBeNull()
   })
 })

@@ -324,6 +324,7 @@ export default function ForecastScreen() {
               tidePhasesByHour={conditions.tide ? conditions.tidePhasesByHour : undefined}
               windHourly={conditions.windHourly}
               onUpgrade={() => router.push('/settings')}
+              currentHour={selectedDate === localDateKey(new Date()) ? new Date().getHours() : null}
             />
             <View style={styles.quickStats}>
               <WindDisplay

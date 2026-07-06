@@ -19,7 +19,7 @@ const GRAD_END = '#48cae4'
 interface Props {
   score: number
   label: string
-  bestWindow: { start: string; end: string; score: number }
+  bestWindow: { start: string; end: string; score: number; passed?: boolean }
   breakdown?: {
     pressure: number
     solunar: number
@@ -104,7 +104,7 @@ export function ScoreDisplay({ score, label, bestWindow, breakdown }: Props) {
       <Text style={styles.scoreLabel} numberOfLines={2}>{label}</Text>
 
       <View style={styles.bestWindowRow}>
-        <Text style={styles.bestWindowLabel}>Best window</Text>
+        <Text style={styles.bestWindowLabel}>{bestWindow.passed ? 'Peak today was' : 'Best window'}</Text>
         <View style={styles.bestWindowPill}>
           <Text style={styles.bestWindowTime}>{bestWindow.start}–{bestWindow.end}</Text>
           <Text style={[styles.bestWindowScore, { color: scoreColor(bestWindow.score) }]}> · {bestWindow.score}</Text>
