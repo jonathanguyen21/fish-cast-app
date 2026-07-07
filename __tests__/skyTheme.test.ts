@@ -68,6 +68,12 @@ describe('getSkyTheme', () => {
     expect(getSkyTheme(NIGHT, LAT, LNG, 'clear').isLight).toBe(false)
   })
 
+  it('falls back to the clear palette when icon is undefined', () => {
+    const clear = getSkyTheme(NOON, LAT, LNG, 'clear')
+    const undef = getSkyTheme(NOON, LAT, LNG, undefined)
+    expect(undef.gradientStops).toEqual(clear.gradientStops)
+  })
+
   it('derives a near-black tinted dark pair that differs by state', () => {
     const day = getSkyTheme(NOON, LAT, LNG, 'clear')
     const night = getSkyTheme(NIGHT, LAT, LNG, 'clear')

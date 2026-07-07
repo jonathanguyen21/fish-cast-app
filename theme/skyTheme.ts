@@ -6,6 +6,7 @@ export type SkyIcon = SkyData['icon']
 
 const DEG = Math.PI / 180
 
+// Requires 6-digit `#RRGGBB` hex inputs (no shorthand, no alpha channel).
 export function mixHex(a: string, b: string, t: number): string {
   const pa = parseInt(a.slice(1), 16)
   const pb = parseInt(b.slice(1), 16)
@@ -60,9 +61,9 @@ const ACCENT: Record<SkyState, string> = {
   day: '#FFF3DC', goldenPM: '#FFD9A0', dusk: '#FFD9A0',
 }
 
-export function getSkyTheme(date: Date, lat: number, lng: number, icon: SkyIcon): SkyTheme {
+export function getSkyTheme(date: Date, lat: number, lng: number, icon: SkyIcon | undefined): SkyTheme {
   const state = getSkyState(date, lat, lng)
-  const mute = MUTE[icon]
+  const mute = MUTE[icon as SkyIcon] ?? 0
   const gradientStops = BASE[state].map(stop => mixHex(stop, GRAY[state], mute))
   const mid = BASE[state][1]
   return {

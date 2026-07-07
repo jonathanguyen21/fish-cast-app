@@ -30,15 +30,16 @@ const GO_FLAVOR: Partial<Record<SkyState, string>> = {
 export function getVerdict(i: {
   bite: number
   comfort: number
+  overall: number
   skyState: SkyState
   betterDay?: { label: string; score: number } | null
 }): Verdict {
-  if (i.bite >= 70 && i.comfort >= 60) {
+  if (i.bite >= 70 && i.comfort >= 60 && i.overall >= 55) {
     const flavor = GO_FLAVOR[i.skyState]
     return { phrase: flavor ? `Go — ${flavor}` : 'Go.', sub: null }
   }
-  if (i.bite >= 70) return { phrase: 'Biting — but dress for it', sub: null }
-  if (i.bite >= 45) return { phrase: 'Decent — pick your window', sub: null }
+  if (i.bite >= 70 && i.overall >= 45) return { phrase: 'Biting — but dress for it', sub: null }
+  if (i.bite >= 45 && i.overall >= 45) return { phrase: 'Decent — pick your window', sub: null }
   return {
     phrase: 'Save it for tomorrow',
     sub: i.betterDay ? `${i.betterDay.label} looks great — ${i.betterDay.score}` : null,

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated'
@@ -18,22 +18,37 @@ const STARS = Array.from({ length: 28 }, (_, i) => ({
 }))
 
 export function SkyBackground({ theme, children }: Props) {
-  const fade = useSharedValue(0)
+  const fade = useSharedValue(1)
   const key = theme.gradientStops.join(',')
+  const [current, setCurrent] = useState(theme.gradientStops)
+  const [prev, setPrev] = useState<string[] | null>(null)
 
   useEffect(() => {
+    if (key === current.join(',')) return
+    setPrev(current)
+    setCurrent(theme.gradientStops)
     fade.value = 0
     fade.value = withTiming(1, { duration: 600 })
+    // current/setCurrent intentionally excluded — key derives from theme.gradientStops,
+    // and including current would re-run this effect on the setCurrent below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, fade])
 
   const fadeStyle = useAnimatedStyle(() => ({ opacity: fade.value }))
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: theme.gradientStops[0] }]}>
+      {prev && (
+        <LinearGradient
+          testID="sky-gradient-prev"
+          colors={prev as [string, string, ...string[]]}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
       <Animated.View style={[StyleSheet.absoluteFill, fadeStyle]}>
         <LinearGradient
           testID="sky-gradient"
-          colors={theme.gradientStops as [string, string, ...string[]]}
+          colors={current as [string, string, ...string[]]}
           style={StyleSheet.absoluteFill}
         />
         {theme.state === 'night' && STARS.map((s, i) => (

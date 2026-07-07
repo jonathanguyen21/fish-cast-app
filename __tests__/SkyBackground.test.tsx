@@ -23,4 +23,12 @@ describe('SkyBackground', () => {
     const night = render(<SkyBackground theme={NIGHT}><Text>x</Text></SkyBackground>)
     expect(night.queryAllByTestId('sky-star').length).toBeGreaterThan(10)
   })
+  it('crossfades: both layers present after a theme change so nothing goes transparent', () => {
+    const { rerender, getByTestId } = render(
+      <SkyBackground theme={DAY}><Text>x</Text></SkyBackground>
+    )
+    rerender(<SkyBackground theme={NIGHT}><Text>x</Text></SkyBackground>)
+    expect(getByTestId('sky-gradient')).toBeTruthy()
+    expect(getByTestId('sky-gradient-prev')).toBeTruthy()
+  })
 })

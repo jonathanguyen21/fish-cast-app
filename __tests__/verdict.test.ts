@@ -25,24 +25,41 @@ describe('computeAxes', () => {
 
 describe('getVerdict', () => {
   it('high bite + high comfort → Go with golden-hour flavor', () => {
-    expect(getVerdict({ bite: 80, comfort: 70, skyState: 'goldenPM' }).phrase).toBe('Go — golden hour feed')
-    expect(getVerdict({ bite: 80, comfort: 70, skyState: 'goldenAM' }).phrase).toBe('Go — dawn bite is on')
-    expect(getVerdict({ bite: 80, comfort: 70, skyState: 'night' }).phrase).toBe('Go — night bite is live')
-    expect(getVerdict({ bite: 80, comfort: 70, skyState: 'day' }).phrase).toBe('Go.')
+    expect(getVerdict({ bite: 80, comfort: 70, overall: 75, skyState: 'goldenPM' }).phrase).toBe('Go — golden hour feed')
+    expect(getVerdict({ bite: 80, comfort: 70, overall: 75, skyState: 'goldenAM' }).phrase).toBe('Go — dawn bite is on')
+    expect(getVerdict({ bite: 80, comfort: 70, overall: 75, skyState: 'night' }).phrase).toBe('Go — night bite is live')
+    expect(getVerdict({ bite: 80, comfort: 70, overall: 75, skyState: 'day' }).phrase).toBe('Go.')
   })
   it('boundary: comfort 60 goes, 59 dresses for it', () => {
-    expect(getVerdict({ bite: 70, comfort: 60, skyState: 'day' }).phrase).toBe('Go.')
-    expect(getVerdict({ bite: 70, comfort: 59, skyState: 'day' }).phrase).toBe('Biting — but dress for it')
+    expect(getVerdict({ bite: 70, comfort: 60, overall: 75, skyState: 'day' }).phrase).toBe('Go.')
+    expect(getVerdict({ bite: 70, comfort: 59, overall: 65, skyState: 'day' }).phrase).toBe('Biting — but dress for it')
   })
   it('mid bite → pick your window', () => {
-    expect(getVerdict({ bite: 55, comfort: 90, skyState: 'day' }).phrase).toBe('Decent — pick your window')
+    expect(getVerdict({ bite: 55, comfort: 90, overall: 65, skyState: 'day' }).phrase).toBe('Decent — pick your window')
   })
   it('low bite → save it, with better-day handoff in sub', () => {
-    const v = getVerdict({ bite: 30, comfort: 90, skyState: 'day', betterDay: { label: 'Wednesday evening', score: 84 } })
+    const v = getVerdict({ bite: 30, comfort: 90, overall: 30, skyState: 'day', betterDay: { label: 'Wednesday evening', score: 84 } })
     expect(v.phrase).toBe('Save it for tomorrow')
     expect(v.sub).toBe('Wednesday evening looks great — 84')
   })
   it('low bite without a better day has no sub', () => {
-    expect(getVerdict({ bite: 30, comfort: 90, skyState: 'day' }).sub).toBeNull()
+    expect(getVerdict({ bite: 30, comfort: 90, overall: 30, skyState: 'day' }).sub).toBeNull()
+  })
+
+  describe('overall respects the engine safety caps', () => {
+    it('heavy-rain cap (overall 45) downgrades a high bite/comfort combo to dress-for-it', () => {
+      expect(getVerdict({ bite: 100, comfort: 60, overall: 45, skyState: 'day' }).phrase)
+        .toBe('Biting — but dress for it')
+    })
+    it('dangerous-wind cap (overall 35) downgrades a high bite/comfort combo to save-it', () => {
+      expect(getVerdict({ bite: 100, comfort: 60, overall: 35, skyState: 'day' }).phrase)
+        .toBe('Save it for tomorrow')
+    })
+    it('bite/overall boundary at 45: 45 picks a window, 44 saves it', () => {
+      expect(getVerdict({ bite: 45, comfort: 90, overall: 45, skyState: 'day' }).phrase)
+        .toBe('Decent — pick your window')
+      expect(getVerdict({ bite: 44, comfort: 90, overall: 45, skyState: 'day' }).phrase)
+        .toBe('Save it for tomorrow')
+    })
   })
 })
