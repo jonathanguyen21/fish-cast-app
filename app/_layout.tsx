@@ -2,6 +2,7 @@ import React from 'react'
 import { View, Text, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useFonts } from 'expo-font'
+import { Manrope_500Medium, Manrope_700Bold, Manrope_800ExtraBold } from '@expo-google-fonts/manrope'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
@@ -63,7 +64,11 @@ const asyncStoragePersister = createAsyncStoragePersister({
 })
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({})
+  const [loaded, error] = useFonts({
+    Manrope_500Medium,
+    Manrope_700Bold,
+    Manrope_800ExtraBold,
+  })
   const setSession = useAuthStore(s => s.setSession)
   const userId = useAuthStore(s => s.session)?.user.id ?? null
   const spots = useSpotsStore(s => s.spots)
