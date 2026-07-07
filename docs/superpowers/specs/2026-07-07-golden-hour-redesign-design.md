@@ -21,7 +21,7 @@ FishCast's answer:
 - **Private by design** — no feed, no community, nobody sees your spots.
 - **Experience as differentiation** — the living-sky design is the AllTrails playbook: win a dated category on experience quality.
 
-Honest limits: solunar is folk-science-adjacent (explainability keeps the score credible); species data is editorial rather than crowd-sourced (the shelved catch log is the long-term answer — "your spot's learned pattern"); data sources are US-only.
+Honest limits: solunar is folk-science-adjacent (explainability keeps the score credible); species *behavior* data is editorial rather than crowd-sourced — mitigated by the dynamic local roster (OBIS/GBIF occurrence data decides which species show per spot), with the shelved catch log as the long-term answer ("your spot's learned pattern"); condition data sources are US-only.
 
 **Identity:** Robinhood/Copilot boldness × AllTrails outdoors. Direction chosen from three mockups: **Golden Hour** — dynamic time-of-day + weather-reactive sky, glassy cards, bold numerals.
 
@@ -79,7 +79,7 @@ Full dynamic sky (current state). Header: "When should you go?" + best-day callo
 
 ### Species
 
-Calm tinted-dark. Keeps: Active Right Now (top 3), All Species list with score badges, per-species hourly bite chart, species detail screen. Restyle only — no logic changes. Empty/uncovered-region states keep existing copy.
+Calm tinted-dark. Keeps: Active Right Now (top 3), All Species list with score badges, per-species hourly bite chart, species detail screen. Restyle only — no scoring-logic changes. Empty/uncovered-region states keep existing copy. Gains the dynamic local roster (below) as the final implementation phase.
 
 ### Spots
 
@@ -106,6 +106,19 @@ SkyState = night | dawn | goldenAM | day | goldenPM | dusk
 - **Tinted-dark derivation** for Species/Spots: current sky's dominant hue mixed at low saturation into a near-black base — one function, same module.
 - **Rendering:** `expo-linear-gradient`, crossfaded with `reanimated` on state change. Night adds a lightweight starfield (absolutely-positioned dots, no canvas). V1 is gradients only — no shaders, no Skia, no images.
 - Fully unit-testable: (time, location, icon) → expected state and palette.
+
+---
+
+## Dynamic Local Species Roster (final phase — ships after the redesign)
+
+**Principle: dynamic roster, editorial brains.** The curated species profiles (behavior, tide/time preferences, tips) stay — they power scoring and are the moat. What becomes dynamic is *which* species appear at a spot and *in what order*, driven by real biodiversity occurrence records.
+
+- **Service:** `services/speciesOccurrenceService.ts` — `fetchLocalAbundance(spot) → Record<scientificName, AbundanceTier>`. Saltwater spots query **OBIS** (`api.obis.org` checklist within ~40 km of the spot); freshwater spots query **GBIF** occurrence counts. Both are free, no-auth JSON APIs called with plain `fetch`, matching the existing service pattern. Join key: the `scientific_name` field every species record already carries.
+- **Tiers:** relative record counts → `common | occasional | rare | not-recorded`.
+- **Display:** abundance chip on species cards ("Common here" / "Occasional"); list ranked by tier weight, then live score. `not-recorded` species collapse under an "Also in this region" section rather than disappearing.
+- **Honesty:** chips are labeled as *observed near here* (public biodiversity records) — observation data is popularity-biased, so no fake precision.
+- **Caching:** TanStack Query keyed by `spot.id`, staleTime 7 days, gcTime 30 days, AsyncStorage-persisted (occurrence data changes slowly).
+- **Fallback:** API failure or zero records → current static region list, no chips. The feature can never make the tab worse than today.
 
 ---
 
@@ -147,7 +160,8 @@ Plus one light haptic (`expo-haptics`) when the verdict lands. Nothing else — 
 
 ## Testing
 
-- **Pure units:** sky engine (time/location/icon → state + palette), verdict mapping (bite/comfort/overall → phrase), bite/comfort grouping (breakdown → axes).
+- **Pure units:** sky engine (time/location/icon → state + palette), verdict mapping (bite/comfort/overall → phrase), bite/comfort grouping (breakdown → axes), abundance tiering + roster ranking (counts → tiers → sort order).
+- **Service tests:** `speciesOccurrenceService` with mocked `fetch` + OBIS/GBIF fixture JSON, matching the existing service-test pattern.
 - **Existing suite:** all current tests stay green where logic is untouched; scoring engine internals do not change.
 - **Component tests:** Today hero (verdict renders per state), Week day cards (best-day pin, Pro lock), Conditions screen sections.
 - **Device verification:** Expo Go over the established ngrok tunnel; check dawn/day/dusk/night states by mocking the sky engine clock.
