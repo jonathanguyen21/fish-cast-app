@@ -54,6 +54,7 @@ features/
     scoringEngine.ts       Pure scoring algorithm (ScoringInputs → 0–100)
     ScoreDisplay.tsx       Animated score dial
     ScoreTimeline.tsx      Hourly bar chart (all 24h, NOW marker + past dimming when viewing today)
+    verdict.ts             computeAxes(breakdown, spotType) → bite/comfort; getVerdict() → phrase
   tide/
     tideUtils.ts           Phase detection, hoursFromTurn, height formatting
     TideChart.tsx          SVG bezier tide curve
@@ -67,6 +68,7 @@ features/
     SpeciesCard.tsx        Row with score badge + Pro lock
     SpeciesDetail.tsx      Full detail view
   forecast/ForecastStrip.tsx  7-day strip (Pro gate)
+  sky/SkyBackground.tsx    Animated sky gradient + night starfield (Golden Hour)
 
 store/
   spotsStore.ts            spots[], activeSpot, AsyncStorage persisted
@@ -88,6 +90,8 @@ theme/
   colors.ts                Dark ocean palette (Colors.background, Colors.accent, etc.)
   spacing.ts               Spacing constants (Spacing.md, Spacing.screenPad, etc.)
   typography.ts            Text style presets
+  skyTheme.ts              getSkyTheme(date, lat, lng, icon) — time+weather → gradient palette, tinted dark
+  tokens.ts                Golden Hour tokens: Radii, Glass, Accent, Fonts (Manrope), Type scale
 
 __tests__/
   fixtures/                10 JSON fixture files (NOAA, NWS, Open-Meteo responses)
@@ -259,5 +263,6 @@ await browser.close()
 
 - **Phase B2:** `useForecast` / `forecastService.ts` — 7-day forecast from NWS daily gridpoints (now implemented)
 - **Phase C:** Push notifications (background fetch at user's alert threshold), Pro subscription (RevenueCat), species data for northeast/southeast regions
+- **Golden Hour redesign in progress:** spec at `docs/superpowers/specs/2026-07-07-golden-hour-redesign-design.md`. Plan 1 (foundation: sky engine, tokens, verdict) is built; Plans 2–4 (Today/Week screens, Species/Spots/Conditions, dynamic species roster) restyle the app to consume it. Until Plan 2 lands, no screen renders the new system.
 
 `forecastService.ts` is implemented. `useForecast.ts` uses real TanStack Query.
