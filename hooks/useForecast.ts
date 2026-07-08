@@ -7,6 +7,7 @@ interface UseForecastResult {
   data: DayForecast[] | undefined
   isLoading: boolean
   isError: boolean
+  isRefetching: boolean
   refetch: () => void
 }
 
@@ -20,5 +21,11 @@ export function useForecast(spot: Spot | null): UseForecastResult {
     retry: 2,
   })
 
-  return { data: query.data, isLoading: query.isLoading, isError: query.isError, refetch: query.refetch }
+  return {
+    data: query.data,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    isRefetching: query.isRefetching,
+    refetch: query.refetch,
+  }
 }

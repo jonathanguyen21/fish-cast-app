@@ -13,8 +13,6 @@ import { Glass, Radii, Type, Accent } from '../../theme/tokens'
 import { Colors } from '../../theme/colors'
 import type { SkyIcon } from '../../theme/skyTheme'
 
-const FREE_DAYS = 2
-
 const SKY_WORD: Record<string, string> = {
   'clear': 'clear',
   'partly-cloudy': 'partly cloudy',
@@ -30,18 +28,25 @@ function localDateKey(d: Date): string {
   return `${y}-${m}-${day}`
 }
 
+function nextDayKey(dateKey: string): string {
+  const d = new Date(dateKey + 'T12:00:00')
+  d.setDate(d.getDate() + 1)
+  return localDateKey(d)
+}
+
 export default function WeekScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { activeSpot } = useSpots()
   const isPro = useSettingsStore(s => s.isPro)
   const tempUnit = useSettingsStore(s => s.tempUnit)
-  const { data: forecast, isLoading, isError, refetch } = useForecast(activeSpot)
+  const { data: forecast, isLoading, isError, isRefetching, refetch } = useForecast(activeSpot)
 
   const todayKey = localDateKey(new Date())
+  const tomorrowKey = nextDayKey(todayKey)
   const skyTheme = useSkyTheme(
     activeSpot ? { lat: activeSpot.lat, lng: activeSpot.lng } : null,
-    forecast?.[0]?.skyIcon,
+    forecast?.find(d => d.date === todayKey)?.skyIcon,
     todayKey,
   )
   const tint = skyTheme.textTint
@@ -56,7 +61,7 @@ export default function WeekScreen() {
     <SkyBackground theme={skyTheme}>
       <ScrollView
         contentContainerStyle={{ paddingBottom: 32 }}
-        refreshControl={<RefreshControl refreshing={!!forecast && isLoading} onRefresh={refetch} tintColor={Colors.accent} />}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Colors.accent} />}
       >
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <Text style={[Type.secondary, { color: tint, opacity: 0.75 }]}>This week</Text>
@@ -74,7 +79,7 @@ export default function WeekScreen() {
           </View>
         )}
 
-        {activeSpot && isError && !forecast && (
+        {activeSpot && !isLoading && (isError || (forecast != null && forecast.length === 0)) && (
           <View style={styles.stateBox}>
             <Text style={[Type.body, { color: tint, opacity: 0.85 }]}>Could not load the forecast</Text>
             <TouchableOpacity style={styles.retry} onPress={() => refetch()}>
@@ -91,8 +96,8 @@ export default function WeekScreen() {
           </View>
         )}
 
-        {activeSpot && forecast && forecast.map((day, i) => {
-          const locked = !isPro && i >= FREE_DAYS
+        {activeSpot && forecast && forecast.length > 0 && forecast.map((day) => {
+          const locked = !isPro && day.date > tomorrowKey
           const miniAt = resolveSkyDate(day.date, day.peakWindow.start, new Date())
           const miniSky = getSkyTheme(miniAt, activeSpot.lat, activeSpot.lng, day.skyIcon as SkyIcon | undefined)
           const noteParts: string[] = []
@@ -119,7 +124,7 @@ export default function WeekScreen() {
           )
         })}
 
-        {activeSpot && forecast && !isPro && forecast.length > FREE_DAYS && (
+        {activeSpot && forecast && !isPro && forecast.some(d => d.date > tomorrowKey) && (
           <Text style={[Type.secondary, { color: tint, opacity: 0.6, textAlign: 'center', marginTop: 12 }]}>
             Free shows today and tomorrow — Pro unlocks the full week
           </Text>

@@ -30,7 +30,7 @@ app/
   (tabs)/
     _layout.tsx            Tab bar — Today · Week · Species · Spots (settings/catchlog registered but shelved via href:null)
     index.tsx              Today screen — verdict hero, bite curve, condition chips on SkyBackground (date via ?date= param)
-    week.tsx               Week tab: WeekDayCard list with per-day mini-skies, best-day callout, FREE_DAYS=2 teaser gate, taps deep-link Today ?date=
+    week.tsx               Week tab: WeekDayCard list with per-day mini-skies, best-day callout, date-based teaser gate (today+tomorrow free), taps deep-link Today ?date=
     species.tsx            Species tab — active-right-now + scored species list for the current spot
     spots.tsx              Spots list + active spot switcher
     settings.tsx           Units, alert threshold, Pro flag (shelved: hidden from tab bar via href:null; reached via Today header gear)
@@ -206,7 +206,7 @@ Hourly scores: all 24 hours (0–23), each entry carries `hourIndex`; best windo
 
 **Region routing:** `getSpeciesForRegion(lat, lng, spotType)` in `data/species/index.ts` — freshwater spots always get `freshwaterSpecies`; saltwater maps via `detectRegion` (west_coast: lat 32–49, lng ≤ -117; southeast incl. Gulf: lat 24–35, lng -98..-75; northeast: lat > 35, lng ≥ -82); uncovered saltwater areas get `[]` and an empty-state note on the Species tab. Water temp fallback (65°F/68°F) is flagged via `water.estimated`.
 
-**Teaser gate:** Week screen shows `FREE_DAYS = 2` past days (today + 1). Tapping locked days (day 3+) pushes to `/settings`.
+**Teaser gate:** Week screen is free for the first 2 calendar days (today + tomorrow), gated by `day.date` vs. tomorrow's date key — not by array index, since NWS can drop today's daytime period in the evening and shift `forecast[0]` to tomorrow. Tapping a locked day (day 3+) pushes to `/settings`.
 
 ---
 

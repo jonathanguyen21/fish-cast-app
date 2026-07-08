@@ -10,7 +10,7 @@ import { formatScrubTime } from './tideUtils'
 
 interface Props {
   tide: TideData
-  currentHour: number
+  currentHour: number | null
 }
 
 const CHART_HEIGHT = 140
@@ -63,9 +63,9 @@ export function TideChart({ tide, currentHour }: Props) {
   const pathD = curvePath(points)
   const fillD = `${pathD} L ${toX(curve.length - 1)} ${CHART_HEIGHT - PADDING.bottom} L ${toX(0)} ${CHART_HEIGHT - PADDING.bottom} Z`
 
-  const clampedHour = Math.min(Math.max(currentHour, 0), curve.length - 1)
-  const nowX = toX(clampedHour)
-  const nowY = toY(curve[clampedHour])
+  const clampedHour = currentHour === null ? null : Math.min(Math.max(currentHour, 0), curve.length - 1)
+  const nowX = clampedHour === null ? null : toX(clampedHour)
+  const nowY = clampedHour === null ? null : toY(curve[clampedHour])
 
   const [cursorIndex, setCursorIndex] = useState<number | null>(null)
   const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -117,9 +117,13 @@ export function TideChart({ tide, currentHour }: Props) {
           ))}
           <Path d={fillD} fill="url(#tideGrad)" />
           <Path d={pathD} stroke={Colors.ocean} strokeWidth={2} fill="none" />
-          <Line x1={nowX} y1={PADDING.top} x2={nowX} y2={baseline}
-            stroke={Colors.accent} strokeWidth={1.5} strokeDasharray="4 2" />
-          <Circle cx={nowX} cy={nowY} r={4} fill={Colors.accent} />
+          {nowX !== null && nowY !== null && (
+            <G testID="tide-now-marker">
+              <Line x1={nowX} y1={PADDING.top} x2={nowX} y2={baseline}
+                stroke={Colors.accent} strokeWidth={1.5} strokeDasharray="4 2" />
+              <Circle cx={nowX} cy={nowY} r={4} fill={Colors.accent} />
+            </G>
+          )}
 
           {/* Tide event markers */}
           {tide.events.map((ev, idx) => {

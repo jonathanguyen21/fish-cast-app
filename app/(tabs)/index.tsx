@@ -164,6 +164,16 @@ export default function ForecastScreen() {
             <Text style={[Type.title, { color: skyTheme.textTint, fontSize: 18 }]}>
               {activeSpot?.name ?? 'FishCast'}
             </Text>
+            {selectedDate !== todayKey && (
+              <TouchableOpacity
+                testID="back-to-today"
+                accessibilityRole="button"
+                onPress={() => router.setParams({ date: undefined })}
+                style={styles.backToTodayPill}
+              >
+                <Text style={[Type.chip, { color: skyTheme.accent }]}>Back to today</Text>
+              </TouchableOpacity>
+            )}
           </View>
           <TouchableOpacity
             testID="settings-gear"
@@ -199,7 +209,9 @@ export default function ForecastScreen() {
                     {conditions.tide.current.rising ? 'Tide rising' : 'Tide falling'}
                   </Text>
                   <Text style={[styles.chipSub, { color: skyTheme.textTint }]}>
-                    {tideTurnCountdown(conditions.tide)}
+                    {selectedDate === todayKey
+                      ? tideTurnCountdown(conditions.tide)
+                      : `${conditions.tide.next.type === 'high' ? 'High' : 'Low'} ${conditions.tide.next.time}`}
                   </Text>
                 </View>
               )}
@@ -235,7 +247,7 @@ export default function ForecastScreen() {
               onUpgrade={() => router.push('/settings')}
               currentHour={selectedDate === localDateKey(new Date()) ? new Date().getHours() : null}
             />
-            {conditions.tide && <TideChart tide={conditions.tide} currentHour={currentHour} />}
+            {conditions.tide && <TideChart tide={conditions.tide} currentHour={selectedDate === todayKey ? currentHour : null} />}
             <ConditionsGrid
               conditions={conditions}
               spotType={activeSpot.type}
@@ -312,6 +324,11 @@ const styles = StyleSheet.create({
   emptyCtaText: { fontSize: 15, fontWeight: '700', color: Colors.background },
   emptyCtaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: 20, paddingBottom: 4 },
+  backToTodayPill: {
+    alignSelf: 'flex-start', marginTop: 6,
+    backgroundColor: Glass.fill, borderWidth: 1, borderColor: Glass.stroke,
+    borderRadius: Radii.pill, paddingHorizontal: 10, paddingVertical: 4,
+  },
   gear: { width: 34, height: 34, borderRadius: 17, backgroundColor: Glass.fill, borderWidth: 1, borderColor: Glass.stroke, alignItems: 'center', justifyContent: 'center' },
   chipsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginTop: 12 },
   conditionChip: { flex: 1, backgroundColor: Glass.fill, borderWidth: 1, borderColor: Glass.stroke, borderRadius: Radii.chip, padding: 10, alignItems: 'center' },

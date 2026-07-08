@@ -61,4 +61,15 @@ describe('TideChart', () => {
     render(<TideChart tide={TIDE} currentHour={23} />)
     expect(screen.getByTestId('tide-chart')).toBeTruthy()
   })
+
+  it('shows the now-marker when currentHour is a number', () => {
+    render(<TideChart tide={TIDE} currentHour={14} />)
+    expect(screen.getByTestId('tide-now-marker')).toBeTruthy()
+  })
+
+  it('renders no now-marker when currentHour is null', () => {
+    render(<TideChart tide={TIDE} currentHour={null} />)
+    expect(screen.getByTestId('tide-chart')).toBeTruthy()
+    expect(screen.queryByTestId('tide-now-marker')).toBeNull()
+  })
 })
