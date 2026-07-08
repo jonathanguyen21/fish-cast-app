@@ -53,7 +53,10 @@ export function WeekDayCard({
           {dayLabel}
           {!locked && <Text style={{ opacity: 0.65 }}> · {skyWord}</Text>}
         </Text>
-        <Text style={[Type.secondary, { color: textTint, opacity: locked ? 0.4 : 0.75 }]}>
+        <Text
+          style={[Type.secondary, { color: textTint, opacity: locked ? 0.4 : 0.75 }]}
+          numberOfLines={1}
+        >
           {locked ? 'Unlock with Pro' : `${windowLabel} · ${note}`}
         </Text>
       </View>
@@ -82,7 +85,7 @@ const styles = StyleSheet.create({
   best: { borderColor: Glass.strokeStrong, borderWidth: 1.5 },
   locked: { opacity: 0.75 },
   dim: { opacity: 0.5 },
-  mini: { width: 44, height: 44, borderRadius: 12 },
+  mini: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: Glass.stroke },
   miniLocked: { backgroundColor: 'rgba(255,255,255,0.08)' },
   body: { flex: 1 },
   bestTag: {

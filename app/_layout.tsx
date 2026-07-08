@@ -5,7 +5,6 @@ import { useFonts } from 'expo-font'
 import { Manrope_500Medium, Manrope_700Bold, Manrope_800ExtraBold } from '@expo-google-fonts/manrope'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
-import { StatusBar } from 'expo-status-bar'
 import { useEffect, useRef } from 'react'
 import { QueryClient } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
@@ -139,7 +138,6 @@ export default function RootLayout() {
       client={queryClient}
       persistOptions={{ persister: asyncStoragePersister, maxAge: 24 * 60 * 60 * 1000 }}
     >
-      <StatusBar style="light" />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: Colors.background },
@@ -150,34 +148,8 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="spot/new" options={{ title: 'Add Spot', presentation: 'modal' }} />
         <Stack.Screen name="species/[id]" options={{ title: 'Species Detail', presentation: 'modal' }} />
-        <Stack.Screen
-          name="detail/wind"
-          options={{ title: 'Wind Detail', presentation: 'modal', headerShown: false }}
-        />
-        <Stack.Screen
-          name="detail/pressure"
-          options={{ title: 'Pressure Detail', presentation: 'modal', headerShown: false }}
-        />
-        <Stack.Screen
-          name="detail/swell"
-          options={{ title: 'Swell Detail', presentation: 'modal', headerShown: false }}
-        />
-        <Stack.Screen
-          name="detail/airtemp"
-          options={{ title: 'Air Temp', presentation: 'modal', headerShown: false }}
-        />
-        <Stack.Screen
-          name="detail/sky"
-          options={{ title: 'Sky & Rain', presentation: 'modal', headerShown: false }}
-        />
-        <Stack.Screen
-          name="detail/moon"
-          options={{ title: 'Moon & Solunar', presentation: 'modal', headerShown: false }}
-        />
-        <Stack.Screen
-          name="detail/sun"
-          options={{ title: 'Sun', presentation: 'modal', headerShown: false }}
-        />
+        <Stack.Screen name="conditions" options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="settings" options={{ title: 'Settings', presentation: 'modal' }} />
       </Stack>
     </PersistQueryClientProvider>
     </AppErrorBoundary>

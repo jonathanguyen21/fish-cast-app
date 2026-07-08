@@ -47,4 +47,17 @@ describe('BiteCurve', () => {
     expect(getByText('Forecast bite')).toBeTruthy()
     expect(queryByText("Today's bite")).toBeNull()
   })
+
+  it('scales the curve to the data range, not 0-100', () => {
+    // All scores in a narrow band; with data-range scaling the path must span
+    // most of the drawable height instead of hugging the top.
+    const flat = Array.from({ length: 24 }, (_, i) => ({ hourIndex: i, score: 60 + (i % 2) * 20, time: '12:00 AM' }))
+    const { getByTestId } = render(
+      <BiteCurve hourlyScores={flat as any} bestWindow={{ start: '9:00 AM', end: '11:00 AM', passed: true } as any} currentHour={null} skyTheme={SKY} />
+    )
+    const d: string = getByTestId('bite-curve-path').props.d
+    const ys = [...d.matchAll(/[\d.]+ ([\d.]+)/g)].map(m => parseFloat(m[1]))
+    const span = Math.max(...ys) - Math.min(...ys)
+    expect(span).toBeGreaterThan(40) // H=84, PAD=6 → drawable 72; 20-pt score swing must use most of it
+  })
 })

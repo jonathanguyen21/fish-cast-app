@@ -61,11 +61,11 @@ export default function TabLayout() {
         name="spots"
         options={{
           title: 'Spots',
+          headerShown: false,
           tabBarIcon: ({ focused }) => <TabIcon name="Spots" focused={focused} />,
         }}
       />
-      {/* Shelved routes: reachable via router.push, hidden from the tab bar */}
-      <Tabs.Screen name="settings" options={{ href: null, title: 'Settings' }} />
+      {/* Shelved route: reachable via router.push, hidden from the tab bar */}
       <Tabs.Screen name="catchlog" options={{ href: null, headerShown: false }} />
     </Tabs>
   );

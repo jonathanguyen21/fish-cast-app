@@ -10,13 +10,10 @@ import { useSpots } from '../../hooks/useSpots'
 import { useConditions } from '../../hooks/useConditions'
 import { useForecast } from '../../hooks/useForecast'
 import { useSettingsStore } from '../../store/settingsStore'
-import { ScoreTimeline } from '../../features/score/ScoreTimeline'
-import { TideChart } from '../../features/tide/TideChart'
-import { ConditionsGrid } from '../../features/conditions/ConditionsGrid'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { useRouter, useLocalSearchParams } from 'expo-router'
-import { ScoreCardSkeleton, TimelineSkeleton, QuickStatsSkeleton, ConditionsGridSkeleton } from '../../features/common/SkeletonLoader'
+import { ScoreCardSkeleton, TimelineSkeleton } from '../../features/common/SkeletonLoader'
 import { buildConditionsSummary } from '../../features/conditions/conditionsSummary'
 import { maybeScheduleFishingAlert } from '../../services/notificationService'
 import { useSkyTheme } from '../../hooks/useSkyTheme'
@@ -85,9 +82,6 @@ export default function ForecastScreen() {
   const betterDay = conditions && selectedDate === todayKey
     ? pickBetterDay(forecast, conditions.fishingScore, selectedDate)
     : null
-
-  const now = new Date()
-  const currentHour = now.getHours()
 
   React.useEffect(() => {
     if (!conditions || !activeSpot || !alertsEnabled) return
@@ -204,7 +198,11 @@ export default function ForecastScreen() {
             />
             <View style={styles.chipsRow}>
               {conditions.tide && (
-                <View style={styles.conditionChip}>
+                <TouchableOpacity
+                  testID="chip-tide"
+                  style={styles.conditionChip}
+                  onPress={() => router.push({ pathname: '/conditions', params: { section: 'tide', date: selectedDate } })}
+                >
                   <Text style={[Type.chip, { color: skyTheme.textTint }]}>
                     {conditions.tide.current.rising ? 'Tide rising' : 'Tide falling'}
                   </Text>
@@ -213,80 +211,36 @@ export default function ForecastScreen() {
                       ? tideTurnCountdown(conditions.tide)
                       : `${conditions.tide.next.type === 'high' ? 'High' : 'Low'} ${conditions.tide.next.time}`}
                   </Text>
-                </View>
+                </TouchableOpacity>
               )}
               <TouchableOpacity
+                testID="chip-wind"
                 style={styles.conditionChip}
-                onPress={() => router.push({
-                  pathname: '/detail/wind',
-                  params: {
-                    data: JSON.stringify(conditions.windHourly),
-                    current: JSON.stringify(conditions.wind),
-                  },
-                })}
+                onPress={() => router.push({ pathname: '/conditions', params: { section: 'wind', date: selectedDate } })}
               >
                 <Text style={[Type.chip, { color: skyTheme.textTint }]}>
-                  Wind {speedUnit === 'kts' ? Math.round(conditions.wind.speed * 0.868) : conditions.wind.speed} {speedUnit === 'kts' ? 'kt' : 'mph'}
+                  Wind {speedUnit === 'kts' ? Math.round(conditions.wind.speed * 0.868) : Math.round(conditions.wind.speed)} {speedUnit === 'kts' ? 'kt' : 'mph'}
                 </Text>
                 <Text style={[styles.chipSub, { color: skyTheme.textTint }]}>
                   {conditions.wind.directionLabel}
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.conditionChip} onPress={() => router.push('/(tabs)/species' as never)}>
-                <Text style={[Type.chip, { color: skyTheme.accent }]}>What's biting</Text>
+              <TouchableOpacity testID="chip-species" style={styles.conditionChip} onPress={() => router.push('/(tabs)/species' as never)}>
+                <Text style={[Type.chip, { color: skyTheme.textTint }]}>What's biting</Text>
                 <Text style={[styles.chipSub, { color: skyTheme.textTint }]}>
                   {conditions.water.estimated ? '~' : ''}{tempUnit === 'C' ? Math.round((conditions.water.temp - 32) * 5 / 9) : conditions.water.temp}° water
                 </Text>
               </TouchableOpacity>
             </View>
-
-            <ScoreTimeline
-              hourlyScores={conditions.hourlyScores}
-              tidePhasesByHour={conditions.tide ? conditions.tidePhasesByHour : undefined}
-              windHourly={conditions.windHourly}
-              onUpgrade={() => router.push('/settings')}
-              currentHour={selectedDate === localDateKey(new Date()) ? new Date().getHours() : null}
-            />
-            {conditions.tide && <TideChart tide={conditions.tide} currentHour={selectedDate === todayKey ? currentHour : null} />}
-            <ConditionsGrid
-              conditions={conditions}
-              spotType={activeSpot.type}
-              onPressPressure={() => router.push({
-                pathname: '/detail/pressure',
-                params: { data: JSON.stringify(conditions.pressure) },
-              })}
-              onPressSwell={conditions.swellHourly ? () => router.push({
-                pathname: '/detail/swell',
-                params: { data: JSON.stringify(conditions.swellHourly) },
-              }) : undefined}
-              onPressAir={() => router.push({
-                pathname: '/detail/airtemp',
-                params: { data: JSON.stringify(conditions.airHourly) },
-              })}
-              onPressSky={() => router.push({
-                pathname: '/detail/sky',
-                params: { data: JSON.stringify(conditions.airHourly) },
-              })}
-              onPressMoon={() => router.push({
-                pathname: '/detail/moon',
-                params: { data: JSON.stringify(conditions.moon) },
-              })}
-              onPressSun={() => router.push({
-                pathname: '/detail/sun',
-                params: { data: JSON.stringify(conditions.sun) },
-              })}
-            />
           </>
         )}
       </ScrollView>
 
       {/* Skeleton loading — replaces spinner while first fetch runs */}
       {isLoading && !conditions && (
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: Colors.background }]}>
+        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
           <ScoreCardSkeleton />
           <TimelineSkeleton />
-          <QuickStatsSkeleton />
-          <ConditionsGridSkeleton />
         </View>
       )}
 

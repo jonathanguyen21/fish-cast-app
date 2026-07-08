@@ -12,6 +12,23 @@ import { WeekDayCard } from '../../features/forecast/WeekDayCard'
 import { Glass, Radii, Type, Accent } from '../../theme/tokens'
 import { Colors } from '../../theme/colors'
 import type { SkyIcon } from '../../theme/skyTheme'
+import type { DayForecast } from '../../types/conditions'
+
+type TempUnit = 'F' | 'C'
+
+function formatTemp(f: number, tempUnit: TempUnit): number {
+  return tempUnit === 'C' ? Math.round((f - 32) * 5 / 9) : f
+}
+
+export function computeDayNote(day: DayForecast, tempUnit: TempUnit): string {
+  if (day.rainChance != null && day.rainChance >= 20) {
+    return `${day.rainChance}% rain`
+  }
+  if (day.highTemp != null) {
+    return `High ${formatTemp(day.highTemp, tempUnit)}°`
+  }
+  return day.scoreLabel
+}
 
 const SKY_WORD: Record<string, string> = {
   'clear': 'clear',
@@ -54,8 +71,6 @@ export default function WeekScreen() {
   const best = forecast && forecast.length > 0
     ? forecast.reduce((a, b) => (b.peakScore > a.peakScore ? b : a))
     : null
-
-  const formatTemp = (f: number) => (tempUnit === 'C' ? Math.round((f - 32) * 5 / 9) : f)
 
   return (
     <SkyBackground theme={skyTheme}>
@@ -100,16 +115,14 @@ export default function WeekScreen() {
           const locked = !isPro && day.date > tomorrowKey
           const miniAt = resolveSkyDate(day.date, day.peakWindow.start, new Date())
           const miniSky = getSkyTheme(miniAt, activeSpot.lat, activeSpot.lng, day.skyIcon as SkyIcon | undefined)
-          const noteParts: string[] = []
-          if (day.highTemp != null) noteParts.push(`High ${formatTemp(day.highTemp)}°`)
-          if (day.rainChance != null) noteParts.push(`${day.rainChance}% rain`)
+          const note = computeDayNote(day, tempUnit)
           return (
             <WeekDayCard
               key={day.date}
               dayLabel={day.dayLabel}
               skyWord={SKY_WORD[day.skyIcon ?? ''] ?? 'mixed sky'}
               windowLabel={`Best ${day.peakWindow.start}–${day.peakWindow.end}`}
-              note={noteParts.join(' · ') || day.scoreLabel}
+              note={note}
               score={day.peakScore}
               miniSky={miniSky}
               isBest={!locked && best != null && day.date === best.date}

@@ -37,9 +37,21 @@ function xFor(hour: number, n: number): number {
   return PAD + (hour / (n - 1)) * (W - PAD * 2)
 }
 
-function buildPath(scores: number[]): string {
+function yDomain(scores: number[]): [number, number] {
+  let lo = Math.min(...scores)
+  let hi = Math.max(...scores)
+  const MIN_SPAN = 25 // don't amplify noise into drama on flat days
+  if (hi - lo < MIN_SPAN) {
+    const mid = (hi + lo) / 2
+    lo = mid - MIN_SPAN / 2
+    hi = mid + MIN_SPAN / 2
+  }
+  return [Math.max(0, lo - 5), Math.min(100, hi + 5)]
+}
+
+function buildPath(scores: number[], lo: number, hi: number): string {
   const n = scores.length
-  const y = (s: number) => H - PAD - (s / 100) * (H - PAD * 2)
+  const y = (s: number) => H - PAD - ((s - lo) / (hi - lo)) * (H - PAD * 2)
   let d = `M ${xFor(0, n).toFixed(1)} ${y(scores[0]).toFixed(1)}`
   for (let i = 1; i < n; i++) {
     const x = xFor(i, n)
@@ -64,8 +76,9 @@ export function BiteCurve({ hourlyScores, bestWindow, currentHour, skyTheme, tit
 
   const n = hourlyScores.length
   const scores = hourlyScores.map(h => h.score)
-  const path = buildPath(scores)
-  const yFor = (s: number) => H - PAD - (s / 100) * (H - PAD * 2)
+  const [lo, hi] = yDomain(scores)
+  const path = buildPath(scores, lo, hi)
+  const yFor = (s: number) => H - PAD - ((s - lo) / (hi - lo)) * (H - PAD * 2)
 
   const startH = parseHour(bestWindow.start)
   const endH = parseHour(bestWindow.end)

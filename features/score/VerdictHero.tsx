@@ -31,6 +31,7 @@ export function VerdictHero({ score, breakdown, spotType, skyTheme, summary, bet
   const [display, setDisplay] = useState(0)
   const [expanded, setExpanded] = useState(false)
   const raf = useRef<number | null>(null)
+  const hapticFired = useRef(false)
 
   useEffect(() => {
     const start = Date.now()
@@ -39,7 +40,8 @@ export function VerdictHero({ score, breakdown, spotType, skyTheme, summary, bet
       setDisplay(Math.round(score * t))
       if (t < 1) {
         raf.current = requestAnimationFrame(step)
-      } else {
+      } else if (!hapticFired.current) {
+        hapticFired.current = true
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
       }
     }

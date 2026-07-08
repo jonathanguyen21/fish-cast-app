@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { StatusBar } from 'expo-status-bar'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated'
 import type { SkyTheme } from '../../theme/skyTheme'
 
@@ -38,6 +39,7 @@ export function SkyBackground({ theme, children }: Props) {
 
   return (
     <View style={[styles.root, { backgroundColor: theme.gradientStops[0] }]}>
+      <StatusBar style={theme.isLight ? 'dark' : 'light'} />
       {prev && (
         <LinearGradient
           testID="sky-gradient-prev"

@@ -42,6 +42,16 @@ describe('WeekDayCard', () => {
     expect(getByText('BEST')).toBeTruthy()
   })
 
+  it('renders a single-line rain note passed via props', () => {
+    // WeekDayCard just renders whatever note string it's given; the rain-vs-temp
+    // priority logic itself is covered by computeDayNote in __tests__/weekNote.test.ts.
+    const { getByText, queryByText } = render(
+      <WeekDayCard {...BASE} note="45% rain" onPress={() => {}} />
+    )
+    expect(getByText(/45% rain/)).toBeTruthy()
+    expect(queryByText(/High/)).toBeNull()
+  })
+
   it('locked card hides details, shows the Pro lock, and still fires onPress (upgrade)', () => {
     const onPress = jest.fn()
     const { getByText, queryByText, getByTestId } = render(

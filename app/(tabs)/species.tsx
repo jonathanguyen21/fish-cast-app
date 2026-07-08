@@ -6,6 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
+import { StatusBar } from 'expo-status-bar'
 import { useSpots } from '../../hooks/useSpots'
 import { useConditions } from '../../hooks/useConditions'
 import { useSettingsStore } from '../../store/settingsStore'
@@ -17,9 +18,9 @@ import { detectPhase } from '../../features/tide/tideUtils'
 import { getSpeciesForRegion } from '../../data/species'
 import { ScoreCardSkeleton, ConditionsGridSkeleton } from '../../features/common/SkeletonLoader'
 import { scoreColor } from '../../features/score/scoringEngine'
-import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
-import { Typography } from '../../theme/typography'
+import { useSkyTheme } from '../../hooks/useSkyTheme'
+import { Fonts, Radii, Type } from '../../theme/tokens'
 
 function localDateKey(d: Date): string {
   const y = d.getFullYear()
@@ -34,6 +35,11 @@ export default function SpeciesScreen() {
   const { activeSpot } = useSpots()
   const { data: conditions, isLoading, refetch } = useConditions(activeSpot, localDateKey(new Date()))
   const isPro = useSettingsStore(s => s.isPro)
+  const skyTheme = useSkyTheme(
+    activeSpot ? { lat: activeSpot.lat, lng: activeSpot.lng } : null,
+    conditions?.sky.icon,
+    localDateKey(new Date()),
+  )
 
   const now = new Date()
   const currentHour = now.getHours()
@@ -77,31 +83,33 @@ export default function SpeciesScreen() {
 
   if (!activeSpot) {
     return (
-      <View style={styles.empty}>
-        <Ionicons name="fish-outline" size={56} color={Colors.textTertiary} />
-        <Text style={styles.emptyText}>No spot selected</Text>
-        <Text style={styles.emptyHint}>Add a fishing spot to see what's biting</Text>
+      <View style={[styles.empty, { backgroundColor: skyTheme.tintedDark.background }]}>
+        <StatusBar style="light" />
+        <Ionicons name="fish-outline" size={56} color={skyTheme.textTint} style={{ opacity: 0.55 }} />
+        <Text style={[styles.emptyText, { color: skyTheme.textTint }]}>No spot selected</Text>
+        <Text style={[styles.emptyHint, { color: skyTheme.textTint, opacity: 0.7 }]}>Add a fishing spot to see what's biting</Text>
       </View>
     )
   }
 
   return (
-    <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+    <View style={[styles.screen, { backgroundColor: skyTheme.tintedDark.background }]}>
+      <StatusBar style="light" />
+      <View style={[styles.header, { paddingTop: insets.top, backgroundColor: skyTheme.tintedDark.background }]}>
         <View style={styles.titleRow}>
-          <Text style={styles.title}>What's Biting</Text>
+          <Text style={[styles.title, { color: skyTheme.textTint }]}>What's Biting</Text>
           {conditions && (
             <View style={[styles.scoreBadge, { borderColor: scoreColor(conditions.fishingScore) + '60', backgroundColor: scoreColor(conditions.fishingScore) + '18' }]}>
               <Text style={[styles.scoreBadgeText, { color: scoreColor(conditions.fishingScore) }]}>{conditions.fishingScore}</Text>
             </View>
           )}
         </View>
-        <Text style={styles.subtitle}>{activeSpot.name}</Text>
+        <Text style={[Type.secondary, styles.subtitle, { color: skyTheme.textTint, opacity: 0.7 }]}>{activeSpot.name}</Text>
       </View>
 
       <ScrollView
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={isLoading && !!conditions} onRefresh={refetch} tintColor={Colors.accent} />}
+        refreshControl={<RefreshControl refreshing={isLoading && !!conditions} onRefresh={refetch} tintColor={skyTheme.accent} />}
       >
         {conditions ? (
           <>
@@ -110,6 +118,7 @@ export default function SpeciesScreen() {
               hourlyByMap={scoredHourlyByMap}
               currentHour={currentHour}
               maxRows={2}
+              theme={skyTheme}
               onPressSpecies={(id) => {
                 const ss = scoredSpecies.find(s => s.species.id === id)
                 if (!ss) return
@@ -118,9 +127,9 @@ export default function SpeciesScreen() {
             />
 
             <View style={styles.section}>
-              <Text style={Typography.sectionTitle}>All Species</Text>
+              <Text style={[Type.secondary, { color: skyTheme.textTint, opacity: 0.7 }]}>All species</Text>
               {scoredSpecies.length === 0 && (
-                <Text style={styles.emptySpecies}>
+                <Text style={[styles.emptySpecies, { color: skyTheme.textTint, opacity: 0.55 }]}>
                   No species data for this area yet — the fishing score above still applies.
                 </Text>
               )}
@@ -130,15 +139,16 @@ export default function SpeciesScreen() {
                   speciesScore={ss}
                   hourly={scoredHourlyByMap[ss.species.id]}
                   isPro={isPro}
+                  theme={skyTheme}
                   onPress={() => router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss), hourlyData: JSON.stringify(scoredHourlyByMap[ss.species.id] ?? []) } })
                   }
                 />
               ))}
               {lockedCount > 0 && (
-                <TouchableOpacity style={styles.upgradeTeaser} onPress={() => router.push('/settings' as never)}>
-                  <Ionicons name="lock-closed" size={14} color={Colors.accent} />
-                  <Text style={styles.upgradeTeaserText}>{lockedCount} more species unlocked with Pro</Text>
-                  <Ionicons name="chevron-forward" size={14} color={Colors.accent} />
+                <TouchableOpacity style={[styles.upgradeTeaser, { backgroundColor: skyTheme.tintedDark.card }]} onPress={() => router.push('/settings' as never)}>
+                  <Ionicons name="lock-closed" size={14} color={skyTheme.accent} />
+                  <Text style={[styles.upgradeTeaserText, { color: skyTheme.accent }]}>{lockedCount} more species unlocked with Pro</Text>
+                  <Ionicons name="chevron-forward" size={14} color={skyTheme.accent} />
                 </TouchableOpacity>
               )}
             </View>
@@ -146,14 +156,14 @@ export default function SpeciesScreen() {
         ) : (
           !isLoading && (
             <View style={styles.empty}>
-              <Text style={styles.emptyHint}>Pull to refresh</Text>
+              <Text style={[styles.emptyHint, { color: skyTheme.textTint, opacity: 0.7 }]}>Pull to refresh</Text>
             </View>
           )
         )}
       </ScrollView>
 
       {isLoading && !conditions && (
-        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: Colors.background }]}>
+        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: skyTheme.tintedDark.background }]}>
           <ScoreCardSkeleton />
           <ConditionsGridSkeleton />
         </View>
@@ -163,30 +173,29 @@ export default function SpeciesScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: Colors.background },
+  screen: { flex: 1 },
   header: {
     paddingHorizontal: Spacing.screenPad,
     paddingBottom: Spacing.sm,
-    backgroundColor: Colors.background,
   },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  title: { fontSize: 28, fontWeight: '700', color: Colors.textPrimary },
-  subtitle: { fontSize: 14, color: Colors.textSecondary, marginTop: 2 },
+  title: { fontFamily: Fonts.extraBold, fontSize: 24 },
+  subtitle: { marginTop: 2 },
   scoreBadge: {
     borderRadius: 20, borderWidth: 1.5,
     paddingHorizontal: 8, paddingVertical: 2,
   },
-  scoreBadgeText: { fontSize: 14, fontWeight: '700' },
+  scoreBadgeText: { fontSize: 14, fontFamily: Fonts.bold },
   content: { paddingBottom: Spacing.xl },
   section: { marginHorizontal: Spacing.screenPad, marginBottom: Spacing.md },
   upgradeTeaser: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
-    backgroundColor: Colors.accent + '15', borderRadius: Spacing.cardRadius,
+    borderRadius: Radii.card,
     padding: Spacing.md, marginTop: Spacing.xs,
   },
-  upgradeTeaserText: { flex: 1, fontSize: 14, color: Colors.accent, fontWeight: '600' },
+  upgradeTeaserText: { flex: 1, fontSize: 14, fontFamily: Fonts.bold },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.sm },
-  emptyText: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center', marginTop: Spacing.sm },
-  emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center' },
-  emptySpecies: { fontSize: 13, color: Colors.textTertiary, paddingVertical: Spacing.sm },
+  emptyText: { fontSize: 20, fontFamily: Fonts.bold, textAlign: 'center', marginTop: Spacing.sm },
+  emptyHint: { fontSize: 14, textAlign: 'center' },
+  emptySpecies: { fontSize: 13, paddingVertical: Spacing.sm },
 })

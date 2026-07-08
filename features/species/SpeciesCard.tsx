@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
+import { Fonts, Radii } from '../../theme/tokens'
+import type { SkyTheme } from '../../theme/skyTheme'
 import { scoreColor } from '../score/scoringEngine'
 import { bestWindowSummary, type SpeciesHourlyScore } from './speciesHourlyScoring'
 import type { SpeciesScore } from '../../types/species'
@@ -12,6 +14,7 @@ interface Props {
   hourly?: SpeciesHourlyScore[]
   isPro: boolean
   onPress: () => void
+  theme?: SkyTheme
 }
 
 function formatHour(h: number): string {
@@ -33,25 +36,40 @@ function lockedBadgeColor(id: string): string {
   return scoreColor(FAKE_SCORE_POOL[hash % FAKE_SCORE_POOL.length])
 }
 
-export function SpeciesCard({ speciesScore, hourly, isPro, onPress }: Props) {
+export function SpeciesCard({ speciesScore, hourly, isPro, onPress, theme }: Props) {
   const { species, score, status } = speciesScore
   const isLocked = species.tier === 'pro' && !isPro
   const color = isLocked ? lockedBadgeColor(species.id) : scoreColor(score)
   const window = hourly ? bestWindowSummary(hourly) : null
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} testID={`species-card-${species.id}`}>
+    <TouchableOpacity
+      style={[styles.card, theme && { backgroundColor: theme.tintedDark.card, borderRadius: Radii.card }]}
+      onPress={onPress}
+      testID={`species-card-${species.id}`}
+    >
       <View style={styles.row}>
         <View style={styles.info}>
           <View style={styles.lockedNameRow}>
-            {isLocked && <Ionicons name="lock-closed" size={11} color={Colors.textTertiary} style={{ marginRight: 4 }} />}
-            <Text style={[styles.name, isLocked && styles.locked]}>{species.common_name}</Text>
+            {isLocked && (
+              <Ionicons
+                name="lock-closed"
+                size={11}
+                color={theme ? theme.textTint : Colors.textTertiary}
+                style={theme ? { marginRight: 4, opacity: 0.55 } : { marginRight: 4 }}
+              />
+            )}
+            <Text style={[
+              styles.name,
+              theme && { fontFamily: Fonts.bold, color: theme.textTint },
+              isLocked && (theme ? { color: theme.textTint, opacity: 0.55 } : styles.locked),
+            ]}>{species.common_name}</Text>
           </View>
-          <Text style={[styles.status, { color: statusColor[status] ?? Colors.textSecondary }]}>
+          <Text style={[styles.status, { color: statusColor[status] ?? (theme ? theme.textTint : Colors.textSecondary) }]}>
             {status}
           </Text>
           {window && !isLocked && (
-            <Text style={styles.bestWindow}>
+            <Text style={[styles.bestWindow, theme && { color: theme.textTint, opacity: 0.55 }]}>
               Best {formatHour(window.start)}–{formatHour(window.end + 1)}
               {' · '}<Text style={{ color: scoreColor(window.avgScore) }}>{window.avgScore}</Text>
             </Text>
@@ -64,8 +82,8 @@ export function SpeciesCard({ speciesScore, hourly, isPro, onPress }: Props) {
       </View>
       {isLocked && (
         <View style={styles.upgradeHintRow}>
-          <Text style={styles.upgradeHint}>Upgrade to Pro to see what's biting</Text>
-          <Ionicons name="chevron-forward" size={12} color={Colors.accent} />
+          <Text style={[styles.upgradeHint, theme && { color: theme.accent }]}>Upgrade to Pro to see what's biting</Text>
+          <Ionicons name="chevron-forward" size={12} color={theme ? theme.accent : Colors.accent} />
         </View>
       )}
     </TouchableOpacity>

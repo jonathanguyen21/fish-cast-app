@@ -1,6 +1,7 @@
 import React from 'react'
 import { Text } from 'react-native'
 import { render } from '@testing-library/react-native'
+import { StatusBar } from 'expo-status-bar'
 import { SkyBackground } from '../features/sky/SkyBackground'
 import { getSkyTheme } from '../theme/skyTheme'
 
@@ -30,5 +31,19 @@ describe('SkyBackground', () => {
     rerender(<SkyBackground theme={NIGHT}><Text>x</Text></SkyBackground>)
     expect(getByTestId('sky-gradient')).toBeTruthy()
     expect(getByTestId('sky-gradient-prev')).toBeTruthy()
+  })
+  it('sets a dark status bar style for a light (day) sky', () => {
+    expect(DAY.isLight).toBe(true)
+    const { UNSAFE_getByType } = render(
+      <SkyBackground theme={DAY}><Text>x</Text></SkyBackground>
+    )
+    expect(UNSAFE_getByType(StatusBar).props.style).toBe('dark')
+  })
+  it('sets a light status bar style for a dark (night) sky', () => {
+    expect(NIGHT.isLight).toBe(false)
+    const { UNSAFE_getByType } = render(
+      <SkyBackground theme={NIGHT}><Text>x</Text></SkyBackground>
+    )
+    expect(UNSAFE_getByType(StatusBar).props.style).toBe('light')
   })
 })

@@ -122,7 +122,7 @@ features/
     speciesScoring.ts      Score a species against current conditions
     SpeciesCard.tsx        Species row with score badge + Pro lock
     SpeciesDetail.tsx      Full species detail view
-  forecast/ForecastStrip.tsx  7-day horizontal forecast (Pro gate)
+  forecast/WeekDayCard.tsx  Per-day forecast card (mini-sky, score, conditions summary) — used by the Week tab
 
 hooks/
   useConditions.ts         4 parallel TanStack Queries → ConditionsData | null
@@ -236,7 +236,7 @@ Add entries to the appropriate region file in `data/species/`:
 
 ## Phase B2: 7-Day Forecast (Next)
 
-`useForecast.ts` and `services/forecastService.ts` are stubbed. Phase B2 will wire them to NWS daily gridpoints (`/gridpoints/{office}/{x},{y}/forecast`) and display real 7-day peak scores in the forecast strip.
+`useForecast.ts` and `services/forecastService.ts` are implemented, wired to NWS daily gridpoints (`/gridpoints/{office}/{x},{y}/forecast`). Real 7-day peak scores are shown in the Week tab (`app/(tabs)/week.tsx`, `features/forecast/WeekDayCard.tsx`).
 
 ---
 
