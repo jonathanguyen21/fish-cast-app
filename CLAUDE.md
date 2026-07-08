@@ -30,7 +30,7 @@ app/
   (tabs)/
     _layout.tsx            Tab bar — Today · Week · Species · Spots (settings/catchlog registered but shelved via href:null)
     index.tsx              Today screen — verdict hero, bite curve, condition chips on SkyBackground (date via ?date= param)
-    week.tsx               Week tab (placeholder until Golden Hour Plan 3)
+    week.tsx               Week tab: WeekDayCard list with per-day mini-skies, best-day callout, date-based teaser gate (today+tomorrow free), taps deep-link Today ?date=
     species.tsx            Species tab — active-right-now + scored species list for the current spot
     spots.tsx              Spots list + active spot switcher
     settings.tsx           Units, alert threshold, Pro flag (shelved: hidden from tab bar via href:null; reached via Today header gear)
@@ -73,7 +73,7 @@ features/
     speciesScoring.ts      Score a species against conditions
     SpeciesCard.tsx        Row with score badge + Pro lock
     SpeciesDetail.tsx      Full detail view
-  forecast/ForecastStrip.tsx  7-day strip (Pro gate)
+  forecast/WeekDayCard.tsx   Per-day forecast card with mini-sky, score, and conditions summary
   sky/SkyBackground.tsx    Animated sky gradient + night starfield (Golden Hour)
 
 store/
@@ -206,6 +206,8 @@ Hourly scores: all 24 hours (0–23), each entry carries `hourIndex`; best windo
 
 **Region routing:** `getSpeciesForRegion(lat, lng, spotType)` in `data/species/index.ts` — freshwater spots always get `freshwaterSpecies`; saltwater maps via `detectRegion` (west_coast: lat 32–49, lng ≤ -117; southeast incl. Gulf: lat 24–35, lng -98..-75; northeast: lat > 35, lng ≥ -82); uncovered saltwater areas get `[]` and an empty-state note on the Species tab. Water temp fallback (65°F/68°F) is flagged via `water.estimated`.
 
+**Teaser gate:** Week screen is free for the first 2 calendar days (today + tomorrow), gated by `day.date` vs. tomorrow's date key — not by array index, since NWS can drop today's daytime period in the evening and shift `forecast[0]` to tomorrow. Tapping a locked day (day 3+) pushes to `/settings`.
+
 ---
 
 ## TypeScript
@@ -269,6 +271,6 @@ await browser.close()
 
 - **Phase B2:** `useForecast` / `forecastService.ts` — 7-day forecast from NWS daily gridpoints (now implemented)
 - **Phase C:** Push notifications (background fetch at user's alert threshold), Pro subscription (RevenueCat), species data for northeast/southeast regions
-- **Golden Hour redesign in progress:** spec at `docs/superpowers/specs/2026-07-07-golden-hour-redesign-design.md`. Plan 1 (foundation: sky engine, tokens, verdict) is built; Plans 2–4 (Today/Week screens, Species/Spots/Conditions, dynamic species roster) restyle the app to consume it. Plans 1–2 are live (Today + nav); Plan 3 (Week) and Plan 4 (working screens + Conditions consolidation) remain.
+- **Golden Hour redesign in progress:** spec at `docs/superpowers/specs/2026-07-07-golden-hour-redesign-design.md`. Plan 1 (foundation: sky engine, tokens, verdict) is built; Plans 2–4 (Today/Week screens, Species/Spots/Conditions, dynamic species roster) restyle the app to consume it. Plans 1–3 are live (foundation, Today + nav, Week); Plan 4 (Species/Spots restyle + Conditions consolidation) remains, then the dynamic species roster.
 
 `forecastService.ts` is implemented. `useForecast.ts` uses real TanStack Query.
