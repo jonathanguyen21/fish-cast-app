@@ -11,6 +11,7 @@ import { formatScrubTime } from './tideUtils'
 interface Props {
   tide: TideData
   currentHour: number | null
+  backgroundColor?: string
 }
 
 const CHART_HEIGHT = 140
@@ -39,7 +40,7 @@ function parseEventHour(timeStr: string): number {
   return h + min / 60
 }
 
-export function TideChart({ tide, currentHour }: Props) {
+export function TideChart({ tide, currentHour, backgroundColor }: Props) {
   const { width } = useWindowDimensions()
   const CHART_WIDTH = width - Spacing.screenPad * 2 - Spacing.md * 2
 
@@ -93,7 +94,7 @@ export function TideChart({ tide, currentHour }: Props) {
   const phaseIconName = tide.phase === 'incoming' ? 'arrow-up-outline' : tide.phase === 'outgoing' ? 'arrow-down-outline' : 'remove-outline'
 
   return (
-    <View style={styles.container} testID="tide-chart">
+    <View style={[styles.container, backgroundColor ? { backgroundColor } : null]} testID="tide-chart">
       <View style={styles.sectionTitleRow}>
         <Text style={styles.sectionTitle}>Tides</Text>
         <Text style={styles.sectionTitleMeta}> · </Text>
