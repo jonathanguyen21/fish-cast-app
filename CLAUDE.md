@@ -18,7 +18,7 @@ React Native / Expo fishing forecast app. Combines NOAA tide/water/wind/pressure
 - **react-native-svg** — tide bezier chart, score bars
 - **suncalc** — local moon/sun calculations (no network)
 - **TypeScript strict mode** throughout
-- **Jest + React Native Testing Library** — 368 tests, 40 suites
+- **Jest + React Native Testing Library** — 381 tests, 42 suites
 
 ---
 
@@ -31,11 +31,11 @@ app/
     _layout.tsx            Tab bar — Today · Week · Species · Spots (catchlog registered but shelved via href:null; settings is no longer a tab)
     index.tsx              Today screen (final layout) — header (date, spot, settings gear) → VerdictHero → BiteCurve → 3 condition chips (tide/wind deep-link to /conditions, species jumps to Species tab) on SkyBackground; nothing renders below the chips (date via ?date= param)
     week.tsx               Week tab: WeekDayCard list with per-day mini-skies, best-day callout, date-based teaser gate (today+tomorrow free), taps deep-link Today ?date=
-    species.tsx            Species tab — active-right-now + scored species list for the current spot, tinted-dark themed
+    species.tsx            Species tab — active-right-now + scored species list for the current spot, tinted-dark themed; "All species" list sorted by abundance tier (common > occasional > rare > not-recorded, via useSpeciesAbundance/OBIS-GBIF) ahead of score, with tier chips on cards and a fallback-safe "Also in this region" section for not-recorded species; degrades to the plain flat list if abundance data is unavailable
     spots.tsx              Spots list + active spot switcher, tinted-dark themed
     catchlog.tsx           Catch log entries (shelved: hidden from tab bar via href:null)
   conditions.tsx           Consolidated Conditions screen — 7 sections (tide/wind/pressure/swell/air/sky/sun) in a ScrollView, deep-linked via ?section=<key>; stack modal
-  settings.tsx             Units, alert threshold, Pro flag — stack modal with native back header; reached via Today header gear or Pro-teaser push
+  settings.tsx             Units, alert threshold, Pro flag — stack modal with native back header, tinted-dark themed (self-themed via useSkyTheme + active spot); reached via Today header gear or Pro-teaser push
   spot/new.tsx             Add Spot modal (async station resolution)
   species/[id].tsx         Species detail modal, tinted-dark themed
 
@@ -47,12 +47,14 @@ services/
   solunarService.ts        suncalc moon/sun → SolunarData (local, no network)
   scoringService.ts        buildConditionsData() — wires all sources into ConditionsData
   forecastService.ts       7-day forecast from NWS daily gridpoints (implemented)
+  speciesOccurrenceService.ts  fetchLocalAbundance(spot, candidates) → OBIS (saltwater) / GBIF (freshwater) abundance tiers
 
 hooks/
   useConditions.ts         4 parallel TanStack Queries → ConditionsData | null
   useForecast.ts           7-day forecast via TanStack Query (implemented)
   useSkyTheme.ts           Live SkyTheme for today, fixed moment for other dates
   useSpots.ts              Thin wrapper over spotsStore
+  useSpeciesAbundance.ts   7-day-cached TanStack Query wrapper around speciesOccurrenceService
 
 features/
   score/
@@ -270,6 +272,6 @@ await browser.close()
 
 - **Phase B2:** `useForecast` / `forecastService.ts` — 7-day forecast from NWS daily gridpoints (now implemented)
 - **Phase C:** Push notifications (background fetch at user's alert threshold), Pro subscription (RevenueCat), species data for northeast/southeast regions
-- **Golden Hour redesign:** spec at `docs/superpowers/specs/2026-07-07-golden-hour-redesign-design.md`. Plans 1–4 are complete: foundation (sky engine, tokens, verdict), Today + nav, Week, and Species/Spots restyle + Conditions consolidation (the seven `app/detail/*` modals were replaced by one `app/conditions.tsx` with 7 sections; `ScoreTimeline`/`ConditionsGrid`/`PressureCard`/`MoonCard` were deleted; Settings moved to a stack modal). Remaining Golden Hour work: the dynamic species roster (OBIS/GBIF).
+- **Golden Hour redesign — complete.** The full spec (`docs/superpowers/specs/2026-07-07-golden-hour-redesign-design.md`) is now fully implemented: sky engine and Golden Hour tokens (Plan 1); verdict-first Today and nav (Plan 2); Week (Plan 3); Conditions consolidation and Species/Spots restyle (Plan 4, the seven `app/detail/*` modals replaced by one `app/conditions.tsx` with 7 sections, `ScoreTimeline`/`ConditionsGrid`/`PressureCard`/`MoonCard` deleted, Settings moved to a stack modal); and the dynamic local species roster plus the Settings tinted-dark restyle (Plan 5, OBIS/GBIF-backed abundance tiering via `speciesOccurrenceService.ts`/`useSpeciesAbundance.ts`). There is no remaining Golden Hour work — every screen is on the tinted-dark design system. Any future redesign work is a new initiative, not a continuation of this spec.
 
 `forecastService.ts` is implemented. `useForecast.ts` uses real TanStack Query.

@@ -5,7 +5,7 @@ import { Radii, Type, Fonts } from '../../../theme/tokens'
 import type { SectionProps } from './types'
 
 const CHART_HEIGHT = 160
-const PADDING = { top: 20, bottom: 28, left: 16, right: 16 }
+const PADDING = { top: 20, bottom: 28, left: 36, right: 16 }
 const CARD_MARGIN = 16
 const CARD_PADDING = 14
 const TOTAL_HOURS = 24

@@ -69,4 +69,27 @@ describe('SpeciesCard', () => {
     fireEvent.press(getByTestId(`species-card-${freeSpecies.id}`))
     expect(onPress).toHaveBeenCalled()
   })
+
+  it('renders a "Common here" chip when abundanceTier is common', () => {
+    const { getByText } = render(
+      <SpeciesCard speciesScore={makeScore(freeSpecies)} isPro={true} onPress={() => {}} abundanceTier="common" />
+    )
+    expect(getByText('Common here')).toBeTruthy()
+  })
+
+  it('renders no abundance chip when abundanceTier is not-recorded', () => {
+    const { queryByText } = render(
+      <SpeciesCard speciesScore={makeScore(freeSpecies)} isPro={true} onPress={() => {}} abundanceTier="not-recorded" />
+    )
+    expect(queryByText('Common here')).toBeNull()
+    expect(queryByText('Occasional')).toBeNull()
+    expect(queryByText('Rarely seen')).toBeNull()
+  })
+
+  it('renders no abundance chip when abundanceTier is omitted', () => {
+    const { queryByText } = render(
+      <SpeciesCard speciesScore={makeScore(freeSpecies)} isPro={true} onPress={() => {}} />
+    )
+    expect(queryByText('Occasional')).toBeNull()
+  })
 })
