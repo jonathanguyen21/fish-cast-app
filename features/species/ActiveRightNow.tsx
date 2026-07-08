@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
-import { Typography } from '../../theme/typography'
+import { Fonts, Glass, Radii, Type } from '../../theme/tokens'
+import type { SkyTheme } from '../../theme/skyTheme'
 import { scoreColor } from '../score/scoringEngine'
 import { describeBestWindow, type SpeciesHourlyScore } from './speciesHourlyScoring'
 import type { SpeciesScore } from '../../types/species'
@@ -15,6 +16,7 @@ interface Props {
   onPressSpecies: (id: string) => void
   maxRows?: number
   onSeeAll?: () => void
+  theme?: SkyTheme
 }
 
 function formatHour(h: number): string {
@@ -33,7 +35,7 @@ function hintLabel(hourly: SpeciesHourlyScore[], currentHour: number): string {
   }
 }
 
-export function ActiveRightNow({ scoredSpecies, hourlyByMap, currentHour, onPressSpecies, maxRows = 3, onSeeAll }: Props) {
+export function ActiveRightNow({ scoredSpecies, hourlyByMap, currentHour, onPressSpecies, maxRows = 3, onSeeAll, theme }: Props) {
   const rows = useMemo(() => {
     return scoredSpecies
       .map(ss => {
@@ -50,14 +52,15 @@ export function ActiveRightNow({ scoredSpecies, hourlyByMap, currentHour, onPres
   if (rows.length === 0) return null
 
   const hasActive = rows.some(r => r.currentScore > 0)
+  const textTint = theme?.textTint
 
   return (
     <View style={styles.container}>
-      <Text style={Typography.sectionTitle}>Active Right Now</Text>
+      <Text style={[Type.secondary, { color: textTint ?? Colors.textSecondary, opacity: theme ? 0.7 : 1 }]}>Active right now</Text>
       {!hasActive && (
-        <Text style={styles.quietNote}>No species peaking right now — check back around dawn or tide turns</Text>
+        <Text style={[styles.quietNote, theme && { color: textTint, opacity: 0.55 }]}>No species peaking right now — check back around dawn or tide turns</Text>
       )}
-      <View style={styles.card}>
+      <View style={[styles.card, theme && { backgroundColor: theme.tintedDark.card, borderRadius: Radii.card }]}>
         {rows.map((row, idx) => {
           const isInactive = row.currentScore === 0
           const color = scoreColor(row.displayScore)
@@ -65,11 +68,23 @@ export function ActiveRightNow({ scoredSpecies, hourlyByMap, currentHour, onPres
             <TouchableOpacity
               key={row.species.id}
               testID={`active-row-${row.species.id}`}
-              style={[styles.row, idx > 0 && styles.rowBorder, isInactive && styles.rowDim]}
+              style={[
+                styles.row,
+                idx > 0 && (theme ? { borderTopWidth: 1, borderTopColor: Glass.stroke } : styles.rowBorder),
+                isInactive && styles.rowDim,
+              ]}
               onPress={() => onPressSpecies(row.species.id)}
             >
-              <Text style={[styles.name, isInactive && styles.nameDim]}>{row.species.common_name}</Text>
-              <Text style={[styles.hint, isInactive && styles.hintDim]}>
+              <Text style={[
+                styles.name,
+                theme && { fontFamily: Fonts.bold, color: textTint },
+                isInactive && (theme ? { color: textTint, opacity: 0.55 } : styles.nameDim),
+              ]}>{row.species.common_name}</Text>
+              <Text style={[
+                styles.hint,
+                theme && { color: textTint, opacity: 0.7 },
+                isInactive && (theme ? { color: textTint, opacity: 0.5 } : styles.hintDim),
+              ]}>
                 {hintLabel(row.hourly, currentHour)}
               </Text>
               <View style={[styles.badge, { backgroundColor: color + '22', borderColor: color }]}>
@@ -81,9 +96,14 @@ export function ActiveRightNow({ scoredSpecies, hourlyByMap, currentHour, onPres
           )
         })}
         {onSeeAll && (
-          <TouchableOpacity style={styles.seeAll} onPress={onSeeAll} accessibilityRole="button" accessibilityLabel="See all species">
-            <Text style={styles.seeAllText}>See all species</Text>
-            <Ionicons name="chevron-forward" size={14} color={Colors.accent} />
+          <TouchableOpacity
+            style={[styles.seeAll, theme && { borderTopColor: Glass.stroke }]}
+            onPress={onSeeAll}
+            accessibilityRole="button"
+            accessibilityLabel="See all species"
+          >
+            <Text style={[styles.seeAllText, theme && { color: theme.accent }]}>See all species</Text>
+            <Ionicons name="chevron-forward" size={14} color={theme ? theme.accent : Colors.accent} />
           </TouchableOpacity>
         )}
       </View>
