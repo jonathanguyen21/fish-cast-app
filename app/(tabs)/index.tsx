@@ -94,45 +94,49 @@ export default function ForecastScreen() {
 
   if (!activeSpot) {
     return (
-      <View style={styles.empty}>
-        <Ionicons name="fish-outline" size={64} color={Colors.accent} style={styles.emptyIcon} />
-        <Text style={styles.emptyText}>Welcome to FishCast</Text>
-        <Text style={styles.emptyHint}>Add a spot to get your personalized 0–100 fishing forecast powered by real tide, pressure, solunar, and weather data.</Text>
-        <View style={styles.featurePills}>
-          <View style={styles.featurePill}>
-            <Ionicons name="water-outline" size={14} color={Colors.ocean} />
-            <Text style={styles.featurePillText}>Live tides</Text>
+      <SkyBackground theme={skyTheme}>
+        <View style={styles.empty}>
+          <Ionicons name="fish-outline" size={64} color={Colors.accent} style={styles.emptyIcon} />
+          <Text style={[styles.emptyText, { color: skyTheme.textTint }]}>Welcome to FishCast</Text>
+          <Text style={[styles.emptyHint, { color: skyTheme.textTint, opacity: 0.8 }]}>Add a spot to get your personalized 0–100 fishing forecast powered by real tide, pressure, solunar, and weather data.</Text>
+          <View style={styles.featurePills}>
+            <View style={styles.featurePill}>
+              <Ionicons name="water-outline" size={14} color={Colors.ocean} />
+              <Text style={styles.featurePillText}>Live tides</Text>
+            </View>
+            <View style={styles.featurePill}>
+              <Ionicons name="moon-outline" size={14} color={Colors.accent} />
+              <Text style={styles.featurePillText}>Solunar</Text>
+            </View>
+            <View style={styles.featurePill}>
+              <Ionicons name="speedometer-outline" size={14} color={Colors.textSecondary} />
+              <Text style={styles.featurePillText}>Pressure</Text>
+            </View>
+            <View style={styles.featurePill}>
+              <Ionicons name="navigate-outline" size={14} color={Colors.success} />
+              <Text style={styles.featurePillText}>Wind</Text>
+            </View>
           </View>
-          <View style={styles.featurePill}>
-            <Ionicons name="moon-outline" size={14} color={Colors.accent} />
-            <Text style={styles.featurePillText}>Solunar</Text>
-          </View>
-          <View style={styles.featurePill}>
-            <Ionicons name="speedometer-outline" size={14} color={Colors.textSecondary} />
-            <Text style={styles.featurePillText}>Pressure</Text>
-          </View>
-          <View style={styles.featurePill}>
-            <Ionicons name="navigate-outline" size={14} color={Colors.success} />
-            <Text style={styles.featurePillText}>Wind</Text>
-          </View>
+          <TouchableOpacity style={[styles.emptyCta, styles.emptyCtaRow]} onPress={() => router.push('/(tabs)/spots')}>
+            <Text style={styles.emptyCtaText}>Add Your First Spot</Text>
+            <Ionicons name="chevron-forward" size={14} color={Colors.accent} />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={[styles.emptyCta, styles.emptyCtaRow]} onPress={() => router.push('/(tabs)/spots')}>
-          <Text style={styles.emptyCtaText}>Add Your First Spot</Text>
-          <Ionicons name="chevron-forward" size={14} color={Colors.accent} />
-        </TouchableOpacity>
-      </View>
+      </SkyBackground>
     )
   }
 
   if (isError && !conditions) {
     return (
-      <View style={styles.empty}>
-        <Ionicons name="alert-circle-outline" size={56} color={Colors.warning} style={styles.emptyIcon} />
-        <Text style={styles.emptyText}>Could not load conditions</Text>
-        <TouchableOpacity style={styles.emptyCta} onPress={refetch}>
-          <Text style={styles.emptyCtaText}>Tap to Retry</Text>
-        </TouchableOpacity>
-      </View>
+      <SkyBackground theme={skyTheme}>
+        <View style={styles.empty}>
+          <Ionicons name="alert-circle-outline" size={56} color={Colors.warning} style={styles.emptyIcon} />
+          <Text style={[styles.emptyText, { color: skyTheme.textTint }]}>Could not load conditions</Text>
+          <TouchableOpacity style={styles.emptyCta} onPress={refetch}>
+            <Text style={styles.emptyCtaText}>Tap to Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SkyBackground>
     )
   }
 
