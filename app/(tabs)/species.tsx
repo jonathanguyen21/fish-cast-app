@@ -21,6 +21,8 @@ import { scoreColor } from '../../features/score/scoringEngine'
 import { Spacing } from '../../theme/spacing'
 import { useSkyTheme } from '../../hooks/useSkyTheme'
 import { Fonts, Radii, Type } from '../../theme/tokens'
+import { useSpeciesAbundance } from '../../hooks/useSpeciesAbundance'
+import type { AbundanceTier } from '../../services/speciesOccurrenceService'
 
 function localDateKey(d: Date): string {
   const y = d.getFullYear()
@@ -44,12 +46,20 @@ export default function SpeciesScreen() {
   const now = new Date()
   const currentHour = now.getHours()
 
+  const regionSpecies = useMemo(
+    () => (activeSpot ? getSpeciesForRegion(activeSpot.lat, activeSpot.lng, activeSpot.type) : []),
+    [activeSpot]
+  )
+  const { data: abundanceData } = useSpeciesAbundance(activeSpot, regionSpecies)
+
+  const TIER_WEIGHT: Record<AbundanceTier, number> = { common: 3, occasional: 2, rare: 1, 'not-recorded': 0 }
+
   const scoredSpecies = useMemo(() => {
     if (!activeSpot || !conditions) return []
     const tidePhase = conditions.tide
       ? detectPhase(conditions.tide.hourlyCurve, currentHour)
       : 'slack'
-    return getSpeciesForRegion(activeSpot.lat, activeSpot.lng, activeSpot.type)
+    return regionSpecies
       .map(sp => scoreSpecies(sp, {
         month: now.getMonth() + 1,
         waterTemp: conditions.water.temp,
@@ -59,9 +69,12 @@ export default function SpeciesScreen() {
       .sort((a, b) => {
         if (!isPro && a.species.tier === 'pro' && b.species.tier !== 'pro') return 1
         if (!isPro && b.species.tier === 'pro' && a.species.tier !== 'pro') return -1
+        const aTier = TIER_WEIGHT[abundanceData?.[a.species.scientific_name] ?? 'not-recorded']
+        const bTier = TIER_WEIGHT[abundanceData?.[b.species.scientific_name] ?? 'not-recorded']
+        if (aTier !== bTier) return bTier - aTier
         return b.score - a.score
       })
-  }, [activeSpot, conditions, currentHour, isPro])
+  }, [activeSpot, conditions, currentHour, isPro, regionSpecies, abundanceData])
 
   const scoredHourlyByMap = useMemo(() => {
     const map: Record<string, SpeciesHourlyScore[]> = {}
@@ -80,6 +93,14 @@ export default function SpeciesScreen() {
   const activeScoredSpecies = isPro ? scoredSpecies : freeSpecies
   const visibleSpecies = isPro ? scoredSpecies : freeSpecies.slice(0, 2)
   const lockedCount = isPro ? 0 : scoredSpecies.length - visibleSpecies.length
+
+  const hasAbundanceData = abundanceData != null && Object.keys(abundanceData).length > 0
+  const mainSpecies = hasAbundanceData
+    ? visibleSpecies.filter(ss => (abundanceData![ss.species.scientific_name] ?? 'not-recorded') !== 'not-recorded')
+    : visibleSpecies
+  const alsoInRegion = hasAbundanceData
+    ? visibleSpecies.filter(ss => (abundanceData![ss.species.scientific_name] ?? 'not-recorded') === 'not-recorded')
+    : []
 
   if (!activeSpot) {
     return (
@@ -133,17 +154,39 @@ export default function SpeciesScreen() {
                   No species data for this area yet — the fishing score above still applies.
                 </Text>
               )}
-              {visibleSpecies.map(ss => (
+              {mainSpecies.map(ss => (
                 <SpeciesCard
                   key={ss.species.id}
                   speciesScore={ss}
                   hourly={scoredHourlyByMap[ss.species.id]}
                   isPro={isPro}
                   theme={skyTheme}
+                  abundanceTier={abundanceData?.[ss.species.scientific_name]}
                   onPress={() => router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss), hourlyData: JSON.stringify(scoredHourlyByMap[ss.species.id] ?? []) } })
                   }
                 />
               ))}
+              {hasAbundanceData && (
+                <Text style={[Type.secondary, { color: skyTheme.textTint, opacity: 0.55, marginTop: 4 }]}>
+                  Ranked by species observed near your spot (public biodiversity records)
+                </Text>
+              )}
+              {alsoInRegion.length > 0 && (
+                <>
+                  <Text style={[Type.secondary, { color: skyTheme.textTint, opacity: 0.7, marginTop: 12 }]}>Also in this region</Text>
+                  {alsoInRegion.map(ss => (
+                    <SpeciesCard
+                      key={ss.species.id}
+                      speciesScore={ss}
+                      hourly={scoredHourlyByMap[ss.species.id]}
+                      isPro={isPro}
+                      theme={skyTheme}
+                      abundanceTier={abundanceData?.[ss.species.scientific_name]}
+                      onPress={() => router.push({ pathname: '/species/[id]', params: { id: ss.species.id, data: JSON.stringify(ss), hourlyData: JSON.stringify(scoredHourlyByMap[ss.species.id] ?? []) } })}
+                    />
+                  ))}
+                </>
+              )}
               {lockedCount > 0 && (
                 <TouchableOpacity style={[styles.upgradeTeaser, { backgroundColor: skyTheme.tintedDark.card }]} onPress={() => router.push('/settings' as never)}>
                   <Ionicons name="lock-closed" size={14} color={skyTheme.accent} />

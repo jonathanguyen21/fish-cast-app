@@ -8,6 +8,13 @@ import type { SkyTheme } from '../../theme/skyTheme'
 import { scoreColor } from '../score/scoringEngine'
 import { bestWindowSummary, type SpeciesHourlyScore } from './speciesHourlyScoring'
 import type { SpeciesScore } from '../../types/species'
+import type { AbundanceTier } from '../../services/speciesOccurrenceService'
+
+const ABUNDANCE_LABEL: Record<Exclude<AbundanceTier, 'not-recorded'>, string> = {
+  common: 'Common here',
+  occasional: 'Occasional',
+  rare: 'Rarely seen',
+}
 
 interface Props {
   speciesScore: SpeciesScore
@@ -15,6 +22,7 @@ interface Props {
   isPro: boolean
   onPress: () => void
   theme?: SkyTheme
+  abundanceTier?: AbundanceTier
 }
 
 function formatHour(h: number): string {
@@ -36,7 +44,7 @@ function lockedBadgeColor(id: string): string {
   return scoreColor(FAKE_SCORE_POOL[hash % FAKE_SCORE_POOL.length])
 }
 
-export function SpeciesCard({ speciesScore, hourly, isPro, onPress, theme }: Props) {
+export function SpeciesCard({ speciesScore, hourly, isPro, onPress, theme, abundanceTier }: Props) {
   const { species, score, status } = speciesScore
   const isLocked = species.tier === 'pro' && !isPro
   const color = isLocked ? lockedBadgeColor(species.id) : scoreColor(score)
@@ -68,6 +76,13 @@ export function SpeciesCard({ speciesScore, hourly, isPro, onPress, theme }: Pro
           <Text style={[styles.status, { color: statusColor[status] ?? (theme ? theme.textTint : Colors.textSecondary) }]}>
             {status}
           </Text>
+          {abundanceTier && abundanceTier !== 'not-recorded' && (
+            <View style={[styles.abundanceChip, theme && { backgroundColor: theme.accent + '22', borderColor: theme.accent + '55' }]}>
+              <Text style={[styles.abundanceChipText, theme && { color: theme.accent }]}>
+                {ABUNDANCE_LABEL[abundanceTier]}
+              </Text>
+            </View>
+          )}
           {window && !isLocked && (
             <Text style={[styles.bestWindow, theme && { color: theme.textTint, opacity: 0.55 }]}>
               Best {formatHour(window.start)}–{formatHour(window.end + 1)}
@@ -109,4 +124,11 @@ const styles = StyleSheet.create({
   upgradeHintRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: Spacing.xs },
   upgradeHint: { fontSize: 12, color: Colors.accent },
   bestWindow: { fontSize: 11, color: Colors.textTertiary, marginTop: 1 },
+  abundanceChip: {
+    alignSelf: 'flex-start', marginTop: 3,
+    borderWidth: 1, borderRadius: 999,
+    paddingHorizontal: 8, paddingVertical: 2,
+    backgroundColor: Colors.accent + '18', borderColor: Colors.accent + '40',
+  },
+  abundanceChipText: { fontSize: 11, fontWeight: '600', color: Colors.accent },
 })
