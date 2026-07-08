@@ -61,6 +61,7 @@ export default function TabLayout() {
         name="spots"
         options={{
           title: 'Spots',
+          headerShown: false,
           tabBarIcon: ({ focused }) => <TabIcon name="Spots" focused={focused} />,
         }}
       />
