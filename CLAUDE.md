@@ -2,7 +2,7 @@
 
 ## What This App Is
 
-React Native / Expo fishing forecast app. Combines NOAA tide/water/wind/pressure data, NWS weather, Open-Meteo marine swell, and local solunar calculations into a 0–100 fishing score. Shows what species are active at the user's saved spot right now, an hourly score timeline, tide chart, conditions grid, and a 7-day forecast strip.
+React Native / Expo fishing forecast app. Combines NOAA tide/water/wind/pressure data, NWS weather, Open-Meteo marine swell, and local solunar calculations into a 0–100 fishing score. Today screen shows a verdict + bite curve with tide/wind/species chips that deep-link into a full Conditions screen; the Week tab shows a 7-day forecast; the Species tab shows what's active at the user's saved spot right now.
 
 **Current state: Phase B1 complete.** All screens use live API data. No mock data in production paths.
 
@@ -18,7 +18,7 @@ React Native / Expo fishing forecast app. Combines NOAA tide/water/wind/pressure
 - **react-native-svg** — tide bezier chart, score bars
 - **suncalc** — local moon/sun calculations (no network)
 - **TypeScript strict mode** throughout
-- **Jest + React Native Testing Library** — 69 tests, 12 suites
+- **Jest + React Native Testing Library** — 368 tests, 40 suites
 
 ---
 
@@ -26,17 +26,18 @@ React Native / Expo fishing forecast app. Combines NOAA tide/water/wind/pressure
 
 ```
 app/
-  _layout.tsx              Root layout — PersistQueryClientProvider, Stack
+  _layout.tsx              Root layout — PersistQueryClientProvider, Stack (conditions + settings registered as presentation:'modal')
   (tabs)/
-    _layout.tsx            Tab bar — Today · Week · Species · Spots (settings/catchlog registered but shelved via href:null)
-    index.tsx              Today screen — verdict hero, bite curve, condition chips on SkyBackground (date via ?date= param)
+    _layout.tsx            Tab bar — Today · Week · Species · Spots (catchlog registered but shelved via href:null; settings is no longer a tab)
+    index.tsx              Today screen (final layout) — header (date, spot, settings gear) → VerdictHero → BiteCurve → 3 condition chips (tide/wind deep-link to /conditions, species jumps to Species tab) on SkyBackground; nothing renders below the chips (date via ?date= param)
     week.tsx               Week tab: WeekDayCard list with per-day mini-skies, best-day callout, date-based teaser gate (today+tomorrow free), taps deep-link Today ?date=
-    species.tsx            Species tab — active-right-now + scored species list for the current spot
-    spots.tsx              Spots list + active spot switcher
-    settings.tsx           Units, alert threshold, Pro flag (shelved: hidden from tab bar via href:null; reached via Today header gear)
+    species.tsx            Species tab — active-right-now + scored species list for the current spot, tinted-dark themed
+    spots.tsx              Spots list + active spot switcher, tinted-dark themed
     catchlog.tsx           Catch log entries (shelved: hidden from tab bar via href:null)
+  conditions.tsx           Consolidated Conditions screen — 7 sections (tide/wind/pressure/swell/air/sky/sun) in a ScrollView, deep-linked via ?section=<key>; stack modal
+  settings.tsx             Units, alert threshold, Pro flag — stack modal with native back header; reached via Today header gear or Pro-teaser push
   spot/new.tsx             Add Spot modal (async station resolution)
-  species/[id].tsx         Species detail modal
+  species/[id].tsx         Species detail modal, tinted-dark themed
 
 services/
   noaaStationService.ts    haversine nearest-station lookup (NOAA CO-OPS station list)
@@ -57,18 +58,16 @@ features/
   score/
     scoringEngine.ts       Pure scoring algorithm (ScoringInputs → 0–100)
     ScoreDisplay.tsx       Animated score dial
-    ScoreTimeline.tsx      Hourly bar chart (all 24h, NOW marker + past dimming when viewing today)
     verdict.ts             computeAxes(breakdown, spotType) → bite/comfort; getVerdict() → phrase
     VerdictHero.tsx        Large verdict display with bite/comfort axes
-    BiteCurve.tsx          Bite likelihood curve chart
+    BiteCurve.tsx          Bite likelihood curve chart, y-axis scaled to the data range (not fixed 0–100)
   tide/
     tideUtils.ts           Phase detection, hoursFromTurn, height formatting
     TideChart.tsx          SVG bezier tide curve
   wind/WindDisplay.tsx     Animated direction arrow
   conditions/
-    ConditionsGrid.tsx     6-cell grid
-    PressureCard.tsx       Pressure + trend arrow
-    MoonCard.tsx           Moon phase + solunar periods
+    conditionsSummary.ts  buildConditionsSummary() — one-line VerdictHero summary text
+    sections/              Consolidated into app/conditions.tsx: TideSection, WindSection, PressureSection, SwellSection, AirTempSection, SkySection, SunMoonSection (+ types.ts)
   species/
     speciesScoring.ts      Score a species against conditions
     SpeciesCard.tsx        Row with score badge + Pro lock
@@ -271,6 +270,6 @@ await browser.close()
 
 - **Phase B2:** `useForecast` / `forecastService.ts` — 7-day forecast from NWS daily gridpoints (now implemented)
 - **Phase C:** Push notifications (background fetch at user's alert threshold), Pro subscription (RevenueCat), species data for northeast/southeast regions
-- **Golden Hour redesign in progress:** spec at `docs/superpowers/specs/2026-07-07-golden-hour-redesign-design.md`. Plan 1 (foundation: sky engine, tokens, verdict) is built; Plans 2–4 (Today/Week screens, Species/Spots/Conditions, dynamic species roster) restyle the app to consume it. Plans 1–3 are live (foundation, Today + nav, Week); Plan 4 (Species/Spots restyle + Conditions consolidation) remains, then the dynamic species roster.
+- **Golden Hour redesign:** spec at `docs/superpowers/specs/2026-07-07-golden-hour-redesign-design.md`. Plans 1–4 are complete: foundation (sky engine, tokens, verdict), Today + nav, Week, and Species/Spots restyle + Conditions consolidation (the seven `app/detail/*` modals were replaced by one `app/conditions.tsx` with 7 sections; `ScoreTimeline`/`ConditionsGrid`/`PressureCard`/`MoonCard` were deleted; Settings moved to a stack modal). Remaining Golden Hour work: the dynamic species roster (OBIS/GBIF).
 
 `forecastService.ts` is implemented. `useForecast.ts` uses real TanStack Query.

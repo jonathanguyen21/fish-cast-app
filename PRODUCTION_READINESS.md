@@ -110,10 +110,9 @@ All `app/detail/*.tsx` screens use `paddingBottom: Spacing.xl`. On iPhone X+ wit
 
 ## MEDIUM — Data / Logic Issues
 
-### 15. useForecast returns stale hardcoded mock data
-**File:** `hooks/useForecast.ts`, `data/mockData.ts`
-`MOCK_FORECAST` has dates hardcoded to `2026-05-04` through `2026-05-10` and labels like `"Today"`, `"Tue"` that are wrong for any other date. When `isPro = true`, the ForecastStrip shows this stale data.
-- Phase B2 (real forecast) is the real fix, but the mock should generate dates relative to `new Date()` so Pro users see plausible day labels.
+### 15. ~~useForecast returns stale hardcoded mock data~~ (resolved)
+**File:** `hooks/useForecast.ts`, `services/forecastService.ts`
+`forecastService.ts` is implemented and wired to real NWS daily gridpoints via TanStack Query (`useForecast.ts`). There is no `MOCK_FORECAST` and no `ForecastStrip` in the render path — the 7-day view is the Week tab (`app/(tabs)/week.tsx`, `features/forecast/WeekDayCard.tsx`), which shows live per-day scores and dates.
 
 ### 16. DayCalendar: future days have no score dots
 **File:** `features/calendar/DayCalendar.tsx:72–76`
@@ -226,8 +225,8 @@ When data is loading the first time, a full-screen spinner appears. Consider add
 
 ## PHASE B2 SCOPE (not bugs, but required before Pro launch)
 
-- **`forecastService.ts`**: throws `'Phase B2: not yet implemented'` — ForecastStrip in Pro mode shows mock data
-- **`useForecast.ts`**: returns MOCK_FORECAST — needs real 7-day NWS gridpoint implementation
+- ~~**`forecastService.ts`**: throws `'Phase B2: not yet implemented'` — ForecastStrip in Pro mode shows mock data~~ (resolved — implemented against live NWS gridpoints)
+- ~~**`useForecast.ts`**: returns MOCK_FORECAST — needs real 7-day NWS gridpoint implementation~~ (resolved — real TanStack Query, displayed in the Week tab)
 - **`DayCalendar` future score dots**: need forecast data to color future days
 - **Northeast / Southeast / Freshwater species data**: all stub empty arrays
 
