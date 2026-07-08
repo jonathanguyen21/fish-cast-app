@@ -3,6 +3,7 @@ import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-nati
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter, useLocalSearchParams } from 'expo-router'
+import { StatusBar } from 'expo-status-bar'
 import { useSpots } from '../hooks/useSpots'
 import { useConditions } from '../hooks/useConditions'
 import { useSkyTheme } from '../hooks/useSkyTheme'
@@ -59,6 +60,7 @@ export default function ConditionsScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.tintedDark.background }]}>
+      <StatusBar style="light" />
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Text style={[styles.title, { color: theme.textTint }]}>Conditions</Text>
         <TouchableOpacity testID="conditions-close" accessibilityRole="button" onPress={() => router.back()} style={styles.close}>

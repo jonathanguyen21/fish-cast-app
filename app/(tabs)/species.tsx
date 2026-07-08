@@ -6,6 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
+import { StatusBar } from 'expo-status-bar'
 import { useSpots } from '../../hooks/useSpots'
 import { useConditions } from '../../hooks/useConditions'
 import { useSettingsStore } from '../../store/settingsStore'
@@ -92,6 +93,7 @@ export default function SpeciesScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: skyTheme.tintedDark.background }]}>
+      <StatusBar style="light" />
       <View style={[styles.header, { paddingTop: insets.top, backgroundColor: skyTheme.tintedDark.background }]}>
         <View style={styles.titleRow}>
           <Text style={[styles.title, { color: skyTheme.textTint }]}>What's Biting</Text>

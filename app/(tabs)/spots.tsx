@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Modal, TextI
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
+import { StatusBar } from 'expo-status-bar'
 import { useSpots } from '../../hooks/useSpots'
 import { useConditions } from '../../hooks/useConditions'
 import { SwipeableRow } from '../../features/common/SwipeableRow'
@@ -102,6 +103,7 @@ export default function SpotsScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.tintedDark.background }]}>
+      <StatusBar style="light" />
       <View style={[styles.header, { paddingTop: insets.top, backgroundColor: theme.tintedDark.background }]}>
         <Text style={[styles.title, { color: theme.textTint }]}>Spots</Text>
         <Text style={[Type.secondary, styles.subtitle, { color: theme.textTint, opacity: 0.7 }]}>Tap a spot to make it active</Text>
