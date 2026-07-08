@@ -45,3 +45,17 @@ export function getVerdict(i: {
     sub: i.betterDay ? `${i.betterDay.label} looks great — ${i.betterDay.score}` : null,
   }
 }
+
+export function pickBetterDay(
+  days: { date: string; dayLabel: string; peakScore: number }[] | undefined,
+  todayScore: number,
+  todayKey: string,
+): { label: string; score: number } | null {
+  if (!days || days.length === 0) return null
+  let best: { label: string; score: number } | null = null
+  for (const d of days) {
+    if (d.date <= todayKey) continue
+    if (!best || d.peakScore > best.score) best = { label: d.dayLabel, score: d.peakScore }
+  }
+  return best && best.score >= todayScore + 10 ? best : null
+}

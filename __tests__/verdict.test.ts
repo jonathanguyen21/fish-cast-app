@@ -1,4 +1,4 @@
-import { computeAxes, getVerdict } from '../features/score/verdict'
+import { computeAxes, getVerdict, pickBetterDay } from '../features/score/verdict'
 import type { ScoreBreakdown } from '../types/conditions'
 
 const FULL: ScoreBreakdown = { pressure: 25, solunar: 20, tide: 20, wind: 15, waterTemp: 10, sky: 10 }
@@ -61,5 +61,26 @@ describe('getVerdict', () => {
       expect(getVerdict({ bite: 44, comfort: 90, overall: 45, skyState: 'day' }).phrase)
         .toBe('Save it for tomorrow')
     })
+  })
+})
+
+describe('pickBetterDay', () => {
+  const DAYS = [
+    { date: '2026-07-07', dayLabel: 'Today', peakScore: 40 },
+    { date: '2026-07-08', dayLabel: 'Wed', peakScore: 84 },
+    { date: '2026-07-09', dayLabel: 'Thu', peakScore: 60 },
+  ]
+
+  it('returns the best future day when it beats today by 10+', () => {
+    expect(pickBetterDay(DAYS, 40, '2026-07-07')).toEqual({ label: 'Wed', score: 84 })
+  })
+
+  it('returns null when no future day beats today by 10+', () => {
+    expect(pickBetterDay(DAYS, 80, '2026-07-07')).toBeNull()
+  })
+
+  it('returns null for undefined or empty input', () => {
+    expect(pickBetterDay(undefined, 40, '2026-07-07')).toBeNull()
+    expect(pickBetterDay([], 40, '2026-07-07')).toBeNull()
   })
 })

@@ -28,10 +28,13 @@ React Native / Expo fishing forecast app. Combines NOAA tide/water/wind/pressure
 app/
   _layout.tsx              Root layout — PersistQueryClientProvider, Stack
   (tabs)/
-    _layout.tsx            Tab bar
-    index.tsx              Dashboard (score, tide, wind, species, forecast)
+    _layout.tsx            Tab bar — Today · Week · Species · Spots (settings/catchlog registered but shelved via href:null)
+    index.tsx              Today screen — verdict hero, bite curve, condition chips on SkyBackground (date via ?date= param)
+    week.tsx               Week tab (placeholder until Golden Hour Plan 3)
+    species.tsx            Species tab — active-right-now + scored species list for the current spot
     spots.tsx              Spots list + active spot switcher
-    settings.tsx           Units, alert threshold, Pro flag
+    settings.tsx           Units, alert threshold, Pro flag (shelved: hidden from tab bar via href:null; reached via Today header gear)
+    catchlog.tsx           Catch log entries (shelved: hidden from tab bar via href:null)
   spot/new.tsx             Add Spot modal (async station resolution)
   species/[id].tsx         Species detail modal
 
@@ -47,6 +50,7 @@ services/
 hooks/
   useConditions.ts         4 parallel TanStack Queries → ConditionsData | null
   useForecast.ts           Phase B2 stub
+  useSkyTheme.ts           Live SkyTheme for today, fixed moment for other dates
   useSpots.ts              Thin wrapper over spotsStore
 
 features/
@@ -55,6 +59,8 @@ features/
     ScoreDisplay.tsx       Animated score dial
     ScoreTimeline.tsx      Hourly bar chart (all 24h, NOW marker + past dimming when viewing today)
     verdict.ts             computeAxes(breakdown, spotType) → bite/comfort; getVerdict() → phrase
+    VerdictHero.tsx        Large verdict display with bite/comfort axes
+    BiteCurve.tsx          Bite likelihood curve chart
   tide/
     tideUtils.ts           Phase detection, hoursFromTurn, height formatting
     TideChart.tsx          SVG bezier tide curve
@@ -263,6 +269,6 @@ await browser.close()
 
 - **Phase B2:** `useForecast` / `forecastService.ts` — 7-day forecast from NWS daily gridpoints (now implemented)
 - **Phase C:** Push notifications (background fetch at user's alert threshold), Pro subscription (RevenueCat), species data for northeast/southeast regions
-- **Golden Hour redesign in progress:** spec at `docs/superpowers/specs/2026-07-07-golden-hour-redesign-design.md`. Plan 1 (foundation: sky engine, tokens, verdict) is built; Plans 2–4 (Today/Week screens, Species/Spots/Conditions, dynamic species roster) restyle the app to consume it. Until Plan 2 lands, no screen renders the new system.
+- **Golden Hour redesign in progress:** spec at `docs/superpowers/specs/2026-07-07-golden-hour-redesign-design.md`. Plan 1 (foundation: sky engine, tokens, verdict) is built; Plans 2–4 (Today/Week screens, Species/Spots/Conditions, dynamic species roster) restyle the app to consume it. Plans 1–2 are live (Today + nav); Plan 3 (Week) and Plan 4 (working screens + Conditions consolidation) remain.
 
 `forecastService.ts` is implemented. `useForecast.ts` uses real TanStack Query.
