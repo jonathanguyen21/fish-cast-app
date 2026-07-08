@@ -13,14 +13,16 @@ interface Props {
   bestWindow: ConditionsData['bestWindow']
   currentHour: number | null
   skyTheme: SkyTheme
+  title?: string
 }
 
 const W = 320
 const H = 84
 const PAD = 6
-// Estimated path length for the draw-in dash animation; longer than any real
-// curve at this viewBox so the full path is always revealed.
-const EST_LEN = 900
+// Estimated path length for the draw-in dash animation; generously longer
+// than any real curve at this viewBox (including pathological/jagged ones)
+// so the full path is always revealed.
+const EST_LEN = 2000
 
 function parseHour(t: string): number {
   const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i)
@@ -48,7 +50,7 @@ function buildPath(scores: number[]): string {
   return d
 }
 
-export function BiteCurve({ hourlyScores, bestWindow, currentHour, skyTheme }: Props) {
+export function BiteCurve({ hourlyScores, bestWindow, currentHour, skyTheme, title = "Today's bite" }: Props) {
   const dash = useSharedValue(EST_LEN)
 
   useEffect(() => {
@@ -74,7 +76,7 @@ export function BiteCurve({ hourlyScores, bestWindow, currentHour, skyTheme }: P
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <Text style={[Type.secondary, { color: skyTheme.textTint, opacity: 0.85 }]}>Today's bite</Text>
+        <Text style={[Type.secondary, { color: skyTheme.textTint, opacity: 0.85 }]}>{title}</Text>
         <Text style={[Type.chip, { color: skyTheme.accent }]}>
           {bestWindow.passed ? `Peak was ${bestWindow.start}–${bestWindow.end}` : `Best ${bestWindow.start}–${bestWindow.end}`}
         </Text>

@@ -72,6 +72,8 @@ export default function ForecastScreen() {
   const { data: forecast } = useForecast(activeSpot)
   const alertsEnabled = useSettingsStore(s => s.alertsEnabled)
   const alertThreshold = useSettingsStore(s => s.alertThreshold)
+  const speedUnit = useSettingsStore(s => s.speedUnit)
+  const tempUnit = useSettingsStore(s => s.tempUnit)
 
   const skyTheme = useSkyTheme(
     activeSpot ? { lat: activeSpot.lat, lng: activeSpot.lng } : null,
@@ -80,8 +82,8 @@ export default function ForecastScreen() {
     conditions?.bestWindow.start,
   )
   const todayKey = localDateKey(new Date())
-  const betterDay = conditions
-    ? pickBetterDay(forecast, conditions.fishingScore, todayKey)
+  const betterDay = conditions && selectedDate === todayKey
+    ? pickBetterDay(forecast, conditions.fishingScore, selectedDate)
     : null
 
   const now = new Date()
@@ -188,6 +190,7 @@ export default function ForecastScreen() {
               bestWindow={conditions.bestWindow}
               currentHour={selectedDate === todayKey ? new Date().getHours() : null}
               skyTheme={skyTheme}
+              title={selectedDate === todayKey ? "Today's bite" : 'Forecast bite'}
             />
             <View style={styles.chipsRow}>
               {conditions.tide && (
@@ -211,7 +214,7 @@ export default function ForecastScreen() {
                 })}
               >
                 <Text style={[Type.chip, { color: skyTheme.textTint }]}>
-                  Wind {conditions.wind.speed} mph
+                  Wind {speedUnit === 'kts' ? Math.round(conditions.wind.speed * 0.868) : conditions.wind.speed} {speedUnit === 'kts' ? 'kt' : 'mph'}
                 </Text>
                 <Text style={[styles.chipSub, { color: skyTheme.textTint }]}>
                   {conditions.wind.directionLabel}
@@ -220,7 +223,7 @@ export default function ForecastScreen() {
               <TouchableOpacity style={styles.conditionChip} onPress={() => router.push('/(tabs)/species' as never)}>
                 <Text style={[Type.chip, { color: skyTheme.accent }]}>What's biting</Text>
                 <Text style={[styles.chipSub, { color: skyTheme.textTint }]}>
-                  {conditions.water.estimated ? '~' : ''}{conditions.water.temp}° water
+                  {conditions.water.estimated ? '~' : ''}{tempUnit === 'C' ? Math.round((conditions.water.temp - 32) * 5 / 9) : conditions.water.temp}° water
                 </Text>
               </TouchableOpacity>
             </View>

@@ -39,4 +39,12 @@ describe('BiteCurve', () => {
     )
     expect(toJSON()).toBeNull()
   })
+
+  it('renders a custom title when provided', () => {
+    const { getByText, queryByText } = render(
+      <BiteCurve hourlyScores={HOURS} bestWindow={WINDOW} currentHour={14} skyTheme={SKY} title="Forecast bite" />
+    )
+    expect(getByText('Forecast bite')).toBeTruthy()
+    expect(queryByText("Today's bite")).toBeNull()
+  })
 })
