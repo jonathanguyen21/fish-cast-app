@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { View, Animated, StyleSheet } from 'react-native'
-import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
+import { Glass, Radii } from '../../theme/tokens'
 
 function SkeletonRect({ width = '100%', height = 14, radius = 6, style }: {
   width?: number | string
@@ -25,7 +25,7 @@ function SkeletonRect({ width = '100%', height = 14, radius = 6, style }: {
   return (
     <Animated.View
       style={[
-        { width, height, borderRadius: radius, backgroundColor: Colors.card },
+        { width, height, borderRadius: radius, backgroundColor: Glass.fill },
         { opacity },
         style,
       ]}
@@ -94,16 +94,20 @@ export function ConditionsGridSkeleton() {
 
 const styles = StyleSheet.create({
   scoreCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: Spacing.cardRadius,
+    backgroundColor: Glass.fill,
+    borderColor: Glass.stroke,
+    borderWidth: 1,
+    borderRadius: Radii.card,
     marginHorizontal: Spacing.screenPad,
     marginBottom: Spacing.md,
     padding: Spacing.lg,
     alignItems: 'center',
   },
   timelineCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: Spacing.cardRadius,
+    backgroundColor: Glass.fill,
+    borderColor: Glass.stroke,
+    borderWidth: 1,
+    borderRadius: Radii.card,
     marginHorizontal: Spacing.screenPad,
     marginBottom: Spacing.md,
     padding: Spacing.md,
@@ -117,21 +121,27 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   quickCard: {
-    flex: 1, backgroundColor: Colors.card,
-    borderRadius: Spacing.cardRadius,
+    flex: 1, backgroundColor: Glass.fill,
+    borderColor: Glass.stroke,
+    borderWidth: 1,
+    borderRadius: Radii.card,
     padding: Spacing.md, alignItems: 'center',
   },
   gridCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: Spacing.cardRadius,
+    backgroundColor: Glass.fill,
+    borderColor: Glass.stroke,
+    borderWidth: 1,
+    borderRadius: Radii.card,
     marginHorizontal: Spacing.screenPad,
     marginBottom: Spacing.md,
     padding: Spacing.md,
   },
   gridRow: { flexDirection: 'row', gap: Spacing.sm },
   gridCell: {
-    flex: 1, backgroundColor: Colors.card,
-    borderRadius: Spacing.cardRadius,
+    flex: 1, backgroundColor: Glass.fill,
+    borderColor: Glass.stroke,
+    borderWidth: 1,
+    borderRadius: Radii.card,
     padding: Spacing.md, alignItems: 'center',
   },
 })
