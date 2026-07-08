@@ -42,8 +42,9 @@ describe('WeekDayCard', () => {
     expect(getByText('BEST')).toBeTruthy()
   })
 
-  it('renders a single-line rain note (rainChance 45 + highTemp 61 favors rain, not high temp)', () => {
-    // Mirrors week.tsx's note-selection logic: rainChance >= 20 wins over highTemp.
+  it('renders a single-line rain note passed via props', () => {
+    // WeekDayCard just renders whatever note string it's given; the rain-vs-temp
+    // priority logic itself is covered by computeDayNote in __tests__/weekNote.test.ts.
     const { getByText, queryByText } = render(
       <WeekDayCard {...BASE} note="45% rain" onPress={() => {}} />
     )

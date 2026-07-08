@@ -12,6 +12,23 @@ import { WeekDayCard } from '../../features/forecast/WeekDayCard'
 import { Glass, Radii, Type, Accent } from '../../theme/tokens'
 import { Colors } from '../../theme/colors'
 import type { SkyIcon } from '../../theme/skyTheme'
+import type { DayForecast } from '../../types/conditions'
+
+type TempUnit = 'F' | 'C'
+
+function formatTemp(f: number, tempUnit: TempUnit): number {
+  return tempUnit === 'C' ? Math.round((f - 32) * 5 / 9) : f
+}
+
+export function computeDayNote(day: DayForecast, tempUnit: TempUnit): string {
+  if (day.rainChance != null && day.rainChance >= 20) {
+    return `${day.rainChance}% rain`
+  }
+  if (day.highTemp != null) {
+    return `High ${formatTemp(day.highTemp, tempUnit)}°`
+  }
+  return day.scoreLabel
+}
 
 const SKY_WORD: Record<string, string> = {
   'clear': 'clear',
@@ -54,8 +71,6 @@ export default function WeekScreen() {
   const best = forecast && forecast.length > 0
     ? forecast.reduce((a, b) => (b.peakScore > a.peakScore ? b : a))
     : null
-
-  const formatTemp = (f: number) => (tempUnit === 'C' ? Math.round((f - 32) * 5 / 9) : f)
 
   return (
     <SkyBackground theme={skyTheme}>
@@ -100,11 +115,7 @@ export default function WeekScreen() {
           const locked = !isPro && day.date > tomorrowKey
           const miniAt = resolveSkyDate(day.date, day.peakWindow.start, new Date())
           const miniSky = getSkyTheme(miniAt, activeSpot.lat, activeSpot.lng, day.skyIcon as SkyIcon | undefined)
-          const note = day.rainChance != null && day.rainChance >= 20
-            ? `${day.rainChance}% rain`
-            : day.highTemp != null
-              ? `High ${formatTemp(day.highTemp)}°`
-              : day.scoreLabel
+          const note = computeDayNote(day, tempUnit)
           return (
             <WeekDayCard
               key={day.date}
