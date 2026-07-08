@@ -8,6 +8,8 @@ import { useConditions } from '../hooks/useConditions'
 import { useSkyTheme } from '../hooks/useSkyTheme'
 import { Type, Fonts } from '../theme/tokens'
 import { TideSection } from '../features/conditions/sections/TideSection'
+import { WindSection } from '../features/conditions/sections/WindSection'
+import { PressureSection } from '../features/conditions/sections/PressureSection'
 import { SunMoonSection } from '../features/conditions/sections/SunMoonSection'
 
 function localDateKey(d: Date): string {
@@ -17,9 +19,10 @@ function localDateKey(d: Date): string {
   return `${y}-${m}-${day}`
 }
 
-// Tasks 2 and 3 add entries here. Order = display order.
 const SECTIONS: { key: string; title: string; Component: React.ComponentType<any> }[] = [
   { key: 'tide', title: 'Tide', Component: TideSection },
+  { key: 'wind', title: 'Wind', Component: WindSection },
+  { key: 'pressure', title: 'Pressure', Component: PressureSection },
   { key: 'sun', title: 'Sun & moon', Component: SunMoonSection },
 ]
 
