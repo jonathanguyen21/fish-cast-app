@@ -16,7 +16,6 @@ import { TideChart } from '../../features/tide/TideChart'
 import { WindDisplay } from '../../features/wind/WindDisplay'
 import { ConditionsGrid } from '../../features/conditions/ConditionsGrid'
 import { ActiveRightNow } from '../../features/species/ActiveRightNow'
-import { ForecastStrip } from '../../features/forecast/ForecastStrip'
 import { DayCalendar } from '../../features/calendar/DayCalendar'
 import { scoreSpecies } from '../../features/species/speciesScoring'
 import { scoreColor } from '../../features/score/scoringEngine'
@@ -110,7 +109,7 @@ export default function ForecastScreen() {
   const [selectedDate, setSelectedDate] = useState<string>(() => localDateKey(new Date()))
   const [showCalendar, setShowCalendar] = useState(false)
   const { data: conditions, isLoading, isError, refetch } = useConditions(activeSpot, selectedDate)
-  const { data: forecast, isLoading: forecastLoading, isError: forecastError } = useForecast(activeSpot)
+  const { data: forecast } = useForecast(activeSpot)
   const isPro = useSettingsStore(s => s.isPro)
   const tempUnit = useSettingsStore(s => s.tempUnit)
   const alertsEnabled = useSettingsStore(s => s.alertsEnabled)
@@ -410,7 +409,6 @@ export default function ForecastScreen() {
                 })
               }}
             />
-            <ForecastStrip forecast={forecast} isPro={isPro} isLoading={forecastLoading} isError={forecastError} onUpgrade={() => router.push('/settings')} />
             {recentCatch && (
               <TouchableOpacity
                 style={styles.recentCatchCard}
