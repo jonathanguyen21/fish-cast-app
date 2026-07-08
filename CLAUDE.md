@@ -28,11 +28,13 @@ React Native / Expo fishing forecast app. Combines NOAA tide/water/wind/pressure
 app/
   _layout.tsx              Root layout — PersistQueryClientProvider, Stack
   (tabs)/
-    _layout.tsx            Tab bar
+    _layout.tsx            Tab bar — Today · Week · Species · Spots (settings/catchlog registered but shelved via href:null)
     index.tsx              Today screen — verdict hero, bite curve, condition chips on SkyBackground (date via ?date= param)
     week.tsx               Week tab (placeholder until Golden Hour Plan 3)
+    species.tsx            Species tab — active-right-now + scored species list for the current spot
     spots.tsx              Spots list + active spot switcher
-    settings.tsx           Units, alert threshold, Pro flag
+    settings.tsx           Units, alert threshold, Pro flag (shelved: hidden from tab bar via href:null; reached via Today header gear)
+    catchlog.tsx           Catch log entries (shelved: hidden from tab bar via href:null)
   spot/new.tsx             Add Spot modal (async station resolution)
   species/[id].tsx         Species detail modal
 
