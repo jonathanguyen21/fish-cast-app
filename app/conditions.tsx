@@ -10,6 +10,9 @@ import { Type, Fonts } from '../theme/tokens'
 import { TideSection } from '../features/conditions/sections/TideSection'
 import { WindSection } from '../features/conditions/sections/WindSection'
 import { PressureSection } from '../features/conditions/sections/PressureSection'
+import { SwellSection } from '../features/conditions/sections/SwellSection'
+import { AirTempSection } from '../features/conditions/sections/AirTempSection'
+import { SkySection } from '../features/conditions/sections/SkySection'
 import { SunMoonSection } from '../features/conditions/sections/SunMoonSection'
 
 function localDateKey(d: Date): string {
@@ -23,6 +26,9 @@ const SECTIONS: { key: string; title: string; Component: React.ComponentType<any
   { key: 'tide', title: 'Tide', Component: TideSection },
   { key: 'wind', title: 'Wind', Component: WindSection },
   { key: 'pressure', title: 'Pressure', Component: PressureSection },
+  { key: 'swell', title: 'Swell', Component: SwellSection },
+  { key: 'air', title: 'Air temperature', Component: AirTempSection },
+  { key: 'sky', title: 'Sky & rain', Component: SkySection },
   { key: 'sun', title: 'Sun & moon', Component: SunMoonSection },
 ]
 
