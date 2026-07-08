@@ -15,7 +15,7 @@ export function useSpeciesAbundance(spot: Spot | null, candidates: Species[]): U
     queryFn: () => fetchLocalAbundance(spot!, candidates),
     enabled: !!spot && candidates.length > 0,
     staleTime: 7 * 24 * 60 * 60 * 1000,  // 7 days — occurrence data changes slowly
-    gcTime: 30 * 24 * 60 * 60 * 1000,    // 30 days
+    gcTime: 24 * 24 * 60 * 60 * 1000,    // 24 days — 30 days would overflow the 32-bit setTimeout limit (2^31-1 ms ≈ 24.8 days) that @tanstack/query-core's gc scheduler doesn't clamp, silently firing near-instantly instead
   })
 
   return {
