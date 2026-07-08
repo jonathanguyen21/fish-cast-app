@@ -168,7 +168,7 @@ export default function SettingsScreen() {
         )}
       </View>
 
-      <SpeciesAlertsSection species={speciesForRegion} />
+      <SpeciesAlertsSection species={speciesForRegion} theme={theme} />
 
       <Text style={[Type.secondary, styles.sectionSpacer, { color: theme.textTint, opacity: 0.7, marginBottom: 10 }]}>Account</Text>
       {session ? (
