@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import {
   ScrollView, View, Text, StyleSheet, RefreshControl,
   TouchableOpacity,
@@ -19,7 +19,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router'
 import { ScoreCardSkeleton, TimelineSkeleton, QuickStatsSkeleton, ConditionsGridSkeleton } from '../../features/common/SkeletonLoader'
 import { buildConditionsSummary } from '../../features/conditions/conditionsSummary'
 import { maybeScheduleFishingAlert } from '../../services/notificationService'
-import { useCatchLog } from '../../hooks/useCatchLog'
 import { useSkyTheme } from '../../hooks/useSkyTheme'
 import { SkyBackground } from '../../features/sky/SkyBackground'
 import { VerdictHero } from '../../features/score/VerdictHero'
@@ -73,7 +72,6 @@ export default function ForecastScreen() {
   const { data: forecast } = useForecast(activeSpot)
   const alertsEnabled = useSettingsStore(s => s.alertsEnabled)
   const alertThreshold = useSettingsStore(s => s.alertThreshold)
-  const { entries: catchEntries } = useCatchLog()
 
   const skyTheme = useSkyTheme(
     activeSpot ? { lat: activeSpot.lat, lng: activeSpot.lng } : null,
@@ -93,11 +91,6 @@ export default function ForecastScreen() {
     if (!conditions || !activeSpot || !alertsEnabled) return
     maybeScheduleFishingAlert(conditions, activeSpot.name, activeSpot.id, alertThreshold)
   }, [conditions?.fishingScore, activeSpot?.id, alertsEnabled, alertThreshold])
-
-  const recentCatch = useMemo(() => {
-    if (!activeSpot || catchEntries.length === 0) return null
-    return catchEntries.find(e => e.spotId === activeSpot.id) ?? null
-  }, [activeSpot?.id, catchEntries])
 
   if (!activeSpot) {
     return (
@@ -264,25 +257,6 @@ export default function ForecastScreen() {
                 params: { data: JSON.stringify(conditions.sun) },
               })}
             />
-            {recentCatch && (
-              <TouchableOpacity
-                style={styles.recentCatchCard}
-                onPress={() => router.push('/(tabs)/catchlog')}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="fish-outline" size={16} color={Colors.accent} />
-                <View style={styles.recentCatchInfo}>
-                  <Text style={styles.recentCatchTitle}>Last catch at this spot</Text>
-                  <Text style={styles.recentCatchSub}>
-                    {recentCatch.species}
-                    {recentCatch.weight ? ` · ${recentCatch.weight} lbs` : ''}
-                    {recentCatch.fishingScore != null ? ` · Score ${recentCatch.fishingScore}` : ''}
-                    {' · '}{formatDateChip(recentCatch.date)}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={14} color={Colors.textTertiary} />
-              </TouchableOpacity>
-            )}
           </>
         )}
       </ScrollView>
@@ -312,15 +286,6 @@ const styles = StyleSheet.create({
   offlineText: { fontSize: 12, color: Colors.background, fontWeight: '600' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl, gap: Spacing.sm },
   emptyIcon: { marginBottom: Spacing.sm },
-  recentCatchCard: {
-    marginHorizontal: Spacing.screenPad, marginBottom: Spacing.md,
-    backgroundColor: Colors.surface, borderRadius: Spacing.cardRadius,
-    padding: Spacing.md, flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
-    borderWidth: 1, borderColor: Colors.card,
-  },
-  recentCatchInfo: { flex: 1 },
-  recentCatchTitle: { fontSize: 12, fontWeight: '600', color: Colors.textSecondary },
-  recentCatchSub: { fontSize: 12, color: Colors.textTertiary, marginTop: 2 },
   emptyText: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center' },
   emptyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20, maxWidth: 300 },
   featurePills: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, justifyContent: 'center', marginVertical: Spacing.sm },
