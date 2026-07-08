@@ -46,11 +46,11 @@ services/
   marineService.ts         Open-Meteo marine swell → SwellData | null
   solunarService.ts        suncalc moon/sun → SolunarData (local, no network)
   scoringService.ts        buildConditionsData() — wires all sources into ConditionsData
-  forecastService.ts       Phase B2 stub (throws — not yet implemented)
+  forecastService.ts       7-day forecast from NWS daily gridpoints (implemented)
 
 hooks/
   useConditions.ts         4 parallel TanStack Queries → ConditionsData | null
-  useForecast.ts           Phase B2 stub
+  useForecast.ts           7-day forecast via TanStack Query (implemented)
   useSkyTheme.ts           Live SkyTheme for today, fixed moment for other dates
   useSpots.ts              Thin wrapper over spotsStore
 

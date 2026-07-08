@@ -1,6 +1,7 @@
 import React from 'react'
 import { View, Text, ScrollView, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { StatusBar } from 'expo-status-bar'
 import { useSpots } from '../../hooks/useSpots'
 import { useSkyTheme } from '../../hooks/useSkyTheme'
 import { Colors } from '../../theme/colors'
@@ -55,6 +56,7 @@ export function SpeciesDetail({ speciesScore, hourly, onUpgrade }: Props) {
       style={[styles.container, { backgroundColor: theme.tintedDark.background }]}
       contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
     >
+      <StatusBar style="light" />
       <View style={styles.headerRow}>
         <View style={styles.headerText}>
           <Text style={[styles.name, { color: theme.textTint }]}>{species.common_name}</Text>

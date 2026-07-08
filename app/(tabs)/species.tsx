@@ -84,6 +84,7 @@ export default function SpeciesScreen() {
   if (!activeSpot) {
     return (
       <View style={[styles.empty, { backgroundColor: skyTheme.tintedDark.background }]}>
+        <StatusBar style="light" />
         <Ionicons name="fish-outline" size={56} color={skyTheme.textTint} style={{ opacity: 0.55 }} />
         <Text style={[styles.emptyText, { color: skyTheme.textTint }]}>No spot selected</Text>
         <Text style={[styles.emptyHint, { color: skyTheme.textTint, opacity: 0.7 }]}>Add a fishing spot to see what's biting</Text>

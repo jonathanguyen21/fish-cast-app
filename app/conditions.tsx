@@ -37,13 +37,17 @@ export default function ConditionsScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const { activeSpot } = useSpots()
-  const { section } = useLocalSearchParams<{ section?: string }>()
+  const { section, date } = useLocalSearchParams<{ section?: string; date?: string }>()
   const todayKey = localDateKey(new Date())
-  const { data: conditions } = useConditions(activeSpot, todayKey)
+  const selectedDate = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)
+    ? date
+    : todayKey
+  const isToday = selectedDate === todayKey
+  const { data: conditions } = useConditions(activeSpot, selectedDate)
   const theme = useSkyTheme(
     activeSpot ? { lat: activeSpot.lat, lng: activeSpot.lng } : null,
     conditions?.sky.icon,
-    todayKey,
+    selectedDate,
   )
   const scrollRef = useRef<ScrollView>(null)
   const sectionY = useRef<Record<string, number>>({})
@@ -71,7 +75,7 @@ export default function ConditionsScreen() {
         {conditions ? SECTIONS.map(({ key, title, Component }) => (
           <View key={key} testID={`section-${key}`} onLayout={e => onSectionLayout(key, e.nativeEvent.layout.y)}>
             <Text style={[Type.secondary, styles.sectionTitle, { color: theme.textTint }]}>{title}</Text>
-            <Component conditions={conditions} theme={theme} />
+            <Component conditions={conditions} theme={theme} currentHour={isToday ? new Date().getHours() : null} />
           </View>
         )) : (
           <Text style={[Type.body, { color: theme.textTint, opacity: 0.7, padding: 20 }]}>Loading conditions…</Text>

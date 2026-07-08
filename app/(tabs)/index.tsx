@@ -201,7 +201,7 @@ export default function ForecastScreen() {
                 <TouchableOpacity
                   testID="chip-tide"
                   style={styles.conditionChip}
-                  onPress={() => router.push({ pathname: '/conditions', params: { section: 'tide' } })}
+                  onPress={() => router.push({ pathname: '/conditions', params: { section: 'tide', date: selectedDate } })}
                 >
                   <Text style={[Type.chip, { color: skyTheme.textTint }]}>
                     {conditions.tide.current.rising ? 'Tide rising' : 'Tide falling'}
@@ -216,7 +216,7 @@ export default function ForecastScreen() {
               <TouchableOpacity
                 testID="chip-wind"
                 style={styles.conditionChip}
-                onPress={() => router.push({ pathname: '/conditions', params: { section: 'wind' } })}
+                onPress={() => router.push({ pathname: '/conditions', params: { section: 'wind', date: selectedDate } })}
               >
                 <Text style={[Type.chip, { color: skyTheme.textTint }]}>
                   Wind {speedUnit === 'kts' ? Math.round(conditions.wind.speed * 0.868) : Math.round(conditions.wind.speed)} {speedUnit === 'kts' ? 'kt' : 'mph'}

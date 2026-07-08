@@ -17,8 +17,15 @@ jest.mock('../hooks/useSpots', () => ({
   useSpots: () => ({ activeSpot: { id: 's1', name: 'Pier', lat: 37.6, lng: -122.5, type: 'saltwater', stationId: '9414290', region: 'west_coast' } }),
 }))
 const mockConditions = require('./helpers/mockConditionsData').default
+// Wind speed is overridden to a fractional value (9.33) here, rather than in the
+// shared fixture, so this suite actually exercises the Math.round in the wind chip.
 jest.mock('../hooks/useConditions', () => ({
-  useConditions: () => ({ data: mockConditions, isLoading: false, isError: false, refetch: jest.fn() }),
+  useConditions: () => ({
+    data: { ...mockConditions, wind: { ...mockConditions.wind, speed: 9.33 } },
+    isLoading: false,
+    isError: false,
+    refetch: jest.fn(),
+  }),
 }))
 jest.mock('../hooks/useForecast', () => ({ useForecast: () => ({ data: [] }) }))
 jest.mock('../services/notificationService', () => ({ maybeScheduleFishingAlert: jest.fn() }))
@@ -38,13 +45,16 @@ describe('Today final layout', () => {
     const { queryByText, getByText } = renderScreen()
     expect(queryByText(/TODAY'S FORECAST/i)).toBeNull()
     expect(queryByText(/Tap any card for details/i)).toBeNull()
-    // wind speed must be an integer, whatever the mock value is
-    expect(getByText(new RegExp(`Wind ${Math.round(mockConditions.wind.speed)} mph`))).toBeTruthy()
+    // wind speed (9.33 in this suite's mock) must round to an integer for display
+    expect(getByText('Wind 9 mph')).toBeTruthy()
+    expect(queryByText(/9\.33/)).toBeNull()
   })
 
-  it('tide chip deep-links to the Conditions tide section', () => {
+  it('tide chip deep-links to the Conditions tide section with the viewed date', () => {
     const { getByTestId } = renderScreen()
     fireEvent.press(getByTestId('chip-tide'))
-    expect(mockPush).toHaveBeenCalledWith({ pathname: '/conditions', params: { section: 'tide' } })
+    const now = new Date()
+    const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/conditions', params: { section: 'tide', date: todayKey } })
   })
 })
