@@ -100,16 +100,18 @@ export default function WeekScreen() {
           const locked = !isPro && day.date > tomorrowKey
           const miniAt = resolveSkyDate(day.date, day.peakWindow.start, new Date())
           const miniSky = getSkyTheme(miniAt, activeSpot.lat, activeSpot.lng, day.skyIcon as SkyIcon | undefined)
-          const noteParts: string[] = []
-          if (day.highTemp != null) noteParts.push(`High ${formatTemp(day.highTemp)}°`)
-          if (day.rainChance != null) noteParts.push(`${day.rainChance}% rain`)
+          const note = day.rainChance != null && day.rainChance >= 20
+            ? `${day.rainChance}% rain`
+            : day.highTemp != null
+              ? `High ${formatTemp(day.highTemp)}°`
+              : day.scoreLabel
           return (
             <WeekDayCard
               key={day.date}
               dayLabel={day.dayLabel}
               skyWord={SKY_WORD[day.skyIcon ?? ''] ?? 'mixed sky'}
               windowLabel={`Best ${day.peakWindow.start}–${day.peakWindow.end}`}
-              note={noteParts.join(' · ') || day.scoreLabel}
+              note={note}
               score={day.peakScore}
               miniSky={miniSky}
               isBest={!locked && best != null && day.date === best.date}

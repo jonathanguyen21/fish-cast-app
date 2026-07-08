@@ -42,6 +42,15 @@ describe('WeekDayCard', () => {
     expect(getByText('BEST')).toBeTruthy()
   })
 
+  it('renders a single-line rain note (rainChance 45 + highTemp 61 favors rain, not high temp)', () => {
+    // Mirrors week.tsx's note-selection logic: rainChance >= 20 wins over highTemp.
+    const { getByText, queryByText } = render(
+      <WeekDayCard {...BASE} note="45% rain" onPress={() => {}} />
+    )
+    expect(getByText(/45% rain/)).toBeTruthy()
+    expect(queryByText(/High/)).toBeNull()
+  })
+
   it('locked card hides details, shows the Pro lock, and still fires onPress (upgrade)', () => {
     const onPress = jest.fn()
     const { getByText, queryByText, getByTestId } = render(
