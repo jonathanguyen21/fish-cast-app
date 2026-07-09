@@ -12,6 +12,7 @@ import { useSettingsStore } from '../../store/settingsStore'
 import { detectRegion } from '../../data/species'
 import { POPULAR_SPOTS } from '../../data/defaultSpots'
 import { resolveNearestStation, getNearbyStations, NearbyStation } from '../../services/noaaStationService'
+import { resolveCityName } from '../../services/geocodingService'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import type { Spot, SpotType } from '../../types/spot'
@@ -28,6 +29,11 @@ export default function AddSpotScreen() {
   const scrollRef = useRef<ScrollView>(null)
 
   const [name, setName] = useState('')
+  const nameRef = useRef('')
+  function updateName(v: string) {
+    nameRef.current = v
+    setName(v)
+  }
   const [type, setType] = useState<SpotType>('saltwater')
   const [coords, setCoords] = useState(DEFAULT_COORDS)
   const [isSaving, setIsSaving] = useState(false)
@@ -84,12 +90,24 @@ export default function AddSpotScreen() {
           return d < bd ? s : best
         })
       : null
-    setName(nearest ? nearest.name : `Spot at ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`)
+
+    if (nearest) {
+      updateName(nearest.name)
+      return
+    }
+
+    const placeholder = `Spot at ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`
+    updateName(placeholder)
+    resolveCityName(latitude, longitude).then(city => {
+      if (city && nameRef.current === placeholder) {
+        updateName(city)
+      }
+    })
   }
 
   function handleStationPress(station: NearbyStation) {
     setCoords({ lat: station.lat, lng: station.lng })
-    if (!name) setName(station.name)
+    if (!name) updateName(station.name)
     mapRef.current?.animateToRegion({
       latitude: station.lat,
       longitude: station.lng,
@@ -168,7 +186,7 @@ export default function AddSpotScreen() {
             title={spot.name}
             description="Tap to select this spot"
             onPress={() => {
-              setName(spot.name)
+              updateName(spot.name)
               setType(spot.type)
               setCoords({ lat: spot.lat, lng: spot.lng })
               setQuickAddName(spot.name)
@@ -189,7 +207,7 @@ export default function AddSpotScreen() {
           <View style={styles.quickAddBanner}>
             <Ionicons name="location" size={16} color={Colors.accent} />
             <Text style={styles.quickAddText} numberOfLines={1}>{quickAddName} selected</Text>
-            <TouchableOpacity onPress={() => { setQuickAddName(null); setName('') }}>
+            <TouchableOpacity onPress={() => { setQuickAddName(null); updateName('') }}>
               <Ionicons name="close-circle" size={18} color={Colors.textTertiary} />
             </TouchableOpacity>
           </View>
@@ -210,7 +228,7 @@ export default function AddSpotScreen() {
         <TextInput
           style={styles.input}
           value={name}
-          onChangeText={setName}
+          onChangeText={updateName}
           placeholder="e.g. Bodega Bay Jetty"
           placeholderTextColor={Colors.textTertiary}
         />

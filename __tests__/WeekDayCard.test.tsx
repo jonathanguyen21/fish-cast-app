@@ -15,6 +15,7 @@ const BASE = {
   isBest: false,
   locked: false,
   textTint: '#FFF8F0',
+  weatherIcon: 'moon' as const,
 }
 
 describe('WeekDayCard', () => {
@@ -63,5 +64,15 @@ describe('WeekDayCard', () => {
     expect(queryByText(/Best 5:00 PM/)).toBeNull()
     fireEvent.press(getByTestId('week-day-card'))
     expect(onPress).toHaveBeenCalled()
+  })
+
+  it('renders the weather icon for the mini-sky', () => {
+    const { getByTestId } = render(<WeekDayCard {...BASE} onPress={() => {}} />)
+    expect(getByTestId('week-day-weather-icon')).toBeTruthy()
+  })
+
+  it('does not render a weather icon when locked', () => {
+    const { queryByTestId } = render(<WeekDayCard {...BASE} locked onPress={() => {}} />)
+    expect(queryByTestId('week-day-weather-icon')).toBeNull()
   })
 })

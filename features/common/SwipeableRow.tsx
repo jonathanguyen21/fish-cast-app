@@ -1,5 +1,6 @@
 import React, { useRef } from 'react'
-import { Animated, PanResponder, View, TouchableOpacity, StyleSheet } from 'react-native'
+import { PanResponder, View, TouchableOpacity, StyleSheet } from 'react-native'
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from 'react-native-reanimated'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
@@ -12,29 +13,29 @@ interface SwipeableRowProps {
 }
 
 export function SwipeableRow({ onDelete, children }: SwipeableRowProps) {
-  const translateX = useRef(new Animated.Value(0)).current
-  const opacity = useRef(new Animated.Value(1)).current
+  const translateX = useSharedValue(0)
+  const opacity = useSharedValue(1)
   const startVal = useRef(0)
 
   function snapTo(value: number) {
-    Animated.spring(translateX, { toValue: value, useNativeDriver: true, bounciness: 0 }).start()
+    translateX.value = withSpring(value, { damping: 20, stiffness: 200 })
   }
 
   function handleDelete() {
-    Animated.parallel([
-      Animated.timing(translateX, { toValue: -300, duration: 220, useNativeDriver: true }),
-      Animated.timing(opacity, { toValue: 0, duration: 220, useNativeDriver: true }),
-    ]).start(() => onDelete())
+    translateX.value = withTiming(-300, { duration: 220 })
+    opacity.value = withTiming(0, { duration: 220 }, (finished) => {
+      if (finished) runOnJS(onDelete)()
+    })
   }
 
   const panResponder = useRef(PanResponder.create({
     onStartShouldSetPanResponder: () => false,
     onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 6 && Math.abs(gs.dx) > Math.abs(gs.dy),
     onPanResponderGrant: () => {
-      startVal.current = (translateX as any)._value || 0
+      startVal.current = translateX.value
     },
     onPanResponderMove: (_, gs) => {
-      translateX.setValue(Math.max(-ACTION_WIDTH, Math.min(0, startVal.current + gs.dx)))
+      translateX.value = Math.max(-ACTION_WIDTH, Math.min(0, startVal.current + gs.dx))
     },
     onPanResponderRelease: (_, gs) => {
       const current = startVal.current + gs.dx
@@ -43,15 +44,26 @@ export function SwipeableRow({ onDelete, children }: SwipeableRowProps) {
     onPanResponderTerminate: () => snapTo(0),
   })).current
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+    opacity: opacity.value,
+  }))
+
   return (
     <View style={styles.root}>
       <View style={styles.deleteArea}>
-        <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} activeOpacity={0.8}>
+        <TouchableOpacity
+          testID="swipeable-delete-btn"
+          style={styles.deleteBtn}
+          onPress={handleDelete}
+          activeOpacity={0.8}
+        >
           <Ionicons name="trash-outline" size={22} color="#fff" />
         </TouchableOpacity>
       </View>
       <Animated.View
-        style={{ transform: [{ translateX }], opacity }}
+        testID="swipeable-draggable"
+        style={animatedStyle}
         {...panResponder.panHandlers}
       >
         {children}

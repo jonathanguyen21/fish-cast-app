@@ -1,5 +1,5 @@
 import React from 'react'
-import { render } from '@testing-library/react-native'
+import { render, fireEvent } from '@testing-library/react-native'
 import { BiteCurve } from '../features/score/BiteCurve'
 import { getSkyTheme } from '../theme/skyTheme'
 import type { HourlyScore } from '../types/conditions'
@@ -59,5 +59,36 @@ describe('BiteCurve', () => {
     const ys = [...d.matchAll(/[\d.]+ ([\d.]+)/g)].map(m => parseFloat(m[1]))
     const span = Math.max(...ys) - Math.min(...ys)
     expect(span).toBeGreaterThan(40) // H=84, PAD=6 → drawable 72; 20-pt score swing must use most of it
+  })
+
+  it('shows a scrub cursor and updates the header readout when dragged', () => {
+    const { getByTestId, queryByTestId, getByText } = render(
+      <BiteCurve hourlyScores={HOURS} bestWindow={WINDOW} currentHour={14} skyTheme={SKY} />
+    )
+    expect(queryByTestId('bite-curve-cursor')).toBeNull()
+    expect(getByText('Best 6:00 PM–8:00 PM')).toBeTruthy()
+
+    const chart = getByTestId('bite-curve-touch-area')
+    // React Native's real PanResponder (unlike the other charts' mocked-out
+    // dependencies) reads `event.touchHistory` internally to compute a touch
+    // centroid *before* invoking our onPanResponderGrant callback — a bare
+    // `{ nativeEvent: { locationX } }` throws inside TouchHistoryMath because
+    // touchHistory is undefined. Supply a minimal valid one alongside
+    // nativeEvent so PanResponder's own bookkeeping doesn't crash; it's
+    // unused by our handler, which only reads nativeEvent.locationX.
+    const touchHistory = {
+      touchBank: [{ touchActive: true, currentTimeStamp: 1, currentPageX: 160, currentPageY: 40 }],
+      numberActiveTouches: 1,
+      indexOfSingleActiveTouch: 0,
+      mostRecentTimeStamp: 1,
+    }
+    fireEvent(chart, 'responderGrant', { nativeEvent: { locationX: 160 }, touchHistory })
+
+    expect(getByTestId('bite-curve-cursor')).toBeTruthy()
+    expect(getByTestId('bite-curve-cursor-line')).toBeTruthy()
+    // 160 is the horizontal midpoint of the 320-wide viewBox (default layout
+    // width fallback is also 320, so the scale factor is 1) → hour index 12,
+    // whose fixture score is 40 + (12 % 6) * 8 = 40 (see HOURS in this file).
+    expect(getByText('12PM · 40')).toBeTruthy()
   })
 })
