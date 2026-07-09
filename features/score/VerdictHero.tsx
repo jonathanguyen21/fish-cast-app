@@ -106,7 +106,17 @@ export function VerdictHero({ score, breakdown, spotType, skyTheme, summary, bet
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', paddingHorizontal: 20 },
+  wrap: {
+    alignItems: 'center',
+    backgroundColor: Glass.fill,
+    borderColor: Glass.stroke,
+    borderWidth: 1,
+    borderRadius: Radii.hero,
+    marginHorizontal: 16,
+    marginTop: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+  },
   chipRow: { flexDirection: 'row', gap: 10, marginTop: 10 },
   chip: {
     backgroundColor: Glass.fill,
