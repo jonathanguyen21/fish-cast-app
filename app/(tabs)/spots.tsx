@@ -11,7 +11,7 @@ import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from '../../features/score/scoringEngine'
 import { useSkyTheme } from '../../hooks/useSkyTheme'
-import { Fonts, Radii, Accent, Glass, Type } from '../../theme/tokens'
+import { Fonts, Radii, Accent, Type } from '../../theme/tokens'
 import type { SkyTheme } from '../../theme/skyTheme'
 import type { Spot } from '../../types/spot'
 
@@ -35,7 +35,6 @@ function SpotRow({ spot, isActive, onPress, onDelete, onEdit, theme }: {
       style={[
         styles.row,
         { backgroundColor: theme.tintedDark.card },
-        isActive && [styles.activeRow, { borderColor: Glass.strokeStrong }],
       ]}
       onPress={onPress}
       onLongPress={() => Alert.alert(spot.name, undefined, [
@@ -44,7 +43,6 @@ function SpotRow({ spot, isActive, onPress, onDelete, onEdit, theme }: {
         { text: 'Cancel', style: 'cancel' },
       ])}
     >
-      {isActive && <View style={[styles.activeIndicator, { backgroundColor: theme.accent }]} />}
       <View style={styles.rowInfo}>
         <View style={styles.rowNameRow}>
           <Text style={[styles.rowName, { color: theme.textTint }]}>{spot.name}</Text>
@@ -193,17 +191,6 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row', alignItems: 'center',
     borderRadius: Radii.card, padding: Spacing.md, overflow: 'hidden',
-  },
-  activeRow: { borderWidth: 1.5 },
-  activeIndicator: {
-    width: 3,
-    height: '100%',
-    borderRadius: 2,
-    marginRight: Spacing.sm,
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
   },
   rowInfo: { flex: 1, paddingLeft: 6 },
   rowNameRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
