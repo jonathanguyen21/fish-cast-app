@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Glass, Radii, Type, Accent } from '../../theme/tokens'
 import { scoreColor } from '../score/scoringEngine'
 import type { SkyTheme } from '../../theme/skyTheme'
+import type { WeatherIconName } from '../../theme/weatherIcon'
 
 interface Props {
   dayLabel: string
@@ -16,11 +17,12 @@ interface Props {
   isBest: boolean
   locked: boolean
   textTint: string
+  weatherIcon: WeatherIconName
   onPress: () => void
 }
 
 export function WeekDayCard({
-  dayLabel, skyWord, windowLabel, note, score, miniSky, isBest, locked, textTint, onPress,
+  dayLabel, skyWord, windowLabel, note, score, miniSky, isBest, locked, textTint, weatherIcon, onPress,
 }: Props) {
   return (
     <Pressable
@@ -42,11 +44,20 @@ export function WeekDayCard({
       {locked ? (
         <View style={[styles.mini, styles.miniLocked]} />
       ) : (
-        <LinearGradient
-          testID="week-day-minisky"
-          colors={miniSky.gradientStops as [string, string, ...string[]]}
-          style={styles.mini}
-        />
+        <View style={styles.miniWrap}>
+          <LinearGradient
+            testID="week-day-minisky"
+            colors={miniSky.gradientStops as [string, string, ...string[]]}
+            style={styles.mini}
+          />
+          <Ionicons
+            testID="week-day-weather-icon"
+            name={weatherIcon}
+            size={20}
+            color={miniSky.textTint}
+            style={styles.miniIcon}
+          />
+        </View>
       )}
       <View style={styles.body}>
         <Text style={[Type.title, { color: textTint, fontSize: 14 }, locked && styles.dim]}>
@@ -87,6 +98,8 @@ const styles = StyleSheet.create({
   dim: { opacity: 0.5 },
   mini: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: Glass.stroke },
   miniLocked: { backgroundColor: 'rgba(255,255,255,0.08)' },
+  miniWrap: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  miniIcon: { position: 'absolute' },
   body: { flex: 1 },
   bestTag: {
     position: 'absolute',

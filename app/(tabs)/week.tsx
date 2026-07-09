@@ -7,6 +7,7 @@ import { useForecast } from '../../hooks/useForecast'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useSkyTheme, resolveSkyDate } from '../../hooks/useSkyTheme'
 import { getSkyTheme } from '../../theme/skyTheme'
+import { weatherIconFor } from '../../theme/weatherIcon'
 import { SkyBackground } from '../../features/sky/SkyBackground'
 import { WeekDayCard } from '../../features/forecast/WeekDayCard'
 import { Glass, Radii, Type, Accent } from '../../theme/tokens'
@@ -115,6 +116,7 @@ export default function WeekScreen() {
           const locked = !isPro && day.date > tomorrowKey
           const miniAt = resolveSkyDate(day.date, day.peakWindow.start, new Date())
           const miniSky = getSkyTheme(miniAt, activeSpot.lat, activeSpot.lng, day.skyIcon as SkyIcon | undefined)
+          const weatherIcon = weatherIconFor(day.skyIcon, miniSky.isLight)
           const note = computeDayNote(day, tempUnit)
           return (
             <WeekDayCard
@@ -125,6 +127,7 @@ export default function WeekScreen() {
               note={note}
               score={day.peakScore}
               miniSky={miniSky}
+              weatherIcon={weatherIcon}
               isBest={!locked && best != null && day.date === best.date}
               locked={locked}
               textTint={tint}
