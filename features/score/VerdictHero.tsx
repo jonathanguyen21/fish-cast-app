@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { computeAxes, getVerdict } from './verdict'
 import { scoreColor } from './scoringEngine'
 import { Glass, Radii, Type } from '../../theme/tokens'
-import type { ScoreBreakdown } from '../../types/conditions'
+import { weatherIconFor } from '../../theme/weatherIcon'
+import type { ScoreBreakdown, SkyData } from '../../types/conditions'
 import type { SkyTheme } from '../../theme/skyTheme'
 
 interface Props {
@@ -12,9 +14,15 @@ interface Props {
   breakdown: ScoreBreakdown
   spotType: 'saltwater' | 'freshwater'
   skyTheme: SkyTheme
+  sky: SkyData                      // drives the weather glyph in the card's corner
   summary: string                   // one-line reason (buildConditionsSummary)
   betterDay: { label: string; score: number } | null
 }
+
+// Below this, the sky condition name ("Overcast") is more useful than a rain
+// number that's not really worth calling out — same threshold Week already
+// uses for its own note-priority logic (computeDayNote in app/(tabs)/week.tsx).
+const RAIN_CALLOUT_THRESHOLD = 20
 
 const FACTORS: { key: keyof ScoreBreakdown; label: string; max: number }[] = [
   { key: 'pressure', label: 'Pressure', max: 25 },
@@ -27,7 +35,7 @@ const FACTORS: { key: keyof ScoreBreakdown; label: string; max: number }[] = [
 
 const COUNT_UP_MS = 600
 
-export function VerdictHero({ score, breakdown, spotType, skyTheme, summary, betterDay }: Props) {
+export function VerdictHero({ score, breakdown, spotType, skyTheme, sky, summary, betterDay }: Props) {
   const [display, setDisplay] = useState(0)
   const [expanded, setExpanded] = useState(false)
   const raf = useRef<number | null>(null)
@@ -56,7 +64,25 @@ export function VerdictHero({ score, breakdown, spotType, skyTheme, summary, bet
 
   return (
     <View style={styles.wrap}>
-      <Text style={[Type.verdict, { color: skyTheme.accent }]}>{verdict.phrase}</Text>
+      {/* Own row, not an absolute overlay — the verdict phrase below is
+          centered and variable-length, so anything sharing its vertical
+          space (even width-capped) can still have its centered box reach
+          into a corner-pinned badge. A dedicated row above it can't collide
+          regardless of phrase length. */}
+      <View style={styles.weatherRow}>
+        <View style={styles.weatherBadge}>
+          <Ionicons
+            testID="hero-weather-icon"
+            name={weatherIconFor(sky.icon, skyTheme.isLight)}
+            size={26}
+            color={skyTheme.textTint}
+          />
+          <Text style={[Type.secondary, { color: skyTheme.textTint, opacity: 0.75, marginTop: 2 }]}>
+            {sky.rainChance >= RAIN_CALLOUT_THRESHOLD ? `${sky.rainChance}% rain` : sky.condition}
+          </Text>
+        </View>
+      </View>
+      <Text style={[Type.verdict, { color: skyTheme.accent, textAlign: 'center' }]}>{verdict.phrase}</Text>
       <Text style={[Type.secondary, { color: skyTheme.textTint, opacity: 0.85, marginTop: 4 }]}>
         {summary}
       </Text>
@@ -117,6 +143,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 24,
   },
+  weatherRow: { alignSelf: 'stretch', flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 4 },
+  weatherBadge: { alignItems: 'center' },
   chipRow: { flexDirection: 'row', gap: 10, marginTop: 10 },
   chip: {
     backgroundColor: Glass.fill,

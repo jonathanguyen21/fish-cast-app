@@ -58,3 +58,4 @@ describe('Today final layout', () => {
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/conditions', params: { section: 'tide', date: todayKey } })
   })
 })
+
