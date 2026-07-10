@@ -200,6 +200,7 @@ export default function ForecastScreen() {
               breakdown={conditions.scoreBreakdown}
               spotType={activeSpot.type}
               skyTheme={skyTheme}
+              sky={conditions.sky}
               summary={buildConditionsSummary(conditions)}
               betterDay={betterDay}
             />
