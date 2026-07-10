@@ -122,7 +122,7 @@ export default function SpotsScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <SwipeableRow onDelete={() => removeSpot(item.id)}>
+          <SwipeableRow onDelete={() => removeSpot(item.id)} borderRadius={Radii.card}>
             <SpotRow
               spot={item}
               isActive={item.id === activeSpotId}
