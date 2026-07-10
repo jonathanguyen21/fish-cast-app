@@ -1,4 +1,14 @@
-import { weatherIconFor } from '../theme/weatherIcon'
+import { weatherIconFor, skyConditionLabel } from '../theme/weatherIcon'
+
+describe('skyConditionLabel', () => {
+  it('maps every icon to its Title Case display label', () => {
+    expect(skyConditionLabel('clear')).toBe('Clear')
+    expect(skyConditionLabel('partly-cloudy')).toBe('Partly Cloudy')
+    expect(skyConditionLabel('overcast')).toBe('Overcast')
+    expect(skyConditionLabel('light-rain')).toBe('Light Rain')
+    expect(skyConditionLabel('heavy-rain')).toBe('Heavy Rain')
+  })
+})
 
 describe('weatherIconFor', () => {
   it('shows sunny for clear daytime', () => {

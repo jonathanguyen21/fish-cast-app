@@ -1,5 +1,6 @@
 import type { AirData, SkyData, WindData } from '../types/conditions'
 import type { Spot } from '../types/spot'
+import { skyConditionLabel } from '../theme/weatherIcon'
 
 export interface NwsData {
   air: AirData
@@ -66,11 +67,7 @@ export function shortForecastToCloudCover(forecast: string): number {
 }
 
 function iconToCondition(icon: SkyData['icon']): SkyData['condition'] {
-  const map: Record<SkyData['icon'], SkyData['condition']> = {
-    'clear': 'Clear', 'partly-cloudy': 'Partly Cloudy', 'overcast': 'Overcast',
-    'light-rain': 'Light Rain', 'heavy-rain': 'Heavy Rain',
-  }
-  return map[icon]
+  return skyConditionLabel(icon)
 }
 
 function buildNwsDataForPeriods(periods: any[]): NwsData {
