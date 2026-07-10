@@ -27,6 +27,22 @@ describe('SwipeableRow', () => {
     expect(flatStyle.borderRadius).toBe(18)
   })
 
+  it('rounds the delete strip\'s own right corners tighter than the parent clip, with margin', () => {
+    const { getByTestId } = render(
+      <SwipeableRow onDelete={() => {}} borderRadius={18}>
+        <Text>Row</Text>
+      </SwipeableRow>
+    )
+    const deleteArea = getByTestId('swipeable-delete-area')
+    const flatStyle = Object.assign({}, ...[deleteArea.props.style].flat(Infinity).filter(Boolean))
+    // Strictly greater than the parent's own clip radius (18) — the delete
+    // strip's red paint must recede *inside* the parent's overflow:hidden
+    // boundary with margin, not sit exactly flush with it, so two
+    // independently rasterized rounded edges can't leave a sub-pixel seam.
+    expect(flatStyle.borderTopRightRadius).toBeGreaterThan(18)
+    expect(flatStyle.borderBottomRightRadius).toBeGreaterThan(18)
+  })
+
   it('renders children and a delete button', () => {
     const { getByText, getByTestId } = render(
       <SwipeableRow onDelete={() => {}}>

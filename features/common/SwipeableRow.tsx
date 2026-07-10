@@ -6,6 +6,10 @@ import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 
 const ACTION_WIDTH = 76
+// Extra corner rounding on the delete strip itself, beyond the parent clip's
+// radius, so it recedes with margin inside that clip rather than exactly
+// matching it — see the comment at its usage below.
+const CORNER_MARGIN = 2
 
 interface SwipeableRowProps {
   onDelete: () => void
@@ -77,7 +81,18 @@ export function SwipeableRow({ onDelete, children, borderRadius = Spacing.cardRa
 
   return (
     <View testID="swipeable-root" style={[styles.root, { borderRadius }]}>
-      <View style={styles.deleteArea}>
+      {/* Rounded on its own right corners, slightly MORE than the parent's
+          clip radius (not just relying on the ancestor's overflow:hidden
+          mask, and not matching it exactly either) — two independently
+          rasterized rounded edges at the exact same radius can disagree by a
+          sub-pixel on high-density displays, leaving a hairline seam of red
+          visible. Rounding the delete strip's own corner a couple points
+          tighter than the mask guarantees its red paint recedes strictly
+          inside the clip boundary regardless of that rounding error. */}
+      <View
+        testID="swipeable-delete-area"
+        style={[styles.deleteArea, { borderTopRightRadius: borderRadius + CORNER_MARGIN, borderBottomRightRadius: borderRadius + CORNER_MARGIN }]}
+      >
         <TouchableOpacity
           testID="swipeable-delete-btn"
           style={styles.deleteBtn}
