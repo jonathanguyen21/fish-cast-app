@@ -65,6 +65,32 @@ describe('fetchNwsData', () => {
     expect(periodWithGust).toBeDefined()
     expect(periodWithGust!.windGust).toBe(15)
   })
+
+  it('picks a midday-representative sky condition for a future day, not that day\'s midnight period', async () => {
+    // Every period on a future day starts after "now" — the old "most
+    // recently started period" selection could never match any of them and
+    // silently fell back to the day's first (midnight) hourly period. This
+    // is exactly the bug behind the Week-vs-Today sky mismatch: Week reads
+    // NWS's own daytime-period summary, while Today/Conditions read this
+    // hourly-grouped data and used to land on an overnight condition instead.
+    const future = new Date()
+    future.setDate(future.getDate() + 3)
+    const futureDateStr = `${future.getFullYear()}-${String(future.getMonth() + 1).padStart(2, '0')}-${String(future.getDate()).padStart(2, '0')}`
+    const iso = (hour: number) => `${futureDateStr}T${String(hour).padStart(2, '0')}:00:00-07:00`
+
+    const futureDayPeriods = [
+      { number: 1, startTime: iso(0), temperature: 50, temperatureUnit: 'F', windSpeed: '5 mph', windDirection: 'N', shortForecast: 'Clear', probabilityOfPrecipitation: { value: 5 } },
+      { number: 2, startTime: iso(6), temperature: 52, temperatureUnit: 'F', windSpeed: '6 mph', windDirection: 'N', shortForecast: 'Clear', probabilityOfPrecipitation: { value: 5 } },
+      { number: 3, startTime: iso(12), temperature: 64, temperatureUnit: 'F', windSpeed: '10 mph', windDirection: 'W', shortForecast: 'Overcast', probabilityOfPrecipitation: { value: 20 } },
+      { number: 4, startTime: iso(18), temperature: 58, temperatureUnit: 'F', windSpeed: '8 mph', windDirection: 'W', shortForecast: 'Overcast', probabilityOfPrecipitation: { value: 20 } },
+    ]
+    ;(global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: async () => pointsFixture })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ properties: { periods: futureDayPeriods } }) })
+
+    const result = await fetchNwsData(SPOT)
+    expect(result.byDay[futureDateStr].sky.condition).toBe('Overcast')
+  })
 })
 
 describe('shortForecastToCloudCover', () => {
