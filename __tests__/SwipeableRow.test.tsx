@@ -2,8 +2,31 @@ import React from 'react'
 import { render, fireEvent } from '@testing-library/react-native'
 import { Text } from 'react-native'
 import { SwipeableRow } from '../features/common/SwipeableRow'
+import { Spacing } from '../theme/spacing'
 
 describe('SwipeableRow', () => {
+  it('clips the delete strip to the default card radius when no radius prop is given', () => {
+    const { getByTestId } = render(
+      <SwipeableRow onDelete={() => {}}>
+        <Text>Row</Text>
+      </SwipeableRow>
+    )
+    const root = getByTestId('swipeable-root')
+    const flatStyle = Object.assign({}, ...[root.props.style].flat(Infinity).filter(Boolean))
+    expect(flatStyle.borderRadius).toBe(Spacing.cardRadius)
+  })
+
+  it('clips the delete strip to a caller-supplied radius, matching the front card exactly', () => {
+    const { getByTestId } = render(
+      <SwipeableRow onDelete={() => {}} borderRadius={18}>
+        <Text>Row</Text>
+      </SwipeableRow>
+    )
+    const root = getByTestId('swipeable-root')
+    const flatStyle = Object.assign({}, ...[root.props.style].flat(Infinity).filter(Boolean))
+    expect(flatStyle.borderRadius).toBe(18)
+  })
+
   it('renders children and a delete button', () => {
     const { getByText, getByTestId } = render(
       <SwipeableRow onDelete={() => {}}>
