@@ -1,6 +1,7 @@
 import { calculateScore, calculateScoreWithBreakdown, scoreLabel } from '../features/score/scoringEngine'
 import { findBestThreeHourWindow } from '../features/score/bestWindow'
 import { detectPhase, hoursFromLastTurn } from '../features/tide/tideUtils'
+import { skyConditionLabel } from '../theme/weatherIcon'
 import type { ConditionsData, SkyData, WindData, PressureData, HourlyScore, ScoreBreakdown } from '../types/conditions'
 import type { Spot } from '../types/spot'
 import type { NoaaData } from './noaaService'
@@ -83,11 +84,7 @@ function getHourlySky(nws: NwsData | null, hour: number): SkyData {
     period.cloudCover > 30 ? 'partly-cloudy' : 'clear'
   if (rainChance >= 60) icon = 'heavy-rain'
   else if (rainChance >= 30) icon = 'light-rain'
-  const condMap: Record<SkyData['icon'], SkyData['condition']> = {
-    clear: 'Clear', 'partly-cloudy': 'Partly Cloudy', overcast: 'Overcast',
-    'light-rain': 'Light Rain', 'heavy-rain': 'Heavy Rain',
-  }
-  return { condition: condMap[icon], rainChance, icon }
+  return { condition: skyConditionLabel(icon), rainChance, icon }
 }
 
 export function buildConditionsData(

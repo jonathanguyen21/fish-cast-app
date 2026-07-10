@@ -23,6 +23,7 @@ import { BiteCurve } from '../../features/score/BiteCurve'
 import { pickBetterDay } from '../../features/score/verdict'
 import { Glass, Radii, Type } from '../../theme/tokens'
 import { detectPhase, formatTideHeight, formatScrubTime } from '../../features/tide/tideUtils'
+import { skyConditionLabel } from '../../theme/weatherIcon'
 
 function tideTurnCountdown(tide: { next: { type: string; time: string } }): string {
   const m = tide.next.time.match(/(\d+):(\d+)\s*(AM|PM)/i)
@@ -83,6 +84,21 @@ export default function ForecastScreen() {
   const betterDay = conditions && selectedDate === todayKey
     ? pickBetterDay(forecast, conditions.fishingScore, selectedDate)
     : null
+
+  // Week's mini-sky icon comes from the NWS *daily* forecast's daytime
+  // period (services/forecastService.ts). conditions.sky instead comes from
+  // the NWS *hourly* forecast grouped by day (services/nwsService.ts) — a
+  // different endpoint with its own per-hour editorial summary, which can
+  // legitimately disagree with the day's overall daytime characterization
+  // even for a sensibly-chosen representative hour. Rather than have Today
+  // guess at a second answer, prefer the exact value Week already shows for
+  // this date when it's available, so the two screens can't disagree.
+  const forecastDay = forecast?.find(d => d.date === selectedDate)
+  const effectiveSky = conditions
+    ? (forecastDay?.skyIcon
+        ? { icon: forecastDay.skyIcon, condition: skyConditionLabel(forecastDay.skyIcon), rainChance: forecastDay.rainChance ?? conditions.sky.rainChance }
+        : conditions.sky)
+    : undefined
 
   // Hour (0-23) currently being scrubbed on the bite curve, or null when not
   // dragging. Wind and tide have real hourly data, so their chips preview the
@@ -200,7 +216,7 @@ export default function ForecastScreen() {
               breakdown={conditions.scoreBreakdown}
               spotType={activeSpot.type}
               skyTheme={skyTheme}
-              sky={conditions.sky}
+              sky={effectiveSky!}
               summary={buildConditionsSummary(conditions)}
               betterDay={betterDay}
             />
