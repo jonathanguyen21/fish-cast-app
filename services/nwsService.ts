@@ -83,12 +83,20 @@ function buildNwsDataForPeriods(periods: any[]): NwsData {
     }
   }
   const nowMs = Date.now()
-  const currentPeriod = periods.reduce((best: any, p: any) => {
-    const pMs = new Date(p.startTime).getTime()
-    const bestMs = new Date(best.startTime).getTime()
-    if (pMs <= nowMs && pMs > bestMs) return p
-    return best
-  }, periods[0])
+  const pastOrCurrent = periods.filter((p: any) => new Date(p.startTime).getTime() <= nowMs)
+  // For today, use the most recently started period — the usual "right now"
+  // reading. For any other day, EVERY period starts in the future, so that
+  // rule can never match; falling through to periods[0] there used to mean
+  // "always report that day's midnight period," silently mismatching
+  // whatever representative daytime condition Week shows for the same date.
+  // Pick the period closest to midday instead — a far more representative
+  // single value for "what's this day like."
+  const currentPeriod = pastOrCurrent.length > 0
+    ? pastOrCurrent.reduce((best: any, p: any) =>
+        new Date(p.startTime).getTime() > new Date(best.startTime).getTime() ? p : best)
+    : periods.reduce((best: any, p: any) =>
+        Math.abs(new Date(p.startTime).getHours() - 12) < Math.abs(new Date(best.startTime).getHours() - 12) ? p : best,
+        periods[0])
 
   const rainChance = currentPeriod.probabilityOfPrecipitation?.value ?? 0
   const icon = mapSkyIcon(currentPeriod.shortForecast, rainChance)
