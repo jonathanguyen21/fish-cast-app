@@ -91,4 +91,28 @@ describe('BiteCurve', () => {
     // whose fixture score is 40 + (12 % 6) * 8 = 40 (see HOURS in this file).
     expect(getByText('12PM · 40')).toBeTruthy()
   })
+
+  it('calls onScrubChange with the scrubbed hour index while dragging, and with null on release', () => {
+    const onScrubChange = jest.fn()
+    const { getByTestId, queryByTestId } = render(
+      <BiteCurve hourlyScores={HOURS} bestWindow={WINDOW} currentHour={14} skyTheme={SKY} onScrubChange={onScrubChange} />
+    )
+    const chart = getByTestId('bite-curve-touch-area')
+    const touchHistory = {
+      touchBank: [{ touchActive: true, currentTimeStamp: 1, currentPageX: 160, currentPageY: 40 }],
+      numberActiveTouches: 1,
+      indexOfSingleActiveTouch: 0,
+      mostRecentTimeStamp: 1,
+    }
+    fireEvent(chart, 'responderGrant', { nativeEvent: { locationX: 160 }, touchHistory })
+    // Same hour-12 math as the sibling test above.
+    expect(onScrubChange).toHaveBeenLastCalledWith(12)
+
+    fireEvent(chart, 'responderRelease', { nativeEvent: { locationX: 160 }, touchHistory })
+    expect(onScrubChange).toHaveBeenLastCalledWith(null)
+    // The visual cursor must also clear on release — a scrub is a preview,
+    // not a permanent pin, especially now that sibling condition chips on
+    // Today mirror this same value.
+    expect(queryByTestId('bite-curve-cursor')).toBeNull()
+  })
 })

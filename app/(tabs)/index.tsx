@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   ScrollView, View, Text, StyleSheet, RefreshControl,
   TouchableOpacity,
@@ -22,6 +22,7 @@ import { VerdictHero } from '../../features/score/VerdictHero'
 import { BiteCurve } from '../../features/score/BiteCurve'
 import { pickBetterDay } from '../../features/score/verdict'
 import { Glass, Radii, Type } from '../../theme/tokens'
+import { detectPhase, formatTideHeight, formatScrubTime } from '../../features/tide/tideUtils'
 
 function tideTurnCountdown(tide: { next: { type: string; time: string } }): string {
   const m = tide.next.time.match(/(\d+):(\d+)\s*(AM|PM)/i)
@@ -81,6 +82,19 @@ export default function ForecastScreen() {
   const todayKey = localDateKey(new Date())
   const betterDay = conditions && selectedDate === todayKey
     ? pickBetterDay(forecast, conditions.fishingScore, selectedDate)
+    : null
+
+  // Hour (0-23) currently being scrubbed on the bite curve, or null when not
+  // dragging. Wind and tide have real hourly data, so their chips preview the
+  // scrubbed hour; water temp has no hourly source anywhere in this app (NOAA
+  // only gives a single latest reading), so that chip is left showing the
+  // current value rather than fabricating an hourly curve for it.
+  const [scrubHour, setScrubHour] = useState<number | null>(null)
+  const scrubTide = scrubHour !== null && conditions?.tide
+    ? { phase: detectPhase(conditions.tide.hourlyCurve, scrubHour), height: conditions.tide.hourlyCurve[scrubHour] }
+    : null
+  const scrubWind = scrubHour !== null
+    ? conditions?.windHourly.find(h => h.hour === scrubHour) ?? null
     : null
 
   React.useEffect(() => {
@@ -195,6 +209,7 @@ export default function ForecastScreen() {
               currentHour={selectedDate === todayKey ? new Date().getHours() : null}
               skyTheme={skyTheme}
               title={selectedDate === todayKey ? "Today's bite" : 'Forecast bite'}
+              onScrubChange={setScrubHour}
             />
             <View style={styles.chipsRow}>
               {conditions.tide && (
@@ -204,12 +219,16 @@ export default function ForecastScreen() {
                   onPress={() => router.push({ pathname: '/conditions', params: { section: 'tide', date: selectedDate } })}
                 >
                   <Text style={[Type.chip, { color: skyTheme.textTint }]}>
-                    {conditions.tide.current.rising ? 'Tide rising' : 'Tide falling'}
+                    {scrubTide
+                      ? scrubTide.phase === 'slack' ? 'Tide holding' : scrubTide.phase === 'incoming' ? 'Tide rising' : 'Tide falling'
+                      : (conditions.tide.current.rising ? 'Tide rising' : 'Tide falling')}
                   </Text>
                   <Text style={[styles.chipSub, { color: skyTheme.textTint }]}>
-                    {selectedDate === todayKey
-                      ? tideTurnCountdown(conditions.tide)
-                      : `${conditions.tide.next.type === 'high' ? 'High' : 'Low'} ${conditions.tide.next.time}`}
+                    {scrubTide
+                      ? `${formatTideHeight(scrubTide.height, conditions.tide.current.unit)} · ${formatScrubTime(scrubHour!)}`
+                      : selectedDate === todayKey
+                        ? tideTurnCountdown(conditions.tide)
+                        : `${conditions.tide.next.type === 'high' ? 'High' : 'Low'} ${conditions.tide.next.time}`}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -219,10 +238,12 @@ export default function ForecastScreen() {
                 onPress={() => router.push({ pathname: '/conditions', params: { section: 'wind', date: selectedDate } })}
               >
                 <Text style={[Type.chip, { color: skyTheme.textTint }]}>
-                  Wind {speedUnit === 'kts' ? Math.round(conditions.wind.speed * 0.868) : Math.round(conditions.wind.speed)} {speedUnit === 'kts' ? 'kt' : 'mph'}
+                  Wind {speedUnit === 'kts'
+                    ? Math.round((scrubWind?.speed ?? conditions.wind.speed) * 0.868)
+                    : Math.round(scrubWind?.speed ?? conditions.wind.speed)} {speedUnit === 'kts' ? 'kt' : 'mph'}
                 </Text>
                 <Text style={[styles.chipSub, { color: skyTheme.textTint }]}>
-                  {conditions.wind.directionLabel}
+                  {scrubWind ? `${scrubWind.directionLabel} · ${formatScrubTime(scrubHour!)}` : conditions.wind.directionLabel}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity testID="chip-species" style={styles.conditionChip} onPress={() => router.push('/(tabs)/species' as never)}>

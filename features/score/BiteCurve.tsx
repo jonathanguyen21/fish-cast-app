@@ -14,6 +14,10 @@ interface Props {
   currentHour: number | null
   skyTheme: SkyTheme
   title?: string
+  // Fires with the scrubbed hour index (0-23) while dragging, and with null
+  // once the finger lifts — lets a parent screen mirror the scrub position
+  // into other hourly-aware UI (e.g. Today's condition chips).
+  onScrubChange?: (hourIndex: number | null) => void
 }
 
 const W = 320
@@ -62,7 +66,7 @@ function buildPath(scores: number[], lo: number, hi: number): string {
   return d
 }
 
-export function BiteCurve({ hourlyScores, bestWindow, currentHour, skyTheme, title = "Today's bite" }: Props) {
+export function BiteCurve({ hourlyScores, bestWindow, currentHour, skyTheme, title = "Today's bite", onScrubChange }: Props) {
   const dash = useSharedValue(EST_LEN)
   const [cursorIdx, setCursorIdx] = useState<number | null>(null)
   // Measured on-screen width of the touch area, in points. The SVG's internal
@@ -81,25 +85,29 @@ export function BiteCurve({ hourlyScores, bestWindow, currentHour, skyTheme, tit
 
   const n = hourlyScores.length
 
-  const panResponder = useMemo<PanResponderInstance>(() => PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderGrant: (e) => {
+  const panResponder = useMemo<PanResponderInstance>(() => {
+    function scrubTo(locationX: number) {
       if (n < 2) return
       const scale = W / (chartWidth || W)
-      const viewBoxX = e.nativeEvent.locationX * scale
+      const viewBoxX = locationX * scale
       const hour = Math.round(((viewBoxX - PAD) / (W - PAD * 2)) * (n - 1))
-      setCursorIdx(Math.max(0, Math.min(hour, n - 1)))
-    },
-    onPanResponderMove: (e) => {
-      if (n < 2) return
-      const scale = W / (chartWidth || W)
-      const viewBoxX = e.nativeEvent.locationX * scale
-      const hour = Math.round(((viewBoxX - PAD) / (W - PAD * 2)) * (n - 1))
-      setCursorIdx(Math.max(0, Math.min(hour, n - 1)))
-    },
-    onPanResponderRelease: () => {},
-  }), [n, chartWidth])
+      const clamped = Math.max(0, Math.min(hour, n - 1))
+      setCursorIdx(clamped)
+      onScrubChange?.(clamped)
+    }
+    function clearScrub() {
+      setCursorIdx(null)
+      onScrubChange?.(null)
+    }
+    return PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: (e) => scrubTo(e.nativeEvent.locationX),
+      onPanResponderMove: (e) => scrubTo(e.nativeEvent.locationX),
+      onPanResponderRelease: clearScrub,
+      onPanResponderTerminate: clearScrub,
+    })
+  }, [n, chartWidth, onScrubChange])
 
   function onTouchAreaLayout(e: LayoutChangeEvent) {
     setChartWidth(e.nativeEvent.layout.width)
