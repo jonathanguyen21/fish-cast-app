@@ -64,18 +64,25 @@ export function VerdictHero({ score, breakdown, spotType, skyTheme, sky, summary
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.weatherBadge}>
-        <Ionicons
-          testID="hero-weather-icon"
-          name={weatherIconFor(sky.icon, skyTheme.isLight)}
-          size={30}
-          color={skyTheme.textTint}
-        />
-        <Text style={[Type.secondary, { color: skyTheme.textTint, opacity: 0.75, marginTop: 2 }]}>
-          {sky.rainChance >= RAIN_CALLOUT_THRESHOLD ? `${sky.rainChance}% rain` : sky.condition}
-        </Text>
+      {/* Own row, not an absolute overlay — the verdict phrase below is
+          centered and variable-length, so anything sharing its vertical
+          space (even width-capped) can still have its centered box reach
+          into a corner-pinned badge. A dedicated row above it can't collide
+          regardless of phrase length. */}
+      <View style={styles.weatherRow}>
+        <View style={styles.weatherBadge}>
+          <Ionicons
+            testID="hero-weather-icon"
+            name={weatherIconFor(sky.icon, skyTheme.isLight)}
+            size={26}
+            color={skyTheme.textTint}
+          />
+          <Text style={[Type.secondary, { color: skyTheme.textTint, opacity: 0.75, marginTop: 2 }]}>
+            {sky.rainChance >= RAIN_CALLOUT_THRESHOLD ? `${sky.rainChance}% rain` : sky.condition}
+          </Text>
+        </View>
       </View>
-      <Text style={[Type.verdict, { color: skyTheme.accent }]}>{verdict.phrase}</Text>
+      <Text style={[Type.verdict, { color: skyTheme.accent, textAlign: 'center' }]}>{verdict.phrase}</Text>
       <Text style={[Type.secondary, { color: skyTheme.textTint, opacity: 0.85, marginTop: 4 }]}>
         {summary}
       </Text>
@@ -136,7 +143,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 24,
   },
-  weatherBadge: { position: 'absolute', top: 16, right: 16, alignItems: 'center' },
+  weatherRow: { alignSelf: 'stretch', flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 4 },
+  weatherBadge: { alignItems: 'center' },
   chipRow: { flexDirection: 'row', gap: 10, marginTop: 10 },
   chip: {
     backgroundColor: Glass.fill,
