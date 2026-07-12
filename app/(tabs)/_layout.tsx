@@ -1,9 +1,12 @@
 import { Tabs } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../../theme/colors';
 import { Glass } from '../../theme/tokens';
+import { TAB_BAR_HEIGHT, TAB_BAR_SIDE_MARGIN, TAB_BAR_BOTTOM_GAP } from '../../theme/tabBar';
 
 type TabName = 'Today' | 'Week' | 'Species' | 'Spots';
 
@@ -29,25 +32,39 @@ function TabIcon({ name, focused }: { name: TabName; focused: boolean }) {
 // requires content to actually render BEHIND the bar for the blur to sample
 // from, so the bar is taken out of normal layout flow (position: absolute)
 // and each screen's own scroll content pads its bottom by the bar's real
-// height (via useBottomTabBarHeight()) to keep from being hidden under it.
+// height + the margin below it (TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_GAP +
+// insets.bottom) to keep from being hidden under it.
 function TabBarBackground() {
   return (
     <View style={StyleSheet.absoluteFill}>
       <BlurView
-        intensity={Platform.OS === 'android' ? 80 : 40}
+        intensity={Platform.OS === 'android' ? 80 : 50}
         tint="dark"
         style={StyleSheet.absoluteFill}
       />
-      <View style={styles.hairline} />
+      {/* Soft sheen along the top curve — light catching the top of a glass
+          surface — kept subtle (low opacity, no shader) per this app's
+          existing "gradients only, no heavy effects" motion budget. */}
+      <LinearGradient
+        colors={['rgba(255,255,255,0.16)', 'rgba(255,255,255,0)']}
+        style={styles.sheen}
+        pointerEvents="none"
+      />
     </View>
   );
 }
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+  const tabBarStyle = {
+    ...styles.tabBar,
+    bottom: TAB_BAR_BOTTOM_GAP + insets.bottom,
+  };
+
   return (
     <Tabs
       screenOptions={{
-        tabBarStyle: styles.tabBar,
+        tabBarStyle,
         tabBarBackground: () => <TabBarBackground />,
         tabBarActiveTintColor: Colors.accent,
         tabBarInactiveTintColor: Colors.textTertiary,
@@ -96,16 +113,21 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
+    left: TAB_BAR_SIDE_MARGIN,
+    right: TAB_BAR_SIDE_MARGIN,
+    height: TAB_BAR_HEIGHT,
+    borderRadius: TAB_BAR_HEIGHT / 2,
     backgroundColor: 'transparent',
-    borderTopWidth: 0,
+    borderWidth: 1,
+    borderColor: Glass.strokeStrong,
+    overflow: 'hidden',
     elevation: 0,
   },
-  hairline: {
+  sheen: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: Glass.stroke,
+    height: TAB_BAR_HEIGHT * 0.5,
   },
 });

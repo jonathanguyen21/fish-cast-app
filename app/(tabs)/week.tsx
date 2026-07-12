@@ -2,7 +2,6 @@ import React from 'react'
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
 import { useSpots } from '../../hooks/useSpots'
 import { useForecast } from '../../hooks/useForecast'
 import { useSettingsStore } from '../../store/settingsStore'
@@ -13,6 +12,7 @@ import { SkyBackground } from '../../features/sky/SkyBackground'
 import { WeekDayCard } from '../../features/forecast/WeekDayCard'
 import { Glass, Radii, Type, Accent } from '../../theme/tokens'
 import { Colors } from '../../theme/colors'
+import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_GAP } from '../../theme/tabBar'
 import type { SkyIcon } from '../../theme/skyTheme'
 import type { DayForecast } from '../../types/conditions'
 
@@ -56,7 +56,7 @@ function nextDayKey(dateKey: string): string {
 export default function WeekScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
-  const tabBarHeight = useBottomTabBarHeight()
+  const tabBarClearance = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_GAP + insets.bottom
   const { activeSpot } = useSpots()
   const isPro = useSettingsStore(s => s.isPro)
   const tempUnit = useSettingsStore(s => s.tempUnit)
@@ -78,7 +78,7 @@ export default function WeekScreen() {
   return (
     <SkyBackground theme={skyTheme}>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 32 + tabBarHeight }}
+        contentContainerStyle={{ paddingBottom: 32 + tabBarClearance }}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Colors.accent} />}
       >
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>

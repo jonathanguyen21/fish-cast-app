@@ -5,7 +5,6 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
 import { useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useSpots } from '../../hooks/useSpots'
@@ -23,6 +22,7 @@ import { Spacing } from '../../theme/spacing'
 import { useSkyTheme } from '../../hooks/useSkyTheme'
 import { Fonts, Radii, Type } from '../../theme/tokens'
 import { useSpeciesAbundance } from '../../hooks/useSpeciesAbundance'
+import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_GAP } from '../../theme/tabBar'
 import type { AbundanceTier } from '../../services/speciesOccurrenceService'
 
 function localDateKey(d: Date): string {
@@ -35,7 +35,7 @@ function localDateKey(d: Date): string {
 export default function SpeciesScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
-  const tabBarHeight = useBottomTabBarHeight()
+  const tabBarClearance = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_GAP + insets.bottom
   const { activeSpot } = useSpots()
   const { data: conditions, isLoading, refetch } = useConditions(activeSpot, localDateKey(new Date()))
   const isPro = useSettingsStore(s => s.isPro)
@@ -131,7 +131,7 @@ export default function SpeciesScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: Spacing.xl + tabBarHeight }]}
+        contentContainerStyle={[styles.content, { paddingBottom: Spacing.xl + tabBarClearance }]}
         refreshControl={<RefreshControl refreshing={isLoading && !!conditions} onRefresh={refetch} tintColor={skyTheme.accent} />}
       >
         {conditions ? (

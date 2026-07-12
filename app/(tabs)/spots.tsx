@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
 import { useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useSpots } from '../../hooks/useSpots'
@@ -13,6 +12,7 @@ import { Spacing } from '../../theme/spacing'
 import { scoreColor } from '../../features/score/scoringEngine'
 import { useSkyTheme } from '../../hooks/useSkyTheme'
 import { Fonts, Radii, Accent, Type } from '../../theme/tokens'
+import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_GAP } from '../../theme/tabBar'
 import type { SkyTheme } from '../../theme/skyTheme'
 import type { Spot } from '../../types/spot'
 
@@ -79,7 +79,7 @@ function SpotRow({ spot, isActive, onPress, onDelete, onEdit, theme }: {
 export default function SpotsScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
-  const tabBarHeight = useBottomTabBarHeight()
+  const tabBarClearance = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_GAP + insets.bottom
   const { spots, activeSpot, activeSpotId, setActiveSpot, removeSpot, updateSpot } = useSpots()
   const [editingSpot, setEditingSpot] = useState<Spot | null>(null)
   const [editName, setEditName] = useState('')
@@ -111,7 +111,7 @@ export default function SpotsScreen() {
       <FlatList
         data={spots}
         keyExtractor={s => s.id}
-        contentContainerStyle={spots.length === 0 ? styles.emptyContainer : [styles.list, { paddingBottom: Spacing.screenPad + tabBarHeight }]}
+        contentContainerStyle={spots.length === 0 ? styles.emptyContainer : [styles.list, { paddingBottom: Spacing.screenPad + tabBarClearance }]}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="map-outline" size={56} color={theme.textTint} style={{ marginBottom: Spacing.sm, opacity: 0.55 }} />
@@ -136,7 +136,7 @@ export default function SpotsScreen() {
           </SwipeableRow>
         )}
       />
-      <TouchableOpacity style={[styles.fab, { backgroundColor: Accent.warmDeep, bottom: 28 + tabBarHeight }]} onPress={() => router.push('/spot/new')}>
+      <TouchableOpacity style={[styles.fab, { backgroundColor: Accent.warmDeep, bottom: 28 + tabBarClearance }]} onPress={() => router.push('/spot/new')}>
         <Ionicons name="add" size={28} color="#3A2A16" />
       </TouchableOpacity>
 

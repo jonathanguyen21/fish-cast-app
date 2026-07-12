@@ -5,7 +5,6 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
 import { useNetInfo } from '@react-native-community/netinfo'
 import { useSpots } from '../../hooks/useSpots'
 import { useConditions } from '../../hooks/useConditions'
@@ -26,6 +25,7 @@ import { pickBetterDay } from '../../features/score/verdict'
 import { Glass, Radii, Type } from '../../theme/tokens'
 import { detectPhase, formatTideHeight, formatScrubTime } from '../../features/tide/tideUtils'
 import { skyConditionLabel } from '../../theme/weatherIcon'
+import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_GAP } from '../../theme/tabBar'
 
 function tideTurnCountdown(tide: { next: { type: string; time: string } }): string {
   const m = tide.next.time.match(/(\d+):(\d+)\s*(AM|PM)/i)
@@ -63,7 +63,7 @@ function formatDateChip(dateStr: string): string {
 export default function ForecastScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
-  const tabBarHeight = useBottomTabBarHeight()
+  const tabBarClearance = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_GAP + insets.bottom
   const netInfo = useNetInfo()
   const { activeSpot } = useSpots()
   const params = useLocalSearchParams<{ date?: string }>()
@@ -180,7 +180,7 @@ export default function ForecastScreen() {
 
       <ScrollView
         style={styles.screen}
-        contentContainerStyle={[styles.content, { paddingBottom: Spacing.xl + tabBarHeight }]}
+        contentContainerStyle={[styles.content, { paddingBottom: Spacing.xl + tabBarClearance }]}
         refreshControl={<RefreshControl refreshing={isLoading && !!conditions} onRefresh={refetch} tintColor={Colors.accent} />}
       >
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
