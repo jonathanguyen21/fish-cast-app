@@ -87,17 +87,18 @@ export function VerdictHero({ score, breakdown, spotType, skyTheme, sky, summary
         {summary}
       </Text>
 
-      <Pressable testID="hero-score" accessibilityRole="button" onPress={() => setExpanded(e => !e)}>
+      <Pressable testID="hero-score" accessibilityRole="button" onPress={() => setExpanded(e => !e)} style={styles.scoreRow}>
         <Text style={[Type.hero, { color: skyTheme.textTint, marginTop: 8 }]}>{display}</Text>
+        <Text style={[Type.secondary, { color: skyTheme.textTint, opacity: 0.5, marginLeft: 4 }]}>/100</Text>
       </Pressable>
 
       <View style={styles.chipRow}>
-        <View style={styles.chip}>
+        <Pressable testID="hero-chip-bite" accessibilityRole="button" onPress={() => setExpanded(e => !e)} style={styles.chip}>
           <Text style={[Type.chip, { color: scoreColor(bite) }]}>Bite {bite}</Text>
-        </View>
-        <View style={styles.chip}>
+        </Pressable>
+        <Pressable testID="hero-chip-comfort" accessibilityRole="button" onPress={() => setExpanded(e => !e)} style={styles.chip}>
           <Text style={[Type.chip, { color: scoreColor(comfort) }]}>Comfort {comfort}</Text>
-        </View>
+        </Pressable>
       </View>
 
       {verdict.sub && (
@@ -106,6 +107,9 @@ export function VerdictHero({ score, breakdown, spotType, skyTheme, sky, summary
 
       {expanded && (
         <View testID="hero-breakdown" style={styles.panel}>
+          <Text style={[Type.secondary, { color: skyTheme.textTint, opacity: 0.75 }]}>
+            Bite tracks how active the fish should be; Comfort tracks how pleasant it'll be for you. Together they make the score out of 100 below.
+          </Text>
           {FACTORS.map(f => {
             const pts = breakdown[f.key]
             const ratio = Math.min(1, pts / f.max)
@@ -145,6 +149,7 @@ const styles = StyleSheet.create({
   },
   weatherRow: { alignSelf: 'stretch', flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 4 },
   weatherBadge: { alignItems: 'center' },
+  scoreRow: { flexDirection: 'row', alignItems: 'flex-end' },
   chipRow: { flexDirection: 'row', gap: 10, marginTop: 10 },
   chip: {
     backgroundColor: Glass.fill,
