@@ -57,5 +57,10 @@ describe('Today final layout', () => {
     const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/conditions', params: { section: 'tide', date: todayKey } })
   })
+
+  it('shows the full tide chart below the chips when the spot has tide data', () => {
+    const { getByTestId } = renderScreen()
+    expect(getByTestId('tide-chart')).toBeTruthy()
+  })
 })
 
