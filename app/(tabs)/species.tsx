@@ -5,6 +5,7 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
 import { useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useSpots } from '../../hooks/useSpots'
@@ -34,6 +35,7 @@ function localDateKey(d: Date): string {
 export default function SpeciesScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  const tabBarHeight = useBottomTabBarHeight()
   const { activeSpot } = useSpots()
   const { data: conditions, isLoading, refetch } = useConditions(activeSpot, localDateKey(new Date()))
   const isPro = useSettingsStore(s => s.isPro)
@@ -129,7 +131,7 @@ export default function SpeciesScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: Spacing.xl + tabBarHeight }]}
         refreshControl={<RefreshControl refreshing={isLoading && !!conditions} onRefresh={refetch} tintColor={skyTheme.accent} />}
       >
         {conditions ? (

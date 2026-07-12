@@ -12,6 +12,7 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
 }))
 jest.mock('@react-native-community/netinfo', () => ({ useNetInfo: () => ({ isConnected: true }) }))
+jest.mock('@react-navigation/bottom-tabs', () => ({ useBottomTabBarHeight: () => 49 }))
 jest.mock('../hooks/useSpots', () => ({
   useSpots: () => ({ activeSpot: { id: 's1', name: 'Pier', lat: 37.6, lng: -122.5, type: 'saltwater', stationId: '9414290', region: 'west_coast' } }),
 }))

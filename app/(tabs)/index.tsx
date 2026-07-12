@@ -5,6 +5,7 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
 import { useNetInfo } from '@react-native-community/netinfo'
 import { useSpots } from '../../hooks/useSpots'
 import { useConditions } from '../../hooks/useConditions'
@@ -62,6 +63,7 @@ function formatDateChip(dateStr: string): string {
 export default function ForecastScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  const tabBarHeight = useBottomTabBarHeight()
   const netInfo = useNetInfo()
   const { activeSpot } = useSpots()
   const params = useLocalSearchParams<{ date?: string }>()
@@ -178,7 +180,7 @@ export default function ForecastScreen() {
 
       <ScrollView
         style={styles.screen}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: Spacing.xl + tabBarHeight }]}
         refreshControl={<RefreshControl refreshing={isLoading && !!conditions} onRefresh={refetch} tintColor={Colors.accent} />}
       >
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
