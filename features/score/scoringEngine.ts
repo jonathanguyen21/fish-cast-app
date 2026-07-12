@@ -126,3 +126,12 @@ export function scoreColor(score: number): string {
   if (score >= 40) return Colors.warning
   return Colors.danger
 }
+
+// Same bands as scoreLabel, mapped to a 1-4 fish rating for the bite-curve's
+// ranked best-times display.
+export function fishRating(score: number): number {
+  if (score >= 85) return 4
+  if (score >= 70) return 3
+  if (score >= 55) return 2
+  return 1
+}

@@ -1,10 +1,26 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { View, Text, StyleSheet, PanResponder, PanResponderInstance, LayoutChangeEvent } from 'react-native'
+import { View, Text, Pressable, StyleSheet, PanResponder, PanResponderInstance, LayoutChangeEvent } from 'react-native'
 import Svg, { Path, Rect, Circle, Line } from 'react-native-svg'
 import Animated, { useSharedValue, useAnimatedProps, withTiming } from 'react-native-reanimated'
+import { Ionicons } from '@expo/vector-icons'
 import { Glass, Radii, Type } from '../../theme/tokens'
+import { fishRating } from './scoringEngine'
+import { findTopThreeHourWindows } from './bestWindow'
 import type { HourlyScore, ConditionsData } from '../../types/conditions'
 import type { SkyTheme } from '../../theme/skyTheme'
+
+const MAX_RANKED_WINDOWS = 3
+
+function FishRating({ score, color }: { score: number; color: string }) {
+  const count = fishRating(score)
+  return (
+    <View style={styles.fishRow} accessibilityLabel={`${count} fish`}>
+      {Array.from({ length: count }).map((_, i) => (
+        <Ionicons key={i} name="fish" size={12} color={color} />
+      ))}
+    </View>
+  )
+}
 
 const AnimatedPath = Animated.createAnimatedComponent(Path)
 
@@ -35,6 +51,13 @@ function parseHour(t: string): number {
   if (/pm/i.test(m[3]) && h !== 12) h += 12
   if (/am/i.test(m[3]) && h === 12) h = 0
   return h
+}
+
+function formatHourLabel(hour: number): string {
+  const h = ((hour % 24) + 24) % 24
+  const period = h < 12 ? 'AM' : 'PM'
+  const displayH = h % 12 === 0 ? 12 : h % 12
+  return `${displayH}:00 ${period}`
 }
 
 function xFor(hour: number, n: number): number {
@@ -69,6 +92,7 @@ function buildPath(scores: number[], lo: number, hi: number): string {
 export function BiteCurve({ hourlyScores, bestWindow, currentHour, skyTheme, title = "Today's bite", onScrubChange }: Props) {
   const dash = useSharedValue(EST_LEN)
   const [cursorIdx, setCursorIdx] = useState<number | null>(null)
+  const [expanded, setExpanded] = useState(false)
   // Measured on-screen width of the touch area, in points. The SVG's internal
   // viewBox is a fixed 320x84 regardless of screen size, so a raw touch
   // locationX (in points) must be rescaled into viewBox units before it's
@@ -128,15 +152,25 @@ export function BiteCurve({ hourlyScores, bestWindow, currentHour, skyTheme, tit
 
   const cursor = cursorIdx !== null ? hourlyScores[cursorIdx] : null
 
+  // Only surfaced for the current/future day (bestWindow.passed means we're
+  // looking at a spent day, where "other good times" no longer means anything).
+  const rankedWindows = bestWindow.passed ? [] : findTopThreeHourWindows(scores, 0, MAX_RANKED_WINDOWS)
+  const otherCount = rankedWindows.length - 1
+
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
         <Text style={[Type.secondary, { color: skyTheme.textTint, opacity: 0.85 }]}>{title}</Text>
-        <Text style={[Type.chip, { color: skyTheme.accent }]}>
-          {cursor
-            ? `${cursor.hour} · ${cursor.score}`
-            : bestWindow.passed ? `Peak was ${bestWindow.start}–${bestWindow.end}` : `Best ${bestWindow.start}–${bestWindow.end}`}
-        </Text>
+        <View style={styles.headerRight}>
+          <Text style={[Type.chip, { color: skyTheme.accent }]}>
+            {cursor
+              ? `${cursor.hour} · ${cursor.score}`
+              : bestWindow.passed ? `Peak was ${bestWindow.start}–${bestWindow.end}` : `Best ${bestWindow.start}–${bestWindow.end}`}
+          </Text>
+          {!cursor && !bestWindow.passed && rankedWindows[0] && (
+            <FishRating score={rankedWindows[0].avgScore} color={skyTheme.accent} />
+          )}
+        </View>
       </View>
       <View testID="bite-curve-touch-area" onLayout={onTouchAreaLayout} {...panResponder.panHandlers}>
         <Svg viewBox={`0 0 ${W} ${H}`} style={styles.svg}>
@@ -187,6 +221,39 @@ export function BiteCurve({ hourlyScores, bestWindow, currentHour, skyTheme, tit
         <Text style={[styles.axis, { color: skyTheme.textTint }]}>6P</Text>
         <Text style={[styles.axis, { color: skyTheme.textTint }]}>12A</Text>
       </View>
+
+      {!bestWindow.passed && otherCount > 0 && (
+        <Pressable
+          testID="bite-curve-expand-toggle"
+          accessibilityRole="button"
+          onPress={() => setExpanded(e => !e)}
+          style={styles.expandToggle}
+        >
+          <Text style={[Type.secondary, { color: skyTheme.textTint, opacity: 0.7 }]}>
+            {expanded ? 'Hide other good times' : `${otherCount} other good time${otherCount > 1 ? 's' : ''} today`}
+          </Text>
+          <Ionicons
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={14}
+            color={skyTheme.textTint}
+            style={{ opacity: 0.7 }}
+          />
+        </Pressable>
+      )}
+
+      {expanded && (
+        <View testID="bite-curve-ranked-list" style={styles.rankedList}>
+          {rankedWindows.map((w, i) => (
+            <View key={i} testID={`bite-curve-rank-${i}`} style={styles.rankedRow}>
+              <Text style={[Type.chip, { color: skyTheme.textTint, opacity: 0.6, width: 16 }]}>{i + 1}</Text>
+              <Text style={[Type.secondary, { color: skyTheme.textTint, flex: 1 }]}>
+                {i === 0 ? `${bestWindow.start}–${bestWindow.end}` : `${formatHourLabel(w.startHour)}–${formatHourLabel(w.endHour)}`}
+              </Text>
+              <FishRating score={w.avgScore} color={skyTheme.accent} />
+            </View>
+          ))}
+        </View>
+      )}
     </View>
   )
 }
@@ -202,7 +269,15 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  fishRow: { flexDirection: 'row', gap: 1 },
   svg: { width: '100%', aspectRatio: W / H },
   axisRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
   axis: { fontSize: 10, opacity: 0.55 },
+  expandToggle: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
+    marginTop: 10, paddingVertical: 4,
+  },
+  rankedList: { marginTop: 6, gap: 8 },
+  rankedRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 })

@@ -115,4 +115,50 @@ describe('BiteCurve', () => {
     // Today mirror this same value.
     expect(queryByTestId('bite-curve-cursor')).toBeNull()
   })
+
+  describe('ranked best times (fish rating)', () => {
+    // Three well-separated, non-overlapping bumps so a distinct top-3 ranked
+    // list exists: hour 8 is best (score 90 → 4 fish), hour 14 second
+    // (75 → 3 fish), hour 20 third (60 → 2 fish).
+    const RANKED_HOURS: HourlyScore[] = Array.from({ length: 24 }, (_, h) => ({
+      hour: `${h === 0 ? 12 : h > 12 ? h - 12 : h}${h < 12 ? 'AM' : 'PM'}`,
+      hourIndex: h,
+      score: 20,
+    }))
+    ;[7, 8, 9].forEach(h => (RANKED_HOURS[h].score = 90))
+    ;[13, 14, 15].forEach(h => (RANKED_HOURS[h].score = 75))
+    ;[19, 20, 21].forEach(h => (RANKED_HOURS[h].score = 60))
+
+    it('shows a fish rating for the best window when the window has not passed', () => {
+      const { getByLabelText } = render(
+        <BiteCurve hourlyScores={RANKED_HOURS} bestWindow={{ start: '8:00 AM', end: '10:00 AM', score: 90 }} currentHour={12} skyTheme={SKY} />
+      )
+      expect(getByLabelText('4 fish')).toBeTruthy()
+    })
+
+    it('hides the fish rating and expand toggle once the window has passed', () => {
+      const { queryByLabelText, queryByTestId } = render(
+        <BiteCurve hourlyScores={RANKED_HOURS} bestWindow={{ start: '8:00 AM', end: '10:00 AM', score: 90, passed: true }} currentHour={null} skyTheme={SKY} />
+      )
+      expect(queryByLabelText('4 fish')).toBeNull()
+      expect(queryByTestId('bite-curve-expand-toggle')).toBeNull()
+    })
+
+    it('reveals a ranked list of other good times on tap, with per-window fish ratings', () => {
+      const { getByTestId, queryByTestId, getByLabelText } = render(
+        <BiteCurve hourlyScores={RANKED_HOURS} bestWindow={{ start: '8:00 AM', end: '10:00 AM', score: 90 }} currentHour={12} skyTheme={SKY} />
+      )
+      expect(queryByTestId('bite-curve-ranked-list')).toBeNull()
+      fireEvent.press(getByTestId('bite-curve-expand-toggle'))
+      expect(getByTestId('bite-curve-ranked-list')).toBeTruthy()
+      expect(getByTestId('bite-curve-rank-0')).toBeTruthy()
+      expect(getByTestId('bite-curve-rank-1')).toBeTruthy()
+      expect(getByTestId('bite-curve-rank-2')).toBeTruthy()
+      expect(getByLabelText('3 fish')).toBeTruthy() // rank-1, score 75
+      expect(getByLabelText('2 fish')).toBeTruthy() // rank-2, score 60
+
+      fireEvent.press(getByTestId('bite-curve-expand-toggle'))
+      expect(queryByTestId('bite-curve-ranked-list')).toBeNull()
+    })
+  })
 })
