@@ -80,7 +80,7 @@ export function SkySection({ conditions, theme }: SectionProps) {
             {hourLabel(cursor.hour)}  ·  {cursor.rainChance}% rain  ·  {cursor.cloudCover}% cloud
           </Text>
         ) : (
-          <Text style={[Type.secondary, styles.cursorSub, { color: textTint, opacity: 0.7 }]}>Drag to scrub</Text>
+          <Text style={[Type.secondary, styles.cursorSub, { color: textTint, opacity: 0.7 }]}>Drag to see hourly detail</Text>
         )}
       </View>
 

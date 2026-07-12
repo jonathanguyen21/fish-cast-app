@@ -15,7 +15,7 @@ describe('VerdictHero', () => {
       <VerdictHero score={84} breakdown={GOOD} spotType="saltwater" skyTheme={SKY} sky={OVERCAST}
         summary="Falling pressure and a rising tide" betterDay={null} />
     )
-    expect(getByText('Go — golden hour feed')).toBeTruthy()
+    expect(getByText('Great time to go — golden hour feed')).toBeTruthy()
     // bite = round(64/75*100) = 85, comfort = round(20/25*100) = 80
     expect(getByText('Bite 85')).toBeTruthy()
     expect(getByText('Comfort 80')).toBeTruthy()
@@ -32,6 +32,27 @@ describe('VerdictHero', () => {
     expect(getByTestId('hero-breakdown')).toBeTruthy()
     expect(getByText('Pressure')).toBeTruthy()
     expect(getByText('22 / 25')).toBeTruthy()
+    expect(getByText(/Bite tracks how active the fish should be/)).toBeTruthy()
+  })
+
+  it('tapping either bite or comfort chip also toggles the breakdown panel', () => {
+    const { getByTestId, queryByTestId } = render(
+      <VerdictHero score={84} breakdown={GOOD} spotType="saltwater" skyTheme={SKY} sky={OVERCAST}
+        summary="s" betterDay={null} />
+    )
+    expect(queryByTestId('hero-breakdown')).toBeNull()
+    fireEvent.press(getByTestId('hero-chip-bite'))
+    expect(getByTestId('hero-breakdown')).toBeTruthy()
+    fireEvent.press(getByTestId('hero-chip-comfort'))
+    expect(queryByTestId('hero-breakdown')).toBeNull()
+  })
+
+  it('shows the score out of 100', () => {
+    const { getByText } = render(
+      <VerdictHero score={84} breakdown={GOOD} spotType="saltwater" skyTheme={SKY} sky={OVERCAST}
+        summary="s" betterDay={null} />
+    )
+    expect(getByText('/100')).toBeTruthy()
   })
 
   it('shows the better-day handoff when today is poor', () => {

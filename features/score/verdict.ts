@@ -36,7 +36,7 @@ export function getVerdict(i: {
 }): Verdict {
   if (i.bite >= 70 && i.comfort >= 60 && i.overall >= 55) {
     const flavor = GO_FLAVOR[i.skyState]
-    return { phrase: flavor ? `Go — ${flavor}` : 'Go.', sub: null }
+    return { phrase: flavor ? `Great time to go — ${flavor}` : 'Great time to go', sub: null }
   }
   if (i.bite >= 70 && i.overall >= 45) return { phrase: 'Biting — but dress for it', sub: null }
   if (i.bite >= 45 && i.overall >= 45) return { phrase: 'Decent — pick your window', sub: null }

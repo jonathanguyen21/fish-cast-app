@@ -25,13 +25,13 @@ describe('computeAxes', () => {
 
 describe('getVerdict', () => {
   it('high bite + high comfort → Go with golden-hour flavor', () => {
-    expect(getVerdict({ bite: 80, comfort: 70, overall: 75, skyState: 'goldenPM' }).phrase).toBe('Go — golden hour feed')
-    expect(getVerdict({ bite: 80, comfort: 70, overall: 75, skyState: 'goldenAM' }).phrase).toBe('Go — dawn bite is on')
-    expect(getVerdict({ bite: 80, comfort: 70, overall: 75, skyState: 'night' }).phrase).toBe('Go — night bite is live')
-    expect(getVerdict({ bite: 80, comfort: 70, overall: 75, skyState: 'day' }).phrase).toBe('Go.')
+    expect(getVerdict({ bite: 80, comfort: 70, overall: 75, skyState: 'goldenPM' }).phrase).toBe('Great time to go — golden hour feed')
+    expect(getVerdict({ bite: 80, comfort: 70, overall: 75, skyState: 'goldenAM' }).phrase).toBe('Great time to go — dawn bite is on')
+    expect(getVerdict({ bite: 80, comfort: 70, overall: 75, skyState: 'night' }).phrase).toBe('Great time to go — night bite is live')
+    expect(getVerdict({ bite: 80, comfort: 70, overall: 75, skyState: 'day' }).phrase).toBe('Great time to go')
   })
   it('boundary: comfort 60 goes, 59 dresses for it', () => {
-    expect(getVerdict({ bite: 70, comfort: 60, overall: 75, skyState: 'day' }).phrase).toBe('Go.')
+    expect(getVerdict({ bite: 70, comfort: 60, overall: 75, skyState: 'day' }).phrase).toBe('Great time to go')
     expect(getVerdict({ bite: 70, comfort: 59, overall: 65, skyState: 'day' }).phrase).toBe('Biting — but dress for it')
   })
   it('mid bite → pick your window', () => {
