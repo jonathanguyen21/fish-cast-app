@@ -20,6 +20,7 @@ import { useSkyTheme } from '../../hooks/useSkyTheme'
 import { SkyBackground } from '../../features/sky/SkyBackground'
 import { VerdictHero } from '../../features/score/VerdictHero'
 import { BiteCurve } from '../../features/score/BiteCurve'
+import { TideChart } from '../../features/tide/TideChart'
 import { pickBetterDay } from '../../features/score/verdict'
 import { Glass, Radii, Type } from '../../theme/tokens'
 import { detectPhase, formatTideHeight, formatScrubTime } from '../../features/tide/tideUtils'
@@ -270,6 +271,17 @@ export default function ForecastScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
+            {conditions.tide && (
+              <View style={{ marginTop: 12 }}>
+                <TideChart
+                  tide={conditions.tide}
+                  currentHour={scrubHour ?? (selectedDate === todayKey ? new Date().getHours() : null)}
+                  backgroundColor={Glass.fill}
+                  theme={skyTheme}
+                  bordered
+                />
+              </View>
+            )}
           </>
         )}
       </ScrollView>

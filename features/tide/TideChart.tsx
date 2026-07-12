@@ -4,14 +4,26 @@ import { Ionicons } from '@expo/vector-icons'
 import { Svg, Path, Defs, LinearGradient, Stop, Line, Circle, Text as SvgText, G } from 'react-native-svg'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
+import { Radii, Glass } from '../../theme/tokens'
 import { useSettingsStore } from '../../store/settingsStore'
 import type { TideData } from '../../types/conditions'
+import type { SkyTheme } from '../../theme/skyTheme'
 import { formatScrubTime } from './tideUtils'
 
 interface Props {
   tide: TideData
   currentHour: number | null
   backgroundColor?: string
+  // When provided, all internal text/line/accent colors switch from the
+  // legacy Colors.* palette to this theme's — needed so the chart looks
+  // right embedded on a Glass sky card (Today) as well as its original
+  // tinted-dark home (Conditions). Omitted entirely, behavior/colors are
+  // byte-identical to before this prop existed.
+  theme?: SkyTheme
+  // Adds a Glass.stroke border, matching Today's other cards (BiteCurve,
+  // VerdictHero). Conditions' sibling section cards have no border, so this
+  // defaults to false rather than being implied by `theme` alone.
+  bordered?: boolean
 }
 
 const CHART_HEIGHT = 140
@@ -40,9 +52,15 @@ function parseEventHour(timeStr: string): number {
   return h + min / 60
 }
 
-export function TideChart({ tide, currentHour, backgroundColor }: Props) {
+export function TideChart({ tide, currentHour, backgroundColor, theme, bordered }: Props) {
   const { width } = useWindowDimensions()
   const CHART_WIDTH = width - Spacing.screenPad * 2 - Spacing.md * 2
+
+  const textColor = theme?.textTint ?? Colors.textPrimary
+  const mutedTextColor = theme?.textTint ?? Colors.textSecondary
+  const faintTextColor = theme?.textTint ?? Colors.textTertiary
+  const accentColor = theme?.accent ?? Colors.accent
+  const curveColor = theme?.accent ?? Colors.ocean
 
   const lengthUnit = useSettingsStore(s => s.lengthUnit)
   const fmtHeight = (h: number) =>
@@ -94,35 +112,42 @@ export function TideChart({ tide, currentHour, backgroundColor }: Props) {
   const phaseIconName = tide.phase === 'incoming' ? 'arrow-up-outline' : tide.phase === 'outgoing' ? 'arrow-down-outline' : 'remove-outline'
 
   return (
-    <View style={[styles.container, backgroundColor ? { backgroundColor } : null]} testID="tide-chart">
+    <View
+      style={[
+        styles.container,
+        backgroundColor ? { backgroundColor } : null,
+        bordered ? { borderWidth: 1, borderColor: Glass.stroke } : null,
+      ]}
+      testID="tide-chart"
+    >
       <View style={styles.sectionTitleRow}>
-        <Text style={styles.sectionTitle}>Tides</Text>
-        <Text style={styles.sectionTitleMeta}> · </Text>
-        <Ionicons name={phaseIconName} size={12} color={Colors.accent} />
-        <Text style={styles.sectionTitleMeta}> {phaseText} · {fmtHeight(tide.current.height)} {heightUnit}</Text>
+        <Text style={[styles.sectionTitle, theme && { color: textColor }]}>Tides</Text>
+        <Text style={[styles.sectionTitleMeta, theme && { color: accentColor }]}> · </Text>
+        <Ionicons name={phaseIconName} size={12} color={accentColor} />
+        <Text style={[styles.sectionTitleMeta, theme && { color: accentColor }]}> {phaseText} · {fmtHeight(tide.current.height)} {heightUnit}</Text>
       </View>
       <View {...panResponder.panHandlers}>
         <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
           <Defs>
             <LinearGradient id="tideGrad" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={Colors.ocean} stopOpacity={0.4} />
-              <Stop offset="1" stopColor={Colors.ocean} stopOpacity={0.0} />
+              <Stop offset="0" stopColor={curveColor} stopOpacity={0.4} />
+              <Stop offset="1" stopColor={curveColor} stopOpacity={0.0} />
             </LinearGradient>
           </Defs>
           {/* Y-axis height labels */}
           {[minH, (minH + maxH) / 2, maxH].map((h, i) => (
             <SvgText key={`yax-${i}`} x={PADDING.left - 4} y={toY(h) + 4}
-              fill={Colors.textTertiary} fontSize={8} textAnchor="end">
+              fill={faintTextColor} fillOpacity={theme ? 0.55 : 1} fontSize={8} textAnchor="end">
               {fmtHeight(h)}
             </SvgText>
           ))}
           <Path d={fillD} fill="url(#tideGrad)" />
-          <Path d={pathD} stroke={Colors.ocean} strokeWidth={2} fill="none" />
+          <Path d={pathD} stroke={curveColor} strokeWidth={2} fill="none" />
           {nowX !== null && nowY !== null && (
             <G testID="tide-now-marker">
               <Line x1={nowX} y1={PADDING.top} x2={nowX} y2={baseline}
-                stroke={Colors.accent} strokeWidth={1.5} strokeDasharray="4 2" />
-              <Circle cx={nowX} cy={nowY} r={4} fill={Colors.accent} />
+                stroke={accentColor} strokeWidth={1.5} strokeDasharray="4 2" />
+              <Circle cx={nowX} cy={nowY} r={4} fill={accentColor} />
             </G>
           )}
 
@@ -130,7 +155,8 @@ export function TideChart({ tide, currentHour, backgroundColor }: Props) {
           {tide.events.map((ev, idx) => {
             const evHour = parseEventHour(ev.time)
             const ex = Math.max(PADDING.left + 22, Math.min(PADDING.left + chartW - 22, toX(evHour)))
-            const symbolColor = ev.type === 'high' ? Colors.accent : Colors.textSecondary
+            const symbolColor = ev.type === 'high' ? accentColor : mutedTextColor
+            const symbolOpacity = ev.type === 'high' ? 1 : (theme ? 0.7 : 1)
             // ▲ for high (apex at baseline), ▼ for low (apex below baseline)
             const triPath = ev.type === 'high'
               ? `M ${ex} ${baseline} L ${ex - 7} ${baseline + 12} L ${ex + 7} ${baseline + 12} Z`
@@ -141,17 +167,17 @@ export function TideChart({ tide, currentHour, backgroundColor }: Props) {
 
             return (
               <G key={`${ev.type}-${idx}`} testID={`tide-tick-${ev.type}-${idx}`}>
-                <Path d={triPath} fill={symbolColor} />
+                <Path d={triPath} fill={symbolColor} fillOpacity={symbolOpacity} />
                 <SvgText
                   x={ex} y={baseline + 24}
-                  fill={symbolColor} fontSize={8} fontWeight="600" textAnchor="middle"
+                  fill={symbolColor} fillOpacity={symbolOpacity} fontSize={8} fontWeight="600" textAnchor="middle"
                 >
                   {fmtHeight(ev.height)}{heightUnit}
                 </SvgText>
                 {!tooClose && (
                   <SvgText
                     x={ex} y={baseline + 34}
-                    fill={Colors.textTertiary} fontSize={7} textAnchor="middle"
+                    fill={faintTextColor} fillOpacity={theme ? 0.55 : 1} fontSize={7} textAnchor="middle"
                   >
                     {ev.time}
                   </SvgText>
@@ -166,20 +192,20 @@ export function TideChart({ tide, currentHour, backgroundColor }: Props) {
               <Line
                 x1={toX(cursorIndex)} y1={PADDING.top}
                 x2={toX(cursorIndex)} y2={baseline}
-                stroke={Colors.accent} strokeWidth={1} strokeDasharray="3 2"
+                stroke={accentColor} strokeWidth={1} strokeDasharray="3 2"
               />
-              <Circle cx={toX(cursorIndex)} cy={toY(curve[cursorIndex])} r={5} fill={Colors.accent} />
+              <Circle cx={toX(cursorIndex)} cy={toY(curve[cursorIndex])} r={5} fill={accentColor} />
               <SvgText
                 x={Math.min(toX(cursorIndex) + 6, CHART_WIDTH - 60)}
                 y={Math.max(toY(curve[cursorIndex]) - 8, PADDING.top + 12)}
-                fill={Colors.textPrimary} fontSize={11} fontWeight="600"
+                fill={textColor} fontSize={11} fontWeight="600"
               >
                 {fmtHeight(curve[cursorIndex])} {heightUnit}
               </SvgText>
               <SvgText
                 x={Math.min(toX(cursorIndex) + 6, CHART_WIDTH - 60)}
                 y={Math.max(toY(curve[cursorIndex]) + 6, PADDING.top + 24)}
-                fill={Colors.textSecondary} fontSize={10}
+                fill={mutedTextColor} fillOpacity={theme ? 0.7 : 1} fontSize={10}
               >
                 {formatScrubTime(cursorIndex)}
               </SvgText>
@@ -194,7 +220,7 @@ export function TideChart({ tide, currentHour, backgroundColor }: Props) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.surface,
-    borderRadius: Spacing.cardRadius,
+    borderRadius: Radii.card,
     marginHorizontal: Spacing.screenPad,
     marginBottom: Spacing.md,
     padding: Spacing.md,

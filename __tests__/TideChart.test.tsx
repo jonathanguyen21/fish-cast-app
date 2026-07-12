@@ -4,8 +4,10 @@ import { TideChart } from '../features/tide/TideChart'
 import { formatScrubTime } from '../features/tide/tideUtils'
 import { useSettingsStore } from '../store/settingsStore'
 import { MOCK_CONDITIONS } from '../data/mockData'
+import { getSkyTheme } from '../theme/skyTheme'
 
 const TIDE = MOCK_CONDITIONS.tide!
+const SKY = getSkyTheme(new Date('2026-07-08T03:10:00Z'), 38.33, -123.05, 'clear')
 
 describe('TideChart', () => {
   beforeEach(() => {
@@ -71,5 +73,11 @@ describe('TideChart', () => {
     render(<TideChart tide={TIDE} currentHour={null} />)
     expect(screen.getByTestId('tide-chart')).toBeTruthy()
     expect(screen.queryByTestId('tide-now-marker')).toBeNull()
+  })
+
+  it('renders without crashing when given a theme and bordered card style', () => {
+    render(<TideChart tide={TIDE} currentHour={14} theme={SKY} bordered backgroundColor="rgba(0,0,0,0.3)" />)
+    expect(screen.getByTestId('tide-chart')).toBeTruthy()
+    expect(screen.getByTestId('tide-now-marker')).toBeTruthy()
   })
 })

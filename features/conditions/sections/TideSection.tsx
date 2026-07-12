@@ -15,6 +15,7 @@ export function TideSection({ conditions, theme, currentHour = new Date().getHou
         tide={conditions.tide}
         currentHour={currentHour}
         backgroundColor={theme.tintedDark.card}
+        theme={theme}
       />
     </View>
   )
