@@ -1,14 +1,16 @@
 import React, { useMemo } from 'react'
 import {
-  ScrollView, View, Text, StyleSheet, TouchableOpacity,
+  View, Text, StyleSheet, TouchableOpacity,
   RefreshControl,
 } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useSpots } from '../../hooks/useSpots'
 import { useConditions } from '../../hooks/useConditions'
+import { useTabBarScrollHandler } from '../../hooks/useTabBarScrollHandler'
 import { useSettingsStore } from '../../store/settingsStore'
 import { SpeciesCard } from '../../features/species/SpeciesCard'
 import { ActiveRightNow } from '../../features/species/ActiveRightNow'
@@ -36,6 +38,7 @@ export default function SpeciesScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const tabBarClearance = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_GAP + insets.bottom
+  const tabBarScrollHandler = useTabBarScrollHandler()
   const { activeSpot } = useSpots()
   const { data: conditions, isLoading, refetch } = useConditions(activeSpot, localDateKey(new Date()))
   const isPro = useSettingsStore(s => s.isPro)
@@ -130,9 +133,11 @@ export default function SpeciesScreen() {
         <Text style={[Type.secondary, styles.subtitle, { color: skyTheme.textTint, opacity: 0.7 }]}>{activeSpot.name}</Text>
       </View>
 
-      <ScrollView
+      <Animated.ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: Spacing.xl + tabBarClearance }]}
         refreshControl={<RefreshControl refreshing={isLoading && !!conditions} onRefresh={refetch} tintColor={skyTheme.accent} />}
+        onScroll={tabBarScrollHandler}
+        scrollEventThrottle={16}
       >
         {conditions ? (
           <>
@@ -205,7 +210,7 @@ export default function SpeciesScreen() {
             </View>
           )
         )}
-      </ScrollView>
+      </Animated.ScrollView>
 
       {isLoading && !conditions && (
         <View style={[StyleSheet.absoluteFillObject, { backgroundColor: skyTheme.tintedDark.background }]}>

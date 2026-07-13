@@ -1,13 +1,15 @@
 import React, { useState } from 'react'
 import {
-  ScrollView, View, Text, StyleSheet, RefreshControl,
+  View, Text, StyleSheet, RefreshControl,
   TouchableOpacity, Modal,
 } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNetInfo } from '@react-native-community/netinfo'
 import { useSpots } from '../../hooks/useSpots'
 import { useConditions } from '../../hooks/useConditions'
+import { useTabBarScrollHandler } from '../../hooks/useTabBarScrollHandler'
 import { useForecast } from '../../hooks/useForecast'
 import { useSettingsStore } from '../../store/settingsStore'
 import { Colors } from '../../theme/colors'
@@ -118,6 +120,7 @@ export default function ForecastScreen() {
   // only gives a single latest reading), so that chip is left showing the
   // current value rather than fabricating an hourly curve for it.
   const [scrubHour, setScrubHour] = useState<number | null>(null)
+  const tabBarScrollHandler = useTabBarScrollHandler()
   const scrubTide = scrubHour !== null && conditions?.tide
     ? { phase: detectPhase(conditions.tide.hourlyCurve, scrubHour), height: conditions.tide.hourlyCurve[scrubHour] }
     : null
@@ -187,10 +190,12 @@ export default function ForecastScreen() {
         </View>
       )}
 
-      <ScrollView
+      <Animated.ScrollView
         style={styles.screen}
         contentContainerStyle={[styles.content, { paddingBottom: Spacing.xl + tabBarClearance }]}
         refreshControl={<RefreshControl refreshing={isLoading && !!conditions} onRefresh={refetch} tintColor={Colors.accent} />}
+        onScroll={tabBarScrollHandler}
+        scrollEventThrottle={16}
       >
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <View>
@@ -336,7 +341,7 @@ export default function ForecastScreen() {
             )}
           </>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Skeleton loading — replaces spinner while first fetch runs */}
       {isLoading && !conditions && (

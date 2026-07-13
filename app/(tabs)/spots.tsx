@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useSpots } from '../../hooks/useSpots'
 import { useConditions } from '../../hooks/useConditions'
+import { useTabBarScrollHandler } from '../../hooks/useTabBarScrollHandler'
 import { SwipeableRow } from '../../features/common/SwipeableRow'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
@@ -81,6 +83,7 @@ export default function SpotsScreen() {
   const insets = useSafeAreaInsets()
   const tabBarClearance = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_GAP + insets.bottom
   const { spots, activeSpot, activeSpotId, setActiveSpot, removeSpot, updateSpot } = useSpots()
+  const tabBarScrollHandler = useTabBarScrollHandler()
   const [editingSpot, setEditingSpot] = useState<Spot | null>(null)
   const [editName, setEditName] = useState('')
   const theme = useSkyTheme(
@@ -108,10 +111,12 @@ export default function SpotsScreen() {
         <Text style={[styles.title, { color: theme.textTint }]}>Spots</Text>
         <Text style={[Type.secondary, styles.subtitle, { color: theme.textTint, opacity: 0.7 }]}>Tap a spot to make it active</Text>
       </View>
-      <FlatList
+      <Animated.FlatList
         data={spots}
         keyExtractor={s => s.id}
         contentContainerStyle={spots.length === 0 ? styles.emptyContainer : [styles.list, { paddingBottom: Spacing.screenPad + tabBarClearance }]}
+        onScroll={tabBarScrollHandler}
+        scrollEventThrottle={16}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="map-outline" size={56} color={theme.textTint} style={{ marginBottom: Spacing.sm, opacity: 0.55 }} />
