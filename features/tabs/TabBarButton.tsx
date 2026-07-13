@@ -1,7 +1,7 @@
 import React from 'react'
 import { Pressable, StyleSheet } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolate } from 'react-native-reanimated'
-import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs'
+import { Accent, Radii } from '../../theme/tokens'
 import { tabBarMinimized } from '../../theme/tabBarVisibility'
 
 // Approximates SwiftUI's .glassEffect(.interactive()) — a brief scale-down
@@ -16,7 +16,16 @@ const PRESS_SHIMMER_OPACITY = 0.3
 const MINIMIZE_ICON_SCALE = 0.9
 const MINIMIZE_ICON_OPACITY = 0.7
 
-export function TabBarButton({ children, style, onPress, ref: _ref, ...rest }: BottomTabBarButtonProps) {
+interface TabBarButtonProps {
+  focused: boolean
+  onPress: () => void
+  onLongPress?: () => void
+  accessibilityLabel?: string
+  testID?: string
+  children: React.ReactNode
+}
+
+export function TabBarButton({ focused, onPress, onLongPress, accessibilityLabel, testID, children }: TabBarButtonProps) {
   const scale = useSharedValue(1)
   const shimmer = useSharedValue(0)
 
@@ -43,13 +52,17 @@ export function TabBarButton({ children, style, onPress, ref: _ref, ...rest }: B
 
   return (
     <Pressable
-      {...rest}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: focused }}
+      accessibilityLabel={accessibilityLabel}
+      testID={testID}
       onPress={onPress}
+      onLongPress={onLongPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={style}
+      style={styles.item}
     >
-      <Animated.View style={[styles.inner, scaleStyle]}>
+      <Animated.View style={[styles.capsule, focused && styles.capsuleActive, scaleStyle]}>
         <Animated.View testID="tab-button-shimmer" pointerEvents="none" style={[styles.shimmer, shimmerStyle]} />
         {children}
       </Animated.View>
@@ -58,11 +71,20 @@ export function TabBarButton({ children, style, onPress, ref: _ref, ...rest }: B
 }
 
 const styles = StyleSheet.create({
-  inner: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  item: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  capsule: {
+    minWidth: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 14,
+    borderRadius: Radii.pill,
+    overflow: 'hidden',
+  },
+  capsuleActive: { backgroundColor: Accent.warm },
   shimmer: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    borderRadius: 14,
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: Radii.pill,
     backgroundColor: '#ffffff',
   },
 })
