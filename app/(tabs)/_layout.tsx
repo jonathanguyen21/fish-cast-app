@@ -4,10 +4,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { useAnimatedStyle, interpolate } from 'react-native-reanimated';
 import { Colors } from '../../theme/colors';
 import { Glass } from '../../theme/tokens';
 import { TAB_BAR_HEIGHT, TAB_BAR_SIDE_MARGIN, TAB_BAR_BOTTOM_GAP } from '../../theme/tabBar';
 import { TabBarButton } from '../../features/tabs/TabBarButton';
+import { tabBarMinimized } from '../../theme/tabBarVisibility';
 
 type TabName = 'Today' | 'Week' | 'Species' | 'Spots';
 
@@ -35,9 +37,27 @@ function TabIcon({ name, focused }: { name: TabName; focused: boolean }) {
 // and each screen's own scroll content pads its bottom by the bar's real
 // height + the margin below it (TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_GAP +
 // insets.bottom) to keep from being hidden under it.
+//
+// The bar "minimizes" (shrinks + dims) on scroll-down and restores on
+// scroll-up (theme/tabBarVisibility.ts + hooks/useTabBarScrollHandler.ts),
+// approximating SwiftUI's .tabBarMinimizeBehavior(.onScrollDown). The blur,
+// sheen, and border all live on one animated child inside the outer
+// (unanimated, full-size) bar container — scaling that child down doesn't
+// change the bar's real hit-region or React Navigation's own layout, it just
+// visually shrinks the glass pill toward its center. Icons shrink in sync
+// via the same shared value, read directly in TabBarButton.
+const MINIMIZE_SCALE = 0.86;
+const MINIMIZE_OPACITY = 0.55;
+
 function TabBarBackground() {
+  const animatedStyle = useAnimatedStyle(() => {
+    const scale = interpolate(tabBarMinimized.value, [0, 1], [1, MINIMIZE_SCALE]);
+    const opacity = interpolate(tabBarMinimized.value, [0, 1], [1, MINIMIZE_OPACITY]);
+    return { transform: [{ scale }], opacity };
+  });
+
   return (
-    <View style={StyleSheet.absoluteFill}>
+    <Animated.View style={[StyleSheet.absoluteFill, animatedStyle]}>
       <BlurView
         intensity={Platform.OS === 'android' ? 80 : 50}
         tint="dark"
@@ -51,7 +71,8 @@ function TabBarBackground() {
         style={styles.sheen}
         pointerEvents="none"
       />
-    </View>
+      <View style={styles.border} pointerEvents="none" />
+    </Animated.View>
   );
 }
 
@@ -120,8 +141,6 @@ const styles = StyleSheet.create({
     height: TAB_BAR_HEIGHT,
     borderRadius: TAB_BAR_HEIGHT / 2,
     backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: Glass.strokeStrong,
     overflow: 'hidden',
     elevation: 0,
   },
@@ -131,5 +150,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: TAB_BAR_HEIGHT * 0.5,
+  },
+  border: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: TAB_BAR_HEIGHT / 2,
+    borderWidth: 1,
+    borderColor: Glass.strokeStrong,
   },
 });

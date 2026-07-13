@@ -1,9 +1,11 @@
 import React from 'react'
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useSpots } from '../../hooks/useSpots'
 import { useForecast } from '../../hooks/useForecast'
+import { useTabBarScrollHandler } from '../../hooks/useTabBarScrollHandler'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useSkyTheme, resolveSkyDate } from '../../hooks/useSkyTheme'
 import { getSkyTheme } from '../../theme/skyTheme'
@@ -61,6 +63,7 @@ export default function WeekScreen() {
   const isPro = useSettingsStore(s => s.isPro)
   const tempUnit = useSettingsStore(s => s.tempUnit)
   const { data: forecast, isLoading, isError, isRefetching, refetch } = useForecast(activeSpot)
+  const tabBarScrollHandler = useTabBarScrollHandler()
 
   const todayKey = localDateKey(new Date())
   const tomorrowKey = nextDayKey(todayKey)
@@ -77,9 +80,11 @@ export default function WeekScreen() {
 
   return (
     <SkyBackground theme={skyTheme}>
-      <ScrollView
+      <Animated.ScrollView
         contentContainerStyle={{ paddingBottom: 32 + tabBarClearance }}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Colors.accent} />}
+        onScroll={tabBarScrollHandler}
+        scrollEventThrottle={16}
       >
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <Text style={[Type.secondary, { color: tint, opacity: 0.75 }]}>This week</Text>
@@ -150,7 +155,7 @@ export default function WeekScreen() {
             Free shows today and tomorrow — Pro unlocks the full week
           </Text>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </SkyBackground>
   )
 }
