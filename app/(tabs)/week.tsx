@@ -83,6 +83,9 @@ export default function WeekScreen() {
       >
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <Text style={[Type.secondary, { color: tint, opacity: 0.75 }]}>This week</Text>
+          {activeSpot && (
+            <Text style={[Type.title, { color: tint, fontSize: 18 }]}>{activeSpot.name}</Text>
+          )}
           <Text style={[Type.verdict, { color: tint }]}>When should you go?</Text>
           {best && (
             <Text style={[Type.secondary, { color: tint, opacity: 0.85, marginTop: 4 }]}>
