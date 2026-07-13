@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../../theme/colors';
 import { Glass } from '../../theme/tokens';
 import { TAB_BAR_HEIGHT, TAB_BAR_SIDE_MARGIN, TAB_BAR_BOTTOM_GAP } from '../../theme/tabBar';
+import { TabBarButton } from '../../features/tabs/TabBarButton';
 
 type TabName = 'Today' | 'Week' | 'Species' | 'Spots';
 
@@ -66,6 +67,7 @@ export default function TabLayout() {
       screenOptions={{
         tabBarStyle,
         tabBarBackground: () => <TabBarBackground />,
+        tabBarButton: (props) => <TabBarButton {...props} />,
         tabBarActiveTintColor: Colors.accent,
         tabBarInactiveTintColor: Colors.textTertiary,
         headerStyle: { backgroundColor: Colors.background },
