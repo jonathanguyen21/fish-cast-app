@@ -6,7 +6,7 @@ import { TabBarButton } from '../features/tabs/TabBarButton'
 describe('TabBarButton', () => {
   it('renders its children', () => {
     const { getByText } = render(
-      <TabBarButton onPress={jest.fn()}>
+      <TabBarButton focused={false} onPress={jest.fn()}>
         <Text>Today</Text>
       </TabBarButton>
     )
@@ -16,7 +16,7 @@ describe('TabBarButton', () => {
   it('fires onPress when tapped', () => {
     const onPress = jest.fn()
     const { getByText } = render(
-      <TabBarButton onPress={onPress}>
+      <TabBarButton focused={false} onPress={onPress}>
         <Text>Week</Text>
       </TabBarButton>
     )
@@ -24,9 +24,29 @@ describe('TabBarButton', () => {
     expect(onPress).toHaveBeenCalledTimes(1)
   })
 
+  it('fires onLongPress when long-pressed', () => {
+    const onLongPress = jest.fn()
+    const { getByText } = render(
+      <TabBarButton focused={false} onPress={jest.fn()} onLongPress={onLongPress}>
+        <Text>Spots</Text>
+      </TabBarButton>
+    )
+    fireEvent(getByText('Spots'), 'longPress')
+    expect(onLongPress).toHaveBeenCalledTimes(1)
+  })
+
+  it('exposes the focused state to accessibility as a selected tab', () => {
+    const { getByRole } = render(
+      <TabBarButton focused onPress={jest.fn()}>
+        <Text>Today</Text>
+      </TabBarButton>
+    )
+    expect(getByRole('tab', { selected: true })).toBeTruthy()
+  })
+
   it('does not throw on press-in / press-out (shimmer + scale animation)', () => {
     const { getByText } = render(
-      <TabBarButton onPress={jest.fn()}>
+      <TabBarButton focused={false} onPress={jest.fn()}>
         <Text>Species</Text>
       </TabBarButton>
     )
