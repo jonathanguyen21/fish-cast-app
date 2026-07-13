@@ -1,8 +1,9 @@
-import React from 'react'
-import { Pressable, StyleSheet } from 'react-native'
+import React, { useRef } from 'react'
+import { Pressable, StyleSheet, LayoutChangeEvent } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolate } from 'react-native-reanimated'
-import { Accent, Radii } from '../../theme/tokens'
+import { Radii } from '../../theme/tokens'
 import { tabBarMinimized } from '../../theme/tabBarVisibility'
+import type { CapsuleFrame } from './tabBarDrag'
 
 // Approximates SwiftUI's .glassEffect(.interactive()) — a brief scale-down
 // plus a light shimmer flash on press, since RN has no native glass-touch
@@ -12,22 +13,32 @@ const PRESS_SHIMMER_OPACITY = 0.3
 
 // Icons shrink and dim in sync with the bar's own minimize animation (see
 // theme/tabBarVisibility.ts) — kept slightly less aggressive than the pill's
-// own scale so the icons stay legible even while minimized.
-const MINIMIZE_ICON_SCALE = 0.9
-const MINIMIZE_ICON_OPACITY = 0.7
+// own scale so the icons stay legible even while minimized. Exported so the
+// bar's shared sliding capsule (app/(tabs)/_layout.tsx) minimizes in
+// lockstep with the icon it sits behind.
+export const MINIMIZE_ICON_SCALE = 0.9
+export const MINIMIZE_ICON_OPACITY = 0.7
 
 interface TabBarButtonProps {
   focused: boolean
   onPress: () => void
   onLongPress?: () => void
+  // Reports where the active-tab capsule should sit for THIS tab, in the
+  // items row's coordinate space — fires once both the item slot and its
+  // centered content have been laid out. The warm capsule itself is no
+  // longer drawn here; it's a single shared indicator in the tab bar that
+  // slides between these reported frames.
+  onCapsuleFrame?: (frame: CapsuleFrame) => void
   accessibilityLabel?: string
   testID?: string
   children: React.ReactNode
 }
 
-export function TabBarButton({ focused, onPress, onLongPress, accessibilityLabel, testID, children }: TabBarButtonProps) {
+export function TabBarButton({ focused, onPress, onLongPress, onCapsuleFrame, accessibilityLabel, testID, children }: TabBarButtonProps) {
   const scale = useSharedValue(1)
   const shimmer = useSharedValue(0)
+  const itemLayout = useRef<{ x: number; width: number } | null>(null)
+  const contentSize = useRef<{ width: number; height: number } | null>(null)
 
   const scaleStyle = useAnimatedStyle(() => {
     const minimizeScale = interpolate(tabBarMinimized.value, [0, 1], [1, MINIMIZE_ICON_SCALE])
@@ -40,6 +51,27 @@ export function TabBarButton({ focused, onPress, onLongPress, accessibilityLabel
   const shimmerStyle = useAnimatedStyle(() => ({
     opacity: shimmer.value,
   }))
+
+  function reportFrame() {
+    if (!itemLayout.current || !contentSize.current || !onCapsuleFrame) return
+    const { x, width } = itemLayout.current
+    const { width: contentWidth, height } = contentSize.current
+    // Content is centered inside the flex item, so the capsule frame hugs
+    // the icon+label rather than filling the whole slot.
+    onCapsuleFrame({ x: x + (width - contentWidth) / 2, width: contentWidth, height })
+  }
+
+  function handleItemLayout(e: LayoutChangeEvent) {
+    const { x, width } = e.nativeEvent.layout
+    itemLayout.current = { x, width }
+    reportFrame()
+  }
+
+  function handleContentLayout(e: LayoutChangeEvent) {
+    const { width, height } = e.nativeEvent.layout
+    contentSize.current = { width, height }
+    reportFrame()
+  }
 
   function handlePressIn() {
     scale.value = withTiming(PRESS_SCALE, { duration: 100 })
@@ -60,9 +92,10 @@ export function TabBarButton({ focused, onPress, onLongPress, accessibilityLabel
       onLongPress={onLongPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      onLayout={handleItemLayout}
       style={styles.item}
     >
-      <Animated.View style={[styles.capsule, focused && styles.capsuleActive, scaleStyle]}>
+      <Animated.View testID="tab-button-content" onLayout={handleContentLayout} style={[styles.capsule, scaleStyle]}>
         <Animated.View testID="tab-button-shimmer" pointerEvents="none" style={[styles.shimmer, shimmerStyle]} />
         {children}
       </Animated.View>
@@ -81,7 +114,6 @@ const styles = StyleSheet.create({
     borderRadius: Radii.pill,
     overflow: 'hidden',
   },
-  capsuleActive: { backgroundColor: Accent.warm },
   shimmer: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: Radii.pill,
