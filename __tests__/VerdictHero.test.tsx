@@ -1,6 +1,7 @@
 import React from 'react'
 import { render, fireEvent } from '@testing-library/react-native'
 import { VerdictHero } from '../features/score/VerdictHero'
+import { scoreColor } from '../features/score/scoringEngine'
 import { getSkyTheme } from '../theme/skyTheme'
 import type { ScoreBreakdown, SkyData } from '../types/conditions'
 
@@ -47,12 +48,24 @@ describe('VerdictHero', () => {
     expect(queryByTestId('hero-breakdown')).toBeNull()
   })
 
-  it('shows the score out of 100', () => {
-    const { getByText } = render(
+  it('labels the score "Bite score" without a "/100" suffix', () => {
+    const { getByText, queryByText } = render(
       <VerdictHero score={84} breakdown={GOOD} spotType="saltwater" skyTheme={SKY} sky={OVERCAST}
         summary="s" betterDay={null} />
     )
-    expect(getByText('/100')).toBeTruthy()
+    expect(getByText('Bite score')).toBeTruthy()
+    expect(queryByText('/100')).toBeNull()
+  })
+
+  it('colors the settled score by its value', async () => {
+    const { findByText } = render(
+      <VerdictHero score={84} breakdown={GOOD} spotType="saltwater" skyTheme={SKY} sky={OVERCAST}
+        summary="s" betterDay={null} />
+    )
+    const scoreEl = await findByText('84')
+    const flatStyle = ([] as any[]).concat(scoreEl.props.style).flat()
+    const colorStyle = flatStyle.find(s => s && s.color)
+    expect(colorStyle.color).toBe(scoreColor(84))
   })
 
   it('shows the better-day handoff when today is poor', () => {
