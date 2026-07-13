@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import {
   ScrollView, View, Text, StyleSheet, RefreshControl,
-  TouchableOpacity,
+  TouchableOpacity, Modal,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -65,7 +65,8 @@ export default function ForecastScreen() {
   const insets = useSafeAreaInsets()
   const tabBarClearance = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_GAP + insets.bottom
   const netInfo = useNetInfo()
-  const { activeSpot } = useSpots()
+  const { spots, activeSpot, activeSpotId, setActiveSpot } = useSpots()
+  const [spotPickerOpen, setSpotPickerOpen] = useState(false)
   const params = useLocalSearchParams<{ date?: string }>()
   const selectedDate = typeof params.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(params.date)
     ? params.date
@@ -188,9 +189,17 @@ export default function ForecastScreen() {
             <Text style={[Type.secondary, { color: skyTheme.textTint, opacity: 0.75 }]}>
               {formatDateChip(selectedDate)}
             </Text>
-            <Text style={[Type.title, { color: skyTheme.textTint, fontSize: 18 }]}>
-              {activeSpot?.name ?? 'FishCast'}
-            </Text>
+            <TouchableOpacity
+              testID="spot-name-button"
+              accessibilityRole="button"
+              style={styles.spotNameRow}
+              onPress={() => setSpotPickerOpen(true)}
+            >
+              <Text style={[Type.title, { color: skyTheme.textTint, fontSize: 18 }]}>
+                {activeSpot?.name ?? 'FishCast'}
+              </Text>
+              <Ionicons name="chevron-down" size={16} color={skyTheme.textTint} style={{ opacity: 0.7 }} />
+            </TouchableOpacity>
             {selectedDate !== todayKey && (
               <TouchableOpacity
                 testID="back-to-today"
@@ -296,6 +305,44 @@ export default function ForecastScreen() {
         </View>
       )}
 
+      <Modal visible={spotPickerOpen} animationType="fade" transparent onRequestClose={() => setSpotPickerOpen(false)}>
+        <TouchableOpacity
+          style={styles.spotModalOverlay}
+          activeOpacity={1}
+          onPress={() => setSpotPickerOpen(false)}
+        >
+          <View style={[styles.spotCard, { backgroundColor: skyTheme.tintedDark.card }]} onStartShouldSetResponder={() => true}>
+            <Text style={[Type.title, { color: skyTheme.textTint, fontSize: 16 }]}>Switch spot</Text>
+            {spots.map(spot => (
+              <TouchableOpacity
+                key={spot.id}
+                testID={`spot-option-${spot.id}`}
+                style={styles.spotOption}
+                onPress={() => {
+                  setActiveSpot(spot.id)
+                  setSpotPickerOpen(false)
+                }}
+              >
+                <Text style={[Type.body, { color: skyTheme.textTint }]}>{spot.name}</Text>
+                {spot.id === activeSpotId && (
+                  <Ionicons name="checkmark" size={18} color={skyTheme.accent} />
+                )}
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              testID="spot-option-add"
+              style={styles.spotOption}
+              onPress={() => {
+                setSpotPickerOpen(false)
+                router.push('/spot/new')
+              }}
+            >
+              <Text style={[Type.body, { color: skyTheme.accent }]}>+ Add a spot</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
     </SkyBackground>
   )
 }
@@ -330,6 +377,19 @@ const styles = StyleSheet.create({
   emptyCtaText: { fontSize: 15, fontWeight: '700', color: Colors.background },
   emptyCtaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: 20, paddingBottom: 4 },
+  spotNameRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  spotModalOverlay: {
+    flex: 1, backgroundColor: '#00000080',
+    alignItems: 'center', justifyContent: 'center', padding: Spacing.lg,
+  },
+  spotCard: {
+    borderRadius: Radii.card,
+    padding: Spacing.lg, width: '100%', gap: 4,
+  },
+  spotOption: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: 12,
+  },
   backToTodayPill: {
     alignSelf: 'flex-start', marginTop: 6,
     backgroundColor: Glass.fill, borderWidth: 1, borderColor: Glass.stroke,

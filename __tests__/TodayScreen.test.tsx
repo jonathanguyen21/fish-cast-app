@@ -15,7 +15,12 @@ jest.mock('expo-router', () => ({
 jest.mock('@react-native-community/netinfo', () => ({ useNetInfo: () => ({ isConnected: true }) }))
 jest.mock('@react-navigation/bottom-tabs', () => ({ useBottomTabBarHeight: () => 49 }))
 jest.mock('../hooks/useSpots', () => ({
-  useSpots: () => ({ activeSpot: { id: 's1', name: 'Pier', lat: 37.6, lng: -122.5, type: 'saltwater', stationId: '9414290', region: 'west_coast' } }),
+  useSpots: () => ({
+    spots: [{ id: 's1', name: 'Pier', lat: 37.6, lng: -122.5, type: 'saltwater', stationId: '9414290', region: 'west_coast' }],
+    activeSpot: { id: 's1', name: 'Pier', lat: 37.6, lng: -122.5, type: 'saltwater', stationId: '9414290', region: 'west_coast' },
+    activeSpotId: 's1',
+    setActiveSpot: jest.fn(),
+  }),
 }))
 const mockConditions = require('./helpers/mockConditionsData').default
 // Wind speed is overridden to a fractional value (9.33) here, rather than in the
