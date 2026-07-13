@@ -12,7 +12,7 @@ import { useSettingsStore } from '../../store/settingsStore'
 import { detectRegion } from '../../data/species'
 import { POPULAR_SPOTS } from '../../data/defaultSpots'
 import { resolveNearestStation, getNearbyStations, NearbyStation } from '../../services/noaaStationService'
-import { resolveCityName } from '../../services/geocodingService'
+import { resolveLocationName } from '../../services/geocodingService'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import type { Spot, SpotType } from '../../types/spot'
@@ -98,9 +98,9 @@ export default function AddSpotScreen() {
 
     const placeholder = `Spot at ${latitude.toFixed(2)}, ${longitude.toFixed(2)}`
     updateName(placeholder)
-    resolveCityName(latitude, longitude).then(city => {
-      if (city && nameRef.current === placeholder) {
-        updateName(city)
+    resolveLocationName(latitude, longitude).then(location => {
+      if (location && nameRef.current === placeholder) {
+        updateName(location)
       }
     })
   }

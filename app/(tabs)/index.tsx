@@ -59,6 +59,12 @@ function formatDateChip(dateStr: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
+function nextDayKey(dateKey: string): string {
+  const d = new Date(dateKey + 'T12:00:00')
+  d.setDate(d.getDate() + 1)
+  return localDateKey(d)
+}
+
 
 export default function ForecastScreen() {
   const router = useRouter()
@@ -77,6 +83,7 @@ export default function ForecastScreen() {
   const alertThreshold = useSettingsStore(s => s.alertThreshold)
   const speedUnit = useSettingsStore(s => s.speedUnit)
   const tempUnit = useSettingsStore(s => s.tempUnit)
+  const isPro = useSettingsStore(s => s.isPro)
 
   const skyTheme = useSkyTheme(
     activeSpot ? { lat: activeSpot.lat, lng: activeSpot.lng } : null,
@@ -85,6 +92,7 @@ export default function ForecastScreen() {
     conditions?.bestWindow.start,
   )
   const todayKey = localDateKey(new Date())
+  const tomorrowKey = nextDayKey(todayKey)
   const betterDay = conditions && selectedDate === todayKey
     ? pickBetterDay(forecast, conditions.fishingScore, selectedDate)
     : null
@@ -220,6 +228,39 @@ export default function ForecastScreen() {
             <Ionicons name="settings-outline" size={20} color={skyTheme.textTint} />
           </TouchableOpacity>
         </View>
+
+        {forecast && forecast.length > 0 && (
+          <View style={styles.daySelectorRow}>
+            {forecast.map(day => {
+              const isSelected = day.date === selectedDate
+              const locked = !isPro && day.date > tomorrowKey
+              return (
+                <TouchableOpacity
+                  key={day.date}
+                  testID={`day-pill-${day.date}`}
+                  style={[
+                    styles.dayPill,
+                    isSelected && { borderColor: skyTheme.accent, backgroundColor: skyTheme.accent + '26' },
+                  ]}
+                  onPress={() => {
+                    if (locked) {
+                      router.push('/settings')
+                      return
+                    }
+                    router.setParams({ date: day.date === todayKey ? undefined : day.date })
+                  }}
+                >
+                  <Text style={[Type.chip, { color: isSelected ? skyTheme.accent : skyTheme.textTint, opacity: isSelected ? 1 : 0.8 }]}>
+                    {day.dayLabel}
+                  </Text>
+                  {locked && (
+                    <Ionicons name="lock-closed" size={9} color={skyTheme.textTint} style={{ opacity: 0.5, marginTop: 2 }} />
+                  )}
+                </TouchableOpacity>
+              )
+            })}
+          </View>
+        )}
 
         {conditions && (
           <>
@@ -396,6 +437,11 @@ const styles = StyleSheet.create({
     borderRadius: Radii.pill, paddingHorizontal: 10, paddingVertical: 4,
   },
   gear: { width: 34, height: 34, borderRadius: 17, backgroundColor: Glass.fill, borderWidth: 1, borderColor: Glass.stroke, alignItems: 'center', justifyContent: 'center' },
+  daySelectorRow: { flexDirection: 'row', gap: 6, paddingHorizontal: 16, marginTop: 10 },
+  dayPill: {
+    flex: 1, alignItems: 'center', paddingVertical: 8,
+    backgroundColor: Glass.fill, borderWidth: 1, borderColor: Glass.stroke, borderRadius: Radii.chip,
+  },
   chipsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginTop: 12 },
   conditionChip: { flex: 1, backgroundColor: Glass.fill, borderWidth: 1, borderColor: Glass.stroke, borderRadius: Radii.chip, padding: 10, alignItems: 'center' },
   chipSub: { fontSize: 11, opacity: 0.7, marginTop: 2 },
