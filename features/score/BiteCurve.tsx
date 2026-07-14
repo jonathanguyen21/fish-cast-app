@@ -22,6 +22,28 @@ function FishRating({ score, color, size = 12, testID }: { score: number; color:
   )
 }
 
+// Vertical offsets (points) for up to 4 fish in the under-curve clusters — a
+// small school swimming at slightly different depths, matching
+// tides4fishing's staggered style, rather than a mechanical flat row.
+const CLUSTER_STAGGER_Y = [0, -3, 2, -4]
+
+function StaggeredFishCluster({ score, color, size = 10 }: { score: number; color: string; size?: number }) {
+  const count = fishRating(score)
+  return (
+    <View style={styles.staggeredFishRow} accessibilityLabel={`${count} fish`}>
+      {Array.from({ length: count }).map((_, i) => (
+        <Ionicons
+          key={i}
+          name="fish"
+          size={size}
+          color={color}
+          style={{ marginTop: CLUSTER_STAGGER_Y[i % CLUSTER_STAGGER_Y.length] }}
+        />
+      ))}
+    </View>
+  )
+}
+
 const AnimatedPath = Animated.createAnimatedComponent(Path)
 
 interface Props {
@@ -224,7 +246,7 @@ export function BiteCurve({ hourlyScores, bestWindow, currentHour, skyTheme, tit
             pointerEvents="none"
             style={[styles.fishClusterAnchor, { left: `${(xFor((w.startHour + w.endHour) / 2, n) / W) * 100}%` }]}
           >
-            <FishRating score={w.avgScore} color={skyTheme.accent} size={10} />
+            <StaggeredFishCluster score={w.avgScore} color={skyTheme.accent} />
           </View>
         ))}
       </View>
@@ -285,6 +307,7 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   fishRow: { flexDirection: 'row', gap: 1 },
+  staggeredFishRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   svg: { width: '100%', aspectRatio: W / H },
   fishClusterAnchor: {
     position: 'absolute', bottom: 1, width: 40, marginLeft: -20, alignItems: 'center',
