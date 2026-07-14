@@ -34,6 +34,19 @@ export function computeDayNote(day: DayForecast, tempUnit: TempUnit): string {
   return day.scoreLabel
 }
 
+// "9:00 PM" -> "9pm", "5:34 AM" -> "5:34am" (best-window times often land
+// on solunar events, not the top of the hour). Labels the mini-sky swatch
+// with the exact moment its gradient represents — that gradient is the sky
+// at this day's best window, not a daily-average forecast, which reads as
+// unexplained "sometimes night, sometimes day" without a time attached.
+export function compactTime(t: string): string {
+  const m = t.match(/(\d+):(\d+)\s*(AM|PM)/i)
+  if (!m) return t
+  const [, h, min, period] = m
+  const time = min === '00' ? h : `${h}:${min}`
+  return `${time}${period.toLowerCase()}`
+}
+
 const SKY_WORD: Record<string, string> = {
   'clear': 'clear',
   'partly-cloudy': 'partly cloudy',
@@ -137,6 +150,7 @@ export default function WeekScreen() {
               note={note}
               score={day.peakScore}
               miniSky={miniSky}
+              peakTimeLabel={compactTime(day.peakWindow.start)}
               weatherIcon={weatherIcon}
               isBest={!locked && best != null && day.date === best.date}
               locked={locked}

@@ -2,7 +2,7 @@ import React from 'react'
 import { Pressable, View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Glass, Radii, Type, Accent } from '../../theme/tokens'
+import { Glass, Radii, Type, Accent, Fonts } from '../../theme/tokens'
 import { scoreColor } from '../score/scoringEngine'
 import type { SkyTheme } from '../../theme/skyTheme'
 import type { WeatherIconName } from '../../theme/weatherIcon'
@@ -18,11 +18,16 @@ interface Props {
   locked: boolean
   textTint: string
   weatherIcon: WeatherIconName
+  // Compact clock time (e.g. "9pm") for the moment miniSky's gradient
+  // represents — that gradient is this day's best-window sky, not a daily
+  // average, so it needs a time stamped on it to read as intentional rather
+  // than an unexplained "sometimes night, sometimes day".
+  peakTimeLabel: string
   onPress: () => void
 }
 
 export function WeekDayCard({
-  dayLabel, skyWord, windowLabel, note, score, miniSky, isBest, locked, textTint, weatherIcon, onPress,
+  dayLabel, skyWord, windowLabel, note, score, miniSky, isBest, locked, textTint, weatherIcon, peakTimeLabel, onPress,
 }: Props) {
   return (
     <Pressable
@@ -53,10 +58,13 @@ export function WeekDayCard({
           <Ionicons
             testID="week-day-weather-icon"
             name={weatherIcon}
-            size={20}
+            size={16}
             color={miniSky.textTint}
             style={styles.miniIcon}
           />
+          <Text testID="week-day-minisky-time" style={[styles.miniTime, { color: miniSky.textTint }]}>
+            {peakTimeLabel}
+          </Text>
         </View>
       )}
       <View style={styles.body}>
@@ -99,7 +107,8 @@ const styles = StyleSheet.create({
   mini: { width: 44, height: 44, borderRadius: 12, borderWidth: 1, borderColor: Glass.stroke },
   miniLocked: { backgroundColor: 'rgba(255,255,255,0.08)' },
   miniWrap: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  miniIcon: { position: 'absolute' },
+  miniIcon: { position: 'absolute', top: 6 },
+  miniTime: { position: 'absolute', bottom: 3, fontSize: 8, fontFamily: Fonts.bold, opacity: 0.9 },
   body: { flex: 1 },
   bestTag: {
     position: 'absolute',
