@@ -11,12 +11,12 @@ import type { CapsuleFrame } from './tabBarDrag'
 const PRESS_SCALE = 0.88
 const PRESS_SHIMMER_OPACITY = 0.3
 
-// Icons shrink and dim in sync with the bar's own minimize animation (see
-// theme/tabBarVisibility.ts) — kept slightly less aggressive than the pill's
-// own scale so the icons stay legible even while minimized. Exported so the
-// bar's shared sliding capsule (app/(tabs)/_layout.tsx) minimizes in
+// Icons dim in sync with the bar's own minimize animation (see
+// theme/tabBarVisibility.ts) — deliberately opacity-only, not also scaled:
+// see the file-level comment in app/(tabs)/_layout.tsx for why a shrinking
+// minimize turned out to cause real device rendering artifacts. Exported so
+// the bar's shared sliding capsule (app/(tabs)/_layout.tsx) dims in
 // lockstep with the icon it sits behind.
-export const MINIMIZE_ICON_SCALE = 0.9
 export const MINIMIZE_ICON_OPACITY = 0.7
 
 interface TabBarButtonProps {
@@ -41,10 +41,9 @@ export function TabBarButton({ focused, onPress, onLongPress, onCapsuleFrame, ac
   const contentSize = useRef<{ width: number; height: number } | null>(null)
 
   const scaleStyle = useAnimatedStyle(() => {
-    const minimizeScale = interpolate(tabBarMinimized.value, [0, 1], [1, MINIMIZE_ICON_SCALE])
     const minimizeOpacity = interpolate(tabBarMinimized.value, [0, 1], [1, MINIMIZE_ICON_OPACITY])
     return {
-      transform: [{ scale: scale.value * minimizeScale }],
+      transform: [{ scale: scale.value }],
       opacity: minimizeOpacity,
     }
   })

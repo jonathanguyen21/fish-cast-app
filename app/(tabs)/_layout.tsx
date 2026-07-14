@@ -11,7 +11,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Colors } from '../../theme/colors';
 import { Accent, Glass, Radii, Type } from '../../theme/tokens';
 import { TAB_BAR_HEIGHT, TAB_BAR_SIDE_MARGIN, TAB_BAR_BOTTOM_GAP } from '../../theme/tabBar';
-import { TabBarButton, MINIMIZE_ICON_SCALE, MINIMIZE_ICON_OPACITY } from '../../features/tabs/TabBarButton';
+import { TabBarButton, MINIMIZE_ICON_OPACITY } from '../../features/tabs/TabBarButton';
 import { nearestTabIndex, capsuleLeftForPointer } from '../../features/tabs/tabBarDrag';
 import type { CapsuleFrame } from '../../features/tabs/tabBarDrag';
 import { tabBarMinimized } from '../../theme/tabBarVisibility';
@@ -49,30 +49,18 @@ const ICONS: Record<string, { focused: keyof typeof Ionicons.glyphMap; default: 
 // height + the margin below it (TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_GAP +
 // insets.bottom) to keep from being hidden under it.
 //
-// The bar "minimizes" (shrinks + dims) on scroll-down and restores on
-// scroll-up (theme/tabBarVisibility.ts + hooks/useTabBarScrollHandler.ts),
-// approximating SwiftUI's .tabBarMinimizeBehavior(.onScrollDown). The blur,
-// scrim, sheen, and border all live on one animated child inside the outer
-// (unanimated, full-size) bar container — scaling that child down doesn't
-// change the bar's real hit-region or layout, it just visually shrinks the
-// glass pill toward its center. Because that shrink is a transform (each
-// layer's own Yoga-layout box stays full-size — only the composited render
-// scales), every layer in that child needs its OWN borderRadius (see
-// TabBarBackground) rather than leaning on the outer container's
-// overflow:hidden clip: that clip is sized to the bar's full, unscaled
-// bounds and stops reaching a shrunk child's corners once it's smaller than
-// the outer box, letting that child's bare rectangular edges show through —
-// this was the actual cause of the reported "rectangle shadow" on scroll,
-// confirmed by DOM inspection (getBoundingClientRect showed the scrim/blur
-// shrinking correctly while their own borderRadius stayed 0). Items shrink
-// in sync via the same shared value, read directly in TabBarButton.
-const MINIMIZE_SCALE = 0.86;
+// The bar "minimizes" (dims) on scroll-down and restores on scroll-up
+// (theme/tabBarVisibility.ts + hooks/useTabBarScrollHandler.ts),
+// approximating SwiftUI's .tabBarMinimizeBehavior(.onScrollDown). This is
+// deliberately opacity-only, not scale+opacity: an earlier version also
+// shrank the glass pill, which — on a real device, not just the web preview
+// used to verify it at the time — produced a visible rectangular "ghost"
+// edge where the shrunk content no longer reached its clipping container's
+// corners. A follow-up "scroll edge veil" fix for that edge itself became a
+// second visible artifact (a sharp-cornered rectangle floating above the
+// rounded pill). Opacity has no geometry to get wrong, so it removes the
+// entire bug class rather than patching each new shape it produced.
 const MINIMIZE_OPACITY = 0.55;
-
-// Height of the scroll-edge veil above the bar (see the wrapper's render for
-// why it's a flow-layout child of the same wrapper as the bar, not an
-// absolutely-positioned sibling).
-const VEIL_HEIGHT = 28;
 
 // Nothing in this file sets a shadow/elevation (verified by grep across
 // theme/tokens.ts, theme/colors.ts, and this file), so this is pure
@@ -88,9 +76,8 @@ const NO_SHADOW = {
 
 function TabBarBackground() {
   const animatedStyle = useAnimatedStyle(() => {
-    const scale = interpolate(tabBarMinimized.value, [0, 1], [1, MINIMIZE_SCALE]);
     const opacity = interpolate(tabBarMinimized.value, [0, 1], [1, MINIMIZE_OPACITY]);
-    return { transform: [{ scale }], opacity };
+    return { opacity };
   });
 
   return (
@@ -290,74 +277,52 @@ function GoldenHourTabBar({ state, descriptors, navigation }: BottomTabBarProps)
 
   const capsuleHeight = frames.find(Boolean)?.height ?? 0;
   const capsuleStyle = useAnimatedStyle(() => {
-    const minimizeScale = interpolate(tabBarMinimized.value, [0, 1], [1, MINIMIZE_ICON_SCALE]);
     const minimizeOpacity = interpolate(tabBarMinimized.value, [0, 1], [1, MINIMIZE_ICON_OPACITY]);
     return {
       width: capsuleW.value,
       opacity: capsuleShown.value * minimizeOpacity,
-      transform: [{ translateX: capsuleX.value }, { scale: minimizeScale }],
+      transform: [{ translateX: capsuleX.value }],
     };
   });
 
   return (
-    <View
-      style={[
-        styles.wrap,
-        { bottom: TAB_BAR_BOTTOM_GAP + insets.bottom, height: TAB_BAR_HEIGHT + VEIL_HEIGHT },
-      ]}
-      pointerEvents="box-none"
-    >
-      {/* Scroll-edge veil: per Apple's Liquid Glass guidance, a floating
-          control should obscure content scrolling near it, not just content
-          strictly behind its own bounds. Without this, a nearby card's
-          border (rounded corner + hairline stroke, e.g. TideChart) can end
-          up just outside the bar's own blur — unobscured, since the blur
-          only covers the bar's exact rect — and read as a second "ghost"
-          outline around the bar. This gradient fades any such edge out
-          before it reaches the bar's boundary. Rendered as a child of the
-          SAME wrapper the bar sits in (not a separate sibling) so it shares
-          the bar's own stacking position above scrolled content, rather
-          than the wrapper's own DOM placement determining a possibly-lower
-          paint order relative to a specific screen's content. */}
-      <LinearGradient pointerEvents="none" colors={['rgba(8,12,24,0)', 'rgba(8,12,24,0.92)']} style={styles.veil} />
-      <View style={styles.tabBar}>
-        <TabBarBackground />
-        <View ref={rowRef} onLayout={handleRowLayout} style={styles.itemsRow} {...panResponder.panHandlers}>
-          <Animated.View
-            testID="tab-bar-capsule"
-            pointerEvents="none"
-            style={[
-              styles.capsule,
-              { height: capsuleHeight, top: (TAB_BAR_HEIGHT - capsuleHeight) / 2 },
-              capsuleStyle,
-            ]}
-          />
-          {visible.map(({ route, index }, visibleIdx) => {
-            const icons = ICONS[route.name];
-            const { options } = descriptors[route.key];
-            const focused = state.index === index;
-            const label = options.title ?? route.name;
-            const color = focused ? ACTIVE_INK : INACTIVE_COLOR;
+    <View style={[styles.tabBar, { bottom: TAB_BAR_BOTTOM_GAP + insets.bottom }]}>
+      <TabBarBackground />
+      <View ref={rowRef} onLayout={handleRowLayout} style={styles.itemsRow} {...panResponder.panHandlers}>
+        <Animated.View
+          testID="tab-bar-capsule"
+          pointerEvents="none"
+          style={[
+            styles.capsule,
+            { height: capsuleHeight, top: (TAB_BAR_HEIGHT - capsuleHeight) / 2 },
+            capsuleStyle,
+          ]}
+        />
+        {visible.map(({ route, index }, visibleIdx) => {
+          const icons = ICONS[route.name];
+          const { options } = descriptors[route.key];
+          const focused = state.index === index;
+          const label = options.title ?? route.name;
+          const color = focused ? ACTIVE_INK : INACTIVE_COLOR;
 
-            const onLongPress = () => {
-              navigation.emit({ type: 'tabLongPress', target: route.key });
-            };
+          const onLongPress = () => {
+            navigation.emit({ type: 'tabLongPress', target: route.key });
+          };
 
-            return (
-              <TabBarButton
-                key={route.key}
-                focused={focused}
-                onPress={() => selectTab(visibleIdx)}
-                onLongPress={onLongPress}
-                onCapsuleFrame={(frame) => handleCapsuleFrame(visibleIdx, frame)}
-                accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
-              >
-                <Ionicons name={focused ? icons.focused : icons.default} size={22} color={color} />
-                <Text style={[Type.chip, styles.label, { color }]}>{label}</Text>
-              </TabBarButton>
-            );
-          })}
-        </View>
+          return (
+            <TabBarButton
+              key={route.key}
+              focused={focused}
+              onPress={() => selectTab(visibleIdx)}
+              onLongPress={onLongPress}
+              onCapsuleFrame={(frame) => handleCapsuleFrame(visibleIdx, frame)}
+              accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
+            >
+              <Ionicons name={focused ? icons.focused : icons.default} size={22} color={color} />
+              <Text style={[Type.chip, styles.label, { color }]}>{label}</Text>
+            </TabBarButton>
+          );
+        })}
       </View>
     </View>
   );
@@ -383,20 +348,10 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  // Wraps the veil and the bar as flow-layout children (not two
-  // independently absolute-positioned siblings) so they always share the
-  // same stacking position above scrolled content — see the render function
-  // for the stacking bug this avoids.
-  wrap: {
+  tabBar: {
     position: 'absolute',
     left: TAB_BAR_SIDE_MARGIN,
     right: TAB_BAR_SIDE_MARGIN,
-    flexDirection: 'column',
-  },
-  veil: {
-    height: VEIL_HEIGHT,
-  },
-  tabBar: {
     height: TAB_BAR_HEIGHT,
     borderRadius: TAB_BAR_HEIGHT / 2,
     // Explicit, not implicit: a rounded, overflow:'hidden' container with no
@@ -431,10 +386,6 @@ const styles = StyleSheet.create({
   scrim: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(8,12,24,0.35)',
-    // Rounds itself instead of depending solely on the outer bar's
-    // overflow:hidden clip — see the comment above where this View is
-    // rendered for why that ancestor-only clip isn't enough once the
-    // minimize transform shrinks this view below the outer box's size.
     borderRadius: TAB_BAR_HEIGHT / 2,
   },
   sheen: {
