@@ -16,6 +16,7 @@ const BASE = {
   locked: false,
   textTint: '#FFF8F0',
   weatherIcon: 'moon' as const,
+  peakTimeLabel: '5pm',
 }
 
 describe('WeekDayCard', () => {
@@ -74,5 +75,15 @@ describe('WeekDayCard', () => {
   it('does not render a weather icon when locked', () => {
     const { queryByTestId } = render(<WeekDayCard {...BASE} locked onPress={() => {}} />)
     expect(queryByTestId('week-day-weather-icon')).toBeNull()
+  })
+
+  it('labels the mini-sky swatch with the peak time it represents', () => {
+    const { getByTestId } = render(<WeekDayCard {...BASE} onPress={() => {}} />)
+    expect(getByTestId('week-day-minisky-time').props.children).toBe('5pm')
+  })
+
+  it('does not render the peak-time label when locked', () => {
+    const { queryByTestId } = render(<WeekDayCard {...BASE} locked onPress={() => {}} />)
+    expect(queryByTestId('week-day-minisky-time')).toBeNull()
   })
 })
