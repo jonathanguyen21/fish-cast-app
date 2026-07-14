@@ -11,12 +11,12 @@ import type { SkyTheme } from '../../theme/skyTheme'
 
 const MAX_RANKED_WINDOWS = 3
 
-function FishRating({ score, color }: { score: number; color: string }) {
+function FishRating({ score, color, size = 12, testID }: { score: number; color: string; size?: number; testID?: string }) {
   const count = fishRating(score)
   return (
-    <View style={styles.fishRow} accessibilityLabel={`${count} fish`}>
+    <View testID={testID} style={styles.fishRow} accessibilityLabel={`${count} fish`}>
       {Array.from({ length: count }).map((_, i) => (
-        <Ionicons key={i} name="fish" size={12} color={color} />
+        <Ionicons key={i} name="fish" size={size} color={color} />
       ))}
     </View>
   )
@@ -168,7 +168,7 @@ export function BiteCurve({ hourlyScores, bestWindow, currentHour, skyTheme, tit
               : bestWindow.passed ? `Peak was ${bestWindow.start}–${bestWindow.end}` : `Best ${bestWindow.start}–${bestWindow.end}`}
           </Text>
           {!cursor && !bestWindow.passed && rankedWindows[0] && (
-            <FishRating score={rankedWindows[0].avgScore} color={skyTheme.accent} />
+            <FishRating testID="bite-curve-header-fish" score={rankedWindows[0].avgScore} color={skyTheme.accent} />
           )}
         </View>
       </View>
@@ -213,6 +213,20 @@ export function BiteCurve({ hourlyScores, bestWindow, currentHour, skyTheme, tit
             </>
           )}
         </Svg>
+        {/* Fish clusters under the curve at each ranked good-time window,
+            tides4fishing-style — a count matching that window's fish rating,
+            centered under its midpoint hour. Purely decorative (pointerEvents
+            none) so dragging still only ever hits the touch area beneath. */}
+        {rankedWindows.map((w, i) => (
+          <View
+            key={i}
+            testID={`bite-curve-fish-cluster-${i}`}
+            pointerEvents="none"
+            style={[styles.fishClusterAnchor, { left: `${(xFor((w.startHour + w.endHour) / 2, n) / W) * 100}%` }]}
+          >
+            <FishRating score={w.avgScore} color={skyTheme.accent} size={10} />
+          </View>
+        ))}
       </View>
       <View style={styles.axisRow}>
         <Text style={[styles.axis, { color: skyTheme.textTint }]}>12A</Text>
@@ -272,6 +286,9 @@ const styles = StyleSheet.create({
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   fishRow: { flexDirection: 'row', gap: 1 },
   svg: { width: '100%', aspectRatio: W / H },
+  fishClusterAnchor: {
+    position: 'absolute', bottom: 1, width: 40, marginLeft: -20, alignItems: 'center',
+  },
   axisRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
   axis: { fontSize: 10, opacity: 0.55 },
   expandToggle: {
