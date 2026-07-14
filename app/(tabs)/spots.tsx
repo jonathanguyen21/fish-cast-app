@@ -13,7 +13,7 @@ import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { scoreColor } from '../../features/score/scoringEngine'
 import { useSkyTheme } from '../../hooks/useSkyTheme'
-import { Fonts, Radii, Accent, Type } from '../../theme/tokens'
+import { Fonts, Radii, Accent, Glass, Type } from '../../theme/tokens'
 import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_GAP } from '../../theme/tabBar'
 import type { SkyTheme } from '../../theme/skyTheme'
 import type { Spot } from '../../types/spot'
@@ -144,6 +144,15 @@ export default function SpotsScreen() {
       <TouchableOpacity style={[styles.fab, { backgroundColor: Accent.warmDeep, bottom: 28 + tabBarClearance }]} onPress={() => router.push('/spot/new')}>
         <Ionicons name="add" size={28} color="#3A2A16" />
       </TouchableOpacity>
+      {spots.length > 0 && (
+        <TouchableOpacity
+          testID="spots-map-fab"
+          style={[styles.fab, styles.mapFab, { backgroundColor: theme.tintedDark.card, bottom: 28 + tabBarClearance }]}
+          onPress={() => router.push('/spot/map')}
+        >
+          <Ionicons name="map" size={22} color={theme.accent} />
+        </TouchableOpacity>
+      )}
 
       <Modal visible={!!editingSpot} animationType="fade" transparent onRequestClose={() => setEditingSpot(null)}>
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -220,6 +229,14 @@ const styles = StyleSheet.create({
     width: 56, height: 56, borderRadius: 28,
     alignItems: 'center', justifyContent: 'center', elevation: 4,
     shadowColor: Accent.warmDeep, shadowOpacity: 0.4, shadowRadius: 8, shadowOffset: { width: 0, height: 3 },
+  },
+  // Secondary action (view all spots on a map) mirrors the primary "Add"
+  // FAB on the opposite side of the screen — outlined rather than filled so
+  // it doesn't compete with Add as the primary action.
+  mapFab: {
+    left: Spacing.screenPad, right: undefined,
+    borderWidth: 1, borderColor: Glass.stroke,
+    elevation: 2, shadowOpacity: 0.15,
   },
   editBtn: { padding: 4, marginLeft: 4 },
   modalOverlay: {
