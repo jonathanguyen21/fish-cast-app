@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, fireEvent } from '@testing-library/react-native'
+import { render, fireEvent, within } from '@testing-library/react-native'
 import { BiteCurve } from '../features/score/BiteCurve'
 import { getSkyTheme } from '../theme/skyTheme'
 import type { HourlyScore } from '../types/conditions'
@@ -130,22 +130,22 @@ describe('BiteCurve', () => {
     ;[19, 20, 21].forEach(h => (RANKED_HOURS[h].score = 60))
 
     it('shows a fish rating for the best window when the window has not passed', () => {
-      const { getByLabelText } = render(
+      const { getByTestId } = render(
         <BiteCurve hourlyScores={RANKED_HOURS} bestWindow={{ start: '8:00 AM', end: '10:00 AM', score: 90 }} currentHour={12} skyTheme={SKY} />
       )
-      expect(getByLabelText('4 fish')).toBeTruthy()
+      expect(within(getByTestId('bite-curve-header-fish')).getByLabelText('4 fish')).toBeTruthy()
     })
 
     it('hides the fish rating and expand toggle once the window has passed', () => {
-      const { queryByLabelText, queryByTestId } = render(
+      const { queryByTestId } = render(
         <BiteCurve hourlyScores={RANKED_HOURS} bestWindow={{ start: '8:00 AM', end: '10:00 AM', score: 90, passed: true }} currentHour={null} skyTheme={SKY} />
       )
-      expect(queryByLabelText('4 fish')).toBeNull()
+      expect(queryByTestId('bite-curve-header-fish')).toBeNull()
       expect(queryByTestId('bite-curve-expand-toggle')).toBeNull()
     })
 
     it('reveals a ranked list of other good times on tap, with per-window fish ratings', () => {
-      const { getByTestId, queryByTestId, getByLabelText } = render(
+      const { getByTestId, queryByTestId } = render(
         <BiteCurve hourlyScores={RANKED_HOURS} bestWindow={{ start: '8:00 AM', end: '10:00 AM', score: 90 }} currentHour={12} skyTheme={SKY} />
       )
       expect(queryByTestId('bite-curve-ranked-list')).toBeNull()
@@ -154,11 +154,49 @@ describe('BiteCurve', () => {
       expect(getByTestId('bite-curve-rank-0')).toBeTruthy()
       expect(getByTestId('bite-curve-rank-1')).toBeTruthy()
       expect(getByTestId('bite-curve-rank-2')).toBeTruthy()
-      expect(getByLabelText('3 fish')).toBeTruthy() // rank-1, score 75
-      expect(getByLabelText('2 fish')).toBeTruthy() // rank-2, score 60
+      expect(within(getByTestId('bite-curve-rank-1')).getByLabelText('3 fish')).toBeTruthy()
+      expect(within(getByTestId('bite-curve-rank-2')).getByLabelText('2 fish')).toBeTruthy()
 
       fireEvent.press(getByTestId('bite-curve-expand-toggle'))
       expect(queryByTestId('bite-curve-ranked-list')).toBeNull()
+    })
+  })
+
+  describe('fish clusters under the curve', () => {
+    const RANKED_HOURS: HourlyScore[] = Array.from({ length: 24 }, (_, h) => ({
+      hour: `${h === 0 ? 12 : h > 12 ? h - 12 : h}${h < 12 ? 'AM' : 'PM'}`,
+      hourIndex: h,
+      score: 20,
+    }))
+    ;[7, 8, 9].forEach(h => (RANKED_HOURS[h].score = 90))
+    ;[13, 14, 15].forEach(h => (RANKED_HOURS[h].score = 75))
+    ;[19, 20, 21].forEach(h => (RANKED_HOURS[h].score = 60))
+
+    it('renders a fish cluster under the curve for each ranked window, with a matching fish count', () => {
+      const { getByTestId } = render(
+        <BiteCurve hourlyScores={RANKED_HOURS} bestWindow={{ start: '8:00 AM', end: '10:00 AM', score: 90 }} currentHour={12} skyTheme={SKY} />
+      )
+      expect(within(getByTestId('bite-curve-fish-cluster-0')).getByLabelText('4 fish')).toBeTruthy()
+      expect(within(getByTestId('bite-curve-fish-cluster-1')).getByLabelText('3 fish')).toBeTruthy()
+      expect(within(getByTestId('bite-curve-fish-cluster-2')).getByLabelText('2 fish')).toBeTruthy()
+    })
+
+    it('positions each cluster under its own window, not stacked at the same spot', () => {
+      const { getByTestId } = render(
+        <BiteCurve hourlyScores={RANKED_HOURS} bestWindow={{ start: '8:00 AM', end: '10:00 AM', score: 90 }} currentHour={12} skyTheme={SKY} />
+      )
+      const left0 = getByTestId('bite-curve-fish-cluster-0').props.style.find((s: any) => s?.left !== undefined)?.left
+      const left1 = getByTestId('bite-curve-fish-cluster-1').props.style.find((s: any) => s?.left !== undefined)?.left
+      const left2 = getByTestId('bite-curve-fish-cluster-2').props.style.find((s: any) => s?.left !== undefined)?.left
+      expect(left0).not.toEqual(left1)
+      expect(left1).not.toEqual(left2)
+    })
+
+    it('renders no fish clusters once the window has passed', () => {
+      const { queryByTestId } = render(
+        <BiteCurve hourlyScores={RANKED_HOURS} bestWindow={{ start: '8:00 AM', end: '10:00 AM', score: 90, passed: true }} currentHour={null} skyTheme={SKY} />
+      )
+      expect(queryByTestId('bite-curve-fish-cluster-0')).toBeNull()
     })
   })
 })
