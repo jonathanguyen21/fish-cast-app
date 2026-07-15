@@ -1,11 +1,11 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import MapView, { Marker, Callout } from 'react-native-maps'
 import { useRouter } from 'expo-router'
 import { useSpots } from '../../hooks/useSpots'
 import { useConditions } from '../../hooks/useConditions'
 import { scoreColor } from '../../features/score/scoringEngine'
-import { regionForSpots } from '../../features/spots/mapRegion'
+import { regionForSpots, isZoomedOut } from '../../features/spots/mapRegion'
 import { Colors } from '../../theme/colors'
 import { Spacing } from '../../theme/spacing'
 import { Fonts, Radii } from '../../theme/tokens'
@@ -18,19 +18,33 @@ function localDateKey(d: Date): string {
   return `${y}-${m}-${day}`
 }
 
-function SpotMarker({ spot, isActive, onSelect }: { spot: Spot; isActive: boolean; onSelect: () => void }) {
+function SpotMarker({ spot, isActive, onSelect, zoomedOut }: {
+  spot: Spot; isActive: boolean; onSelect: () => void; zoomedOut: boolean
+}) {
   const { data } = useConditions(spot, localDateKey(new Date()))
   const score = data?.fishingScore ?? null
   const color = score !== null ? scoreColor(score) : Colors.textTertiary
 
   return (
     <Marker coordinate={{ latitude: spot.lat, longitude: spot.lng }} onCalloutPress={onSelect}>
-      <View style={[styles.pin, { borderColor: color, backgroundColor: color + '30' }, isActive && styles.pinActive]}>
-        <Text style={[styles.pinText, { color }]}>{score ?? '–'}</Text>
-      </View>
-      <Callout tooltip={false} style={styles.callout}>
-        <Text style={styles.calloutName}>{spot.name}</Text>
-        <Text style={styles.calloutHint}>{isActive ? 'Active spot' : 'Tap to make active'}</Text>
+      {zoomedOut ? (
+        // Zoomed out far enough that full score badges would overlap and
+        // become unreadable — a small color-coded dot still shows "how good
+        // is this spot" at a glance without the illegible crowding.
+        <View style={[styles.dot, { backgroundColor: color }, isActive && styles.dotActive]} />
+      ) : (
+        <View style={[styles.pin, { borderColor: color, backgroundColor: color + '30' }, isActive && styles.pinActive]}>
+          <Text style={[styles.pinText, { color }]}>{score ?? '–'}</Text>
+        </View>
+      )}
+      {/* tooltip: fully custom bubble instead of the native default (a
+          white balloon on both iOS and Android) — this app's near-white
+          text color was unreadable against that default background. */}
+      <Callout tooltip>
+        <View style={styles.calloutBubble}>
+          <Text style={styles.calloutName}>{spot.name}</Text>
+          <Text style={styles.calloutHint}>{isActive ? 'Active spot' : 'Tap to make active'}</Text>
+        </View>
       </Callout>
     </Marker>
   )
@@ -39,21 +53,35 @@ function SpotMarker({ spot, isActive, onSelect }: { spot: Spot; isActive: boolea
 export default function SpotsMapScreen() {
   const router = useRouter()
   const { spots, activeSpotId, setActiveSpot } = useSpots()
+  const initialRegion = regionForSpots(spots)
+  const [zoomedOut, setZoomedOut] = useState(isZoomedOut(initialRegion.latitudeDelta))
 
   function selectSpot(id: string) {
     setActiveSpot(id)
-    router.push('/(tabs)/')
+    // This screen is a stack modal pushed on top of the tabs navigator, not
+    // a tab itself — router.push('/(tabs)/') would push a whole second tabs
+    // instance on top of this modal instead of returning to the existing
+    // one, and repeating that (map -> pick a spot -> back to map -> pick
+    // another) stacks a fresh tabs instance every time. Closing the modal
+    // instead just reveals the existing screen underneath, where the newly
+    // active spot is already visible.
+    router.back()
   }
 
   return (
     <View style={styles.screen}>
-      <MapView style={styles.map} initialRegion={regionForSpots(spots)}>
+      <MapView
+        style={styles.map}
+        initialRegion={initialRegion}
+        onRegionChangeComplete={(region) => setZoomedOut(isZoomedOut(region.latitudeDelta))}
+      >
         {spots.map(spot => (
           <SpotMarker
-            key={spot.id}
+            key={`${spot.id}-${zoomedOut}`}
             spot={spot}
             isActive={spot.id === activeSpotId}
             onSelect={() => selectSpot(spot.id)}
+            zoomedOut={zoomedOut}
           />
         ))}
       </MapView>
@@ -70,7 +98,14 @@ const styles = StyleSheet.create({
   },
   pinActive: { borderWidth: 3 },
   pinText: { fontSize: 13, fontFamily: Fonts.bold },
-  callout: { minWidth: 140, padding: Spacing.sm, borderRadius: Radii.card },
+  dot: {
+    width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: Colors.background,
+  },
+  dotActive: { borderColor: Colors.textPrimary, borderWidth: 2.5 },
+  calloutBubble: {
+    minWidth: 150, padding: Spacing.sm, borderRadius: Radii.card,
+    backgroundColor: Colors.card, borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)',
+  },
   calloutName: { fontSize: 14, fontFamily: Fonts.bold, color: Colors.textPrimary },
   calloutHint: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
 })

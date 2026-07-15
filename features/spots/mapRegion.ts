@@ -29,3 +29,13 @@ export function regionForSpots(spots: { lat: number; lng: number }[]): MapRegion
     longitudeDelta: Math.max((maxLng - minLng) * PAD, MIN_DELTA),
   }
 }
+
+// Beyond this latitudeDelta (roughly: a viewport spanning more than ~35
+// miles north-south), pins are close enough together on a real map that
+// full score badges overlap and become unreadable — shrink them to plain
+// dots until the user zooms back in.
+const ZOOMED_OUT_THRESHOLD = 0.5
+
+export function isZoomedOut(latitudeDelta: number): boolean {
+  return latitudeDelta > ZOOMED_OUT_THRESHOLD
+}
