@@ -104,4 +104,30 @@ describe('Today bite-curve scrub updates the other chips', () => {
     fireEvent(chart, 'responderGrant', { nativeEvent: { locationX: 160 }, touchHistory })
     expect(getByText('58° water')).toBeTruthy()
   })
+
+  it('previews the weather badge at the scrubbed hour too, then reverts on release', () => {
+    const { getByTestId, getByText, queryByText } = renderScreen()
+
+    // Fixture's top-level sky is Overcast (rainChance 10, under the 20%
+    // callout threshold, so the condition name shows directly).
+    expect(getByText('Overcast')).toBeTruthy()
+
+    const chart = getByTestId('bite-curve-touch-area')
+    const touchHistory = {
+      touchBank: [{ touchActive: true, currentTimeStamp: 1, currentPageX: 160, currentPageY: 40 }],
+      numberActiveTouches: 1,
+      indexOfSingleActiveTouch: 0,
+      mostRecentTimeStamp: 1,
+    }
+    // Same hour-12 math as the sibling tests. Fixture's airHourly[hour=12]
+    // = { cloudCover: 40, rainChance: 15 } -> skyDataForHour derives
+    // partly-cloudy (rainChance under 40%, cloudCover in the 30-59% band).
+    fireEvent(chart, 'responderGrant', { nativeEvent: { locationX: 160 }, touchHistory })
+    expect(getByText('Partly Cloudy')).toBeTruthy()
+    expect(queryByText('Overcast')).toBeNull()
+
+    fireEvent(chart, 'responderRelease', { nativeEvent: { locationX: 160 }, touchHistory })
+    expect(getByText('Overcast')).toBeTruthy()
+    expect(queryByText('Partly Cloudy')).toBeNull()
+  })
 })
