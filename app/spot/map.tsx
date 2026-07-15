@@ -39,10 +39,16 @@ function SpotMarker({ spot, isActive, onSelect, zoomedOut }: {
       )}
       {/* tooltip: fully custom bubble instead of the native default (a
           white balloon on both iOS and Android) — this app's near-white
-          text color was unreadable against that default background. */}
+          text color was unreadable against that default background. Always
+          shows the score here (not just when the on-map pin is a dot),
+          since that's the one place a zoomed-out dot's score is otherwise
+          not visible at all until the user zooms back in. */}
       <Callout tooltip>
         <View style={styles.calloutBubble}>
-          <Text style={styles.calloutName}>{spot.name}</Text>
+          <View style={styles.calloutHeader}>
+            <Text style={styles.calloutName}>{spot.name}</Text>
+            {score !== null && <Text style={[styles.calloutScore, { color }]}>{score}</Text>}
+          </View>
           <Text style={styles.calloutHint}>{isActive ? 'Active spot' : 'Tap to make active'}</Text>
         </View>
       </Callout>
@@ -106,6 +112,8 @@ const styles = StyleSheet.create({
     minWidth: 150, padding: Spacing.sm, borderRadius: Radii.card,
     backgroundColor: Colors.card, borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)',
   },
+  calloutHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.sm },
   calloutName: { fontSize: 14, fontFamily: Fonts.bold, color: Colors.textPrimary },
+  calloutScore: { fontSize: 15, fontFamily: Fonts.bold },
   calloutHint: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
 })

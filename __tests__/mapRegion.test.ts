@@ -47,17 +47,18 @@ describe('regionForSpots', () => {
 })
 
 describe('isZoomedOut', () => {
-  it('is false at close/street-level zoom', () => {
+  it('is false across a wide regional view, not just street level', () => {
     expect(isZoomedOut(0.05)).toBe(false)
-    expect(isZoomedOut(0.2)).toBe(false)
+    expect(isZoomedOut(0.5)).toBe(false)
+    expect(isZoomedOut(1.2)).toBe(false)
   })
 
   it('is true once the viewport spans wide enough for pins to start colliding', () => {
-    expect(isZoomedOut(0.6)).toBe(true)
-    expect(isZoomedOut(2.0)).toBe(true)
+    expect(isZoomedOut(1.6)).toBe(true)
+    expect(isZoomedOut(3.0)).toBe(true)
   })
 
   it('treats the threshold boundary itself as not zoomed out', () => {
-    expect(isZoomedOut(0.5)).toBe(false)
+    expect(isZoomedOut(1.5)).toBe(false)
   })
 })
