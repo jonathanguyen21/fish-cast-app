@@ -147,6 +147,7 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="spot/new" options={{ title: 'Add Spot', presentation: 'modal' }} />
+        <Stack.Screen name="spot/map" options={{ title: 'All Spots', presentation: 'modal' }} />
         <Stack.Screen name="species/[id]" options={{ title: 'Species Detail', presentation: 'modal' }} />
         <Stack.Screen name="conditions" options={{ presentation: 'modal', headerShown: false }} />
         <Stack.Screen name="settings" options={{ title: 'Settings', presentation: 'modal' }} />
