@@ -1,4 +1,4 @@
-import { regionForSpots } from '../features/spots/mapRegion'
+import { regionForSpots, isZoomedOut } from '../features/spots/mapRegion'
 
 describe('regionForSpots', () => {
   it('returns a sensible default region when there are no spots', () => {
@@ -43,5 +43,22 @@ describe('regionForSpots', () => {
     ])
     expect(region.latitudeDelta).toBeGreaterThanOrEqual(0.08)
     expect(region.longitudeDelta).toBeGreaterThanOrEqual(0.08)
+  })
+})
+
+describe('isZoomedOut', () => {
+  it('is false across a wide regional view, not just street level', () => {
+    expect(isZoomedOut(0.05)).toBe(false)
+    expect(isZoomedOut(0.5)).toBe(false)
+    expect(isZoomedOut(1.2)).toBe(false)
+  })
+
+  it('is true once the viewport spans wide enough for pins to start colliding', () => {
+    expect(isZoomedOut(1.6)).toBe(true)
+    expect(isZoomedOut(3.0)).toBe(true)
+  })
+
+  it('treats the threshold boundary itself as not zoomed out', () => {
+    expect(isZoomedOut(1.5)).toBe(false)
   })
 })
