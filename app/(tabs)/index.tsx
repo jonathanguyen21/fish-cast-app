@@ -26,7 +26,7 @@ import { TideChart } from '../../features/tide/TideChart'
 import { pickBetterDay } from '../../features/score/verdict'
 import { Glass, Radii, Type } from '../../theme/tokens'
 import { detectPhase, formatTideHeight, formatScrubTime } from '../../features/tide/tideUtils'
-import { skyConditionLabel } from '../../theme/weatherIcon'
+import { skyConditionLabel, skyDataForHour } from '../../theme/weatherIcon'
 import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_GAP } from '../../theme/tabBar'
 
 function tideTurnCountdown(tide: { next: { type: string; time: string } }): string {
@@ -127,6 +127,14 @@ export default function ForecastScreen() {
   const scrubWind = scrubHour !== null
     ? conditions?.windHourly.find(h => h.hour === scrubHour) ?? null
     : null
+  // airHourly has cloudCover/rainChance per hour (unlike sky.icon, which is
+  // only ever computed for "now"), so the weather badge can preview the
+  // scrubbed hour too — via skyDataForHour's approximation from those two
+  // numbers, not the exact same computation "now" uses (see its own comment).
+  const scrubAirHour = scrubHour !== null
+    ? conditions?.airHourly.find(h => h.hour === scrubHour) ?? null
+    : null
+  const displaySky = scrubAirHour ? skyDataForHour(scrubAirHour.cloudCover, scrubAirHour.rainChance) : effectiveSky
 
   React.useEffect(() => {
     if (!conditions || !activeSpot || !alertsEnabled) return
@@ -274,7 +282,7 @@ export default function ForecastScreen() {
               breakdown={conditions.scoreBreakdown}
               spotType={activeSpot.type}
               skyTheme={skyTheme}
-              sky={effectiveSky!}
+              sky={displaySky!}
               summary={buildConditionsSummary(conditions)}
               betterDay={betterDay}
             />
