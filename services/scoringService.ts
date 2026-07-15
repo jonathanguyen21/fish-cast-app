@@ -188,16 +188,18 @@ export function buildConditionsData(
     }
   }
 
-  // Produce hours from the first NWS period through hour 23.
-  // NWS only has future forecast data so never backfill past hours.
+  // NWS only has future forecast data, so hours before the first period
+  // (this morning, if it's currently afternoon) have no real reading —
+  // clone the first entry's conditions for those too, same as the in-range
+  // gap-fill below. This keeps windHourly's fallback and airHourly covering
+  // the full 0-23 day so bite-curve scrubbing (which spans the whole day,
+  // not just from now onward) always finds an hour to show instead of
+  // silently reverting to "now" for any hour before the current one.
   const todayHourly = nws?.hourlyForecast ?? []
   const hourMap = new Map(todayHourly.map(h => [h.hour, h]))
   const firstEntry = todayHourly[0]
   const extendedHourly = firstEntry
-    ? Array.from({ length: 24 - firstEntry.hour }, (_, i) => {
-        const hour = firstEntry.hour + i
-        return hourMap.get(hour) ?? { ...firstEntry, hour }
-      })
+    ? Array.from({ length: 24 }, (_, hour) => hourMap.get(hour) ?? { ...firstEntry, hour })
     : todayHourly
 
   return {

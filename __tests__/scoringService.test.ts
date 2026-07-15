@@ -230,6 +230,21 @@ describe('buildConditionsData', () => {
     expect(result.airHourly[0]).toHaveProperty('cloudCover')
   })
 
+  it('covers all 24 hours in airHourly, backfilling hours before NWS’ first period', () => {
+    // NWS's own fixture only reports hours 5-20 (hourlyForecast starts at
+    // hour 5). Hours before that have no real NWS reading, but bite-curve
+    // scrubbing spans the whole day, so airHourly must still have an entry
+    // for e.g. hour 0 - cloned from the first real period - rather than
+    // being missing entirely (which silently broke the weather-scrub
+    // preview for any hour before "now").
+    const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
+    expect(result.airHourly).toHaveLength(24)
+    const hours = result.airHourly.map(h => h.hour)
+    expect(hours).toEqual(Array.from({ length: 24 }, (_, i) => i))
+    const hourZero = result.airHourly.find(h => h.hour === 0)
+    expect(hourZero).toEqual({ hour: 0, temp: 60, rainChance: 10, cloudCover: 80 })
+  })
+
   it('includes windHourly with gusts and direction', () => {
     const result = buildConditionsData(DATE, NOAA, NWS_BY_DAY, MARINE, SOLUNAR, SPOT, NOW)
     expect(result.windHourly.length).toBeGreaterThan(0)
